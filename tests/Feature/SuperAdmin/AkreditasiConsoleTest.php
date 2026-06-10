@@ -4,6 +4,7 @@ namespace Tests\Feature\SuperAdmin;
 
 use App\Models\Akreditasi;
 use App\Models\AkreditasiAuditLog;
+use App\Models\Banding;
 use App\Models\Edpm;
 use App\Models\Ipm;
 use App\Models\Pesantren;
@@ -111,6 +112,80 @@ class AkreditasiConsoleTest extends TestCase
         $this->assertDatabaseHas('akreditasis', [
             'user_id' => $pesantrenUser->id,
             'status' => Akreditasi::STATUS_INITIAL_SUBMITTED,
+        ]);
+    }
+
+    public function test_super_admin_can_export_akreditasi_console_csv(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Export']);
+        $this->createCompletePesantrenData($pesantrenUser);
+        Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_INITIAL_SUBMITTED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export', ['status' => Akreditasi::STATUS_INITIAL_SUBMITTED, 'q' => 'Export']))
+            ->assertOk()
+            ->assertDownload('akreditasi-superadmin.csv');
+    }
+
+    public function test_super_admin_can_view_banding_page_with_superadmin_actions(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_APPEAL_SUBMITTED,
+        ]);
+        $banding = Banding::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $pesantrenUser->id,
+            'reason' => 'Mohon peninjauan superadmin.',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.banding', $akreditasi->id))
+            ->assertOk()
+            ->assertSee('Review Permohonan Banding')
+            ->assertSee('Mohon peninjauan superadmin.')
+            ->assertSee(route('superadmin.banding.terima', $banding->id), false)
+            ->assertSee(route('superadmin.banding.tolak', $banding->id), false)
+            ->assertDontSee(route('admin.banding.terima', $banding->id), false);
+    }
+
+    public function test_super_admin_can_accept_banding_from_dedicated_route(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_APPEAL_SUBMITTED,
+        ]);
+        $banding = Banding::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $pesantrenUser->id,
+            'reason' => 'Mohon peninjauan ulang.',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.banding.terima', $banding->id), [
+                'response' => 'Banding diterima oleh superadmin.',
+            ])
+            ->assertRedirect(route('superadmin.akreditasi.index'));
+
+        $this->assertDatabaseHas('bandings', [
+            'id' => $banding->id,
+            'status' => 'accepted',
+            'processed_by' => $this->superAdmin->id,
+            'admin_response' => 'Banding diterima oleh superadmin.',
+        ]);
+        $this->assertDatabaseHas('akreditasis', [
+            'id' => $akreditasi->id,
+            'status' => Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
         ]);
     }
 

@@ -7,6 +7,7 @@
 @php
     use App\Models\Akreditasi;
     $bandings = $akreditasi->bandings()->where('status', 'pending')->orderBy('created_at', 'desc')->get();
+    $bandingRoutePrefix = $bandingRoutePrefix ?? 'admin.banding';
 @endphp
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
@@ -96,7 +97,7 @@
                         {{-- Terima Banding --}}
                         <div class="rounded border border-green-100 bg-light-success p-4">
                             <h3 class="fs-7 fw-semibold text-success mb-3">Terima Banding</h3>
-                            <form method="POST" action="{{ route('admin.banding.terima', $banding->id) }}">
+                            <form method="POST" action="{{ route($bandingRoutePrefix.'.terima', $banding->id) }}">
                                 @csrf
                                 <div class="mb-3">
                                     <label for="response_terima_{{ $banding->id }}" class="block fs-8 fw-medium text-success">
@@ -119,7 +120,7 @@
                         {{-- Tolak Banding --}}
                         <div class="rounded border border-red-100 bg-light-danger p-4">
                             <h3 class="fs-7 fw-semibold text-danger mb-3">Tolak Banding</h3>
-                            <form method="POST" action="{{ route('admin.banding.tolak', $banding->id) }}">
+                            <form method="POST" action="{{ route($bandingRoutePrefix.'.tolak', $banding->id) }}">
                                 @csrf
                                 <div class="mb-3">
                                     <label for="response_tolak_{{ $banding->id }}" class="block fs-8 fw-medium text-danger">
