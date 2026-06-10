@@ -87,13 +87,19 @@ class MasterDataTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->post(route('superadmin.master-data.document-categories.store'), [
                 'name' => 'Dokumen Test',
+                'code' => 'dokumen_test',
                 'description' => 'Kategori uji',
                 'required_for_phase' => 'assessment',
+                'visible_to_roles' => ['pesantren', 'asesor'],
+                'asesor_scope' => 'all',
                 'is_active' => '1',
             ])
             ->assertRedirect(route('superadmin.master-data.document-categories.index'));
 
         $category = DocumentCategory::where('name', 'Dokumen Test')->firstOrFail();
+        $this->assertSame('dokumen_test', $category->code);
+        $this->assertSame(['pesantren', 'asesor'], $category->visible_to_roles);
+        $this->assertSame('all', $category->asesor_scope);
         $this->assertTrue($category->is_active);
 
         $this->actingAs($this->superAdmin)
@@ -101,6 +107,24 @@ class MasterDataTest extends TestCase
             ->assertRedirect(route('superadmin.master-data.document-categories.index'));
 
         $this->assertFalse($category->fresh()->is_active);
+    }
+
+    public function test_document_categories_page_explains_access_rules(): void
+    {
+        DocumentCategory::create([
+            'name' => 'Kartu Kendali',
+            'code' => 'kartu_kendali',
+            'visible_to_roles' => ['pesantren'],
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.document-categories.index'))
+            ->assertOk()
+            ->assertSee('Atur Kategori, Template, dan Akses Dokumen')
+            ->assertSee('Kartu Kendali')
+            ->assertSee('Role yang dapat melihat/mengakses')
+            ->assertSee('Cakupan Asesor');
     }
 
     public function test_super_admin_can_update_role_permissions(): void

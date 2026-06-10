@@ -10,6 +10,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class MasterDataController extends Controller
@@ -124,36 +125,52 @@ class MasterDataController extends Controller
     public function documentCategories()
     {
         $categories = DocumentCategory::orderByDesc('is_active')->orderBy('name')->get();
+        $roleOptions = DocumentCategory::ROLE_OPTIONS;
+        $asesorScopeOptions = DocumentCategory::ASESOR_SCOPE_OPTIONS;
+        $phaseOptions = $this->documentPhaseOptions();
+        $presets = $this->documentRulePresets();
+        $stats = [
+            'total' => $categories->count(),
+            'active' => $categories->where('is_active', true)->count(),
+            'with_template' => $categories->filter(fn (DocumentCategory $category) => filled($category->template_path))->count(),
+            'missing_rules' => $categories->filter(fn (DocumentCategory $category) => empty($category->visible_to_roles))->count(),
+        ];
 
-        return view('superadmin.master-data.document-categories.index', compact('categories'));
+        return view('superadmin.master-data.document-categories.index', compact(
+            'categories',
+            'roleOptions',
+            'asesorScopeOptions',
+            'phaseOptions',
+            'presets',
+            'stats',
+        ));
     }
 
     public function storeDocumentCategory(Request $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'required_for_phase' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        $validated = $this->validateDocumentCategory($request);
+        $validated['code'] = $validated['code'] ?: Str::slug($validated['name'], '_');
+        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['template_path'] = $this->storeDocumentCategoryTemplate($request);
 
-        DocumentCategory::create($validated + ['is_active' => $request->boolean('is_active', true)]);
+        DocumentCategory::create($validated);
 
-        return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Kategori dokumen berhasil ditambahkan.');
+        return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Aturan kategori dokumen berhasil ditambahkan.');
     }
 
     public function updateDocumentCategory(Request $request, DocumentCategory $category)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'required_for_phase' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
+        $validated = $this->validateDocumentCategory($request, $category);
+        $validated['code'] = $validated['code'] ?: Str::slug($validated['name'], '_');
+        $validated['is_active'] = $request->boolean('is_active');
 
-        $category->update($validated + ['is_active' => $request->boolean('is_active')]);
+        if ($templatePath = $this->storeDocumentCategoryTemplate($request)) {
+            $validated['template_path'] = $templatePath;
+        }
 
-        return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Kategori dokumen berhasil diperbarui.');
+        $category->update($validated);
+
+        return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Aturan kategori dokumen berhasil diperbarui.');
     }
 
     public function toggleDocumentCategory(DocumentCategory $category)
@@ -168,6 +185,89 @@ class MasterDataController extends Controller
         $category->delete();
 
         return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Kategori dokumen berhasil dihapus.');
+    }
+
+    private function validateDocumentCategory(Request $request, ?DocumentCategory $category = null): array
+    {
+        $roleKeys = array_keys(DocumentCategory::ROLE_OPTIONS);
+        $asesorScopes = array_keys(DocumentCategory::ASESOR_SCOPE_OPTIONS);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'code' => [
+                'nullable',
+                'string',
+                'max:100',
+                'alpha_dash',
+                Rule::unique('document_categories', 'code')->ignore($category?->id),
+            ],
+            'description' => ['nullable', 'string'],
+            'required_for_phase' => ['nullable', 'string', 'max:100'],
+            'visible_to_roles' => ['nullable', 'array'],
+            'visible_to_roles.*' => ['string', Rule::in($roleKeys)],
+            'asesor_scope' => ['nullable', 'string', Rule::in($asesorScopes)],
+            'template' => ['nullable', 'file', 'mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg', 'max:10240'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $validated['visible_to_roles'] = array_values($validated['visible_to_roles'] ?? []);
+
+        if (! in_array('asesor', $validated['visible_to_roles'], true)) {
+            $validated['asesor_scope'] = null;
+        } else {
+            $validated['asesor_scope'] = $validated['asesor_scope'] ?? 'all';
+        }
+
+        unset($validated['template']);
+
+        return $validated;
+    }
+
+    private function storeDocumentCategoryTemplate(Request $request): ?string
+    {
+        if (! $request->hasFile('template')) {
+            return null;
+        }
+
+        return $request->file('template')->store('document-category-templates');
+    }
+
+    private function documentPhaseOptions(): array
+    {
+        return [
+            '' => 'Semua fase',
+            'assessment' => 'Assessment',
+            'visitasi' => 'Visitasi',
+            'final_validation' => 'Validasi Akhir',
+            'hasil' => 'Hasil Akreditasi',
+        ];
+    }
+
+    private function documentRulePresets(): array
+    {
+        return [
+            [
+                'title' => 'Kartu Kendali',
+                'code' => 'kartu_kendali',
+                'description' => 'Dokumen kontrol dari pesantren; akses utama untuk Pesantren.',
+                'roles' => ['pesantren'],
+                'scope' => null,
+            ],
+            [
+                'title' => 'Laporan Visitasi Individu',
+                'code' => 'laporan_visitasi_individu',
+                'description' => 'Laporan personal asesor; dapat diakses Ketua dan Anggota Asesor.',
+                'roles' => ['asesor'],
+                'scope' => 'all',
+            ],
+            [
+                'title' => 'Laporan Visitasi Kelompok',
+                'code' => 'laporan_visitasi_kelompok',
+                'description' => 'Laporan final kelompok; akses khusus Ketua Asesor.',
+                'roles' => ['asesor'],
+                'scope' => 'ketua',
+            ],
+        ];
     }
 
     public function roles()

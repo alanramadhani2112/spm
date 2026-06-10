@@ -5,18 +5,23 @@ namespace App\Services;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 
 class DocumentService
 {
     const TYPE_KARTU_KENDALI = 'kartu_kendali';
+
     const TYPE_LAPORAN_ASESOR = 'laporan_asesor';
+
     const TYPE_SK = 'sk';
+
     const TYPE_SERTIFIKAT = 'sertifikat';
 
     const ROLE_ADMIN = 'admin';
+
     const ROLE_SUPER_ADMIN = 'super_admin';
+
     const ROLE_ASESOR = 'asesor';
+
     const ROLE_PESANTREN = 'pesantren';
 
     /**
@@ -40,35 +45,44 @@ class DocumentService
      *   - Laporan Asesor: hidden from Pesantren
      *   - SK / Sertifikat: hidden from other Pesantren (only uploader's pesantren)
      */
-    public function getVisibleDocuments(int $akreditasiId, string $role, ?int $userId = null): Collection
+    public function getVisibleDocuments(int $akreditasiId, string $role, ?int $userId = null, ?string $asesorScope = null): Collection
     {
-        $query = Document::where('akreditasi_id', $akreditasiId);
+        $documents = Document::with('category')
+            ->where('akreditasi_id', $akreditasiId)
+            ->get();
 
-        if (in_array($role, [self::ROLE_ADMIN, self::ROLE_SUPER_ADMIN])) {
-            return $query->get();
+        if (in_array($role, [self::ROLE_ADMIN, self::ROLE_SUPER_ADMIN], true)) {
+            return $documents;
         }
 
+        return $documents->filter(function (Document $document) use ($role, $userId, $asesorScope) {
+            if ($document->category) {
+                return $document->category->isVisibleToRole($role, $asesorScope);
+            }
+
+            return $this->fallbackVisibility($document, $role, $userId);
+        })->values();
+    }
+
+    private function fallbackVisibility(Document $document, string $role, ?int $userId = null): bool
+    {
         if ($role === self::ROLE_ASESOR) {
-            return $query->where('type', '!=', self::TYPE_KARTU_KENDALI)->get();
+            return $document->type !== self::TYPE_KARTU_KENDALI;
         }
 
         if ($role === self::ROLE_PESANTREN) {
-            $query->where('type', '!=', self::TYPE_LAPORAN_ASESOR);
-
-            if ($userId) {
-                $query->where(function ($q) use ($userId) {
-                    $q->whereNotIn('type', [self::TYPE_SK, self::TYPE_SERTIFIKAT])
-                      ->orWhere(function ($q2) use ($userId) {
-                          $q2->whereIn('type', [self::TYPE_SK, self::TYPE_SERTIFIKAT])
-                             ->where('uploaded_by_user_id', $userId);
-                      });
-                });
+            if ($document->type === self::TYPE_LAPORAN_ASESOR) {
+                return false;
             }
 
-            return $query->get();
+            if (in_array($document->type, [self::TYPE_SK, self::TYPE_SERTIFIKAT], true)) {
+                return ! $userId || $document->uploaded_by_user_id === $userId;
+            }
+
+            return true;
         }
 
-        return collect();
+        return false;
     }
 
     /**
@@ -96,6 +110,11 @@ class DocumentService
     public function validateDocumentRequirement(int $akreditasiId, string $phase): array
     {
         $requiredCategories = DocumentCategory::where('is_active', true)
+            ->where(function ($query) use ($phase) {
+                $query->whereNull('required_for_phase')
+                    ->orWhere('required_for_phase', '')
+                    ->orWhere('required_for_phase', $phase);
+            })
             ->pluck('name', 'id');
 
         $uploadedCategoryIds = Document::where('akreditasi_id', $akreditasiId)
@@ -106,7 +125,7 @@ class DocumentService
         $missing = [];
 
         foreach ($requiredCategories as $categoryId => $categoryName) {
-            if (!in_array($categoryId, $uploadedCategoryIds)) {
+            if (! in_array($categoryId, $uploadedCategoryIds)) {
                 $missing[] = [
                     'category_id' => $categoryId,
                     'category_name' => $categoryName,
