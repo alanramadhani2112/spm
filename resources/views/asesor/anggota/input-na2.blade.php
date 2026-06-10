@@ -6,6 +6,8 @@
 @section('content')
 @php
     use App\Services\ScoringService;
+    $inputRouteName = $inputRouteName ?? 'asesor.anggota.input-na2';
+    $backRouteName = $backRouteName ?? 'asesor.anggota.index';
     $skala = ScoringService::SKALA_NILAI;
 @endphp
 
@@ -45,7 +47,7 @@
             </div>
         </x-slot:header>
 
-        <form method="POST" action="{{ route('asesor.anggota.input-na2', $akreditasi->id) }}" id="na2-form">
+        <form method="POST" action="{{ route($inputRouteName, $akreditasi->id) }}" id="na2-form">
             @csrf
 
             @foreach($komponen as $k)
@@ -117,7 +119,7 @@
             </div>
 
             <div class="mt-6 d-flex align-items-center justify-content-between">
-                <a href="{{ route('asesor.anggota.index') }}" class="btn btn-light">Kembali</a>
+                <a href="{{ route($backRouteName) }}" class="btn btn-light">Kembali</a>
                 <button type="submit" class="btn btn-danger fw-bold">
                     <i class="ki-outline ki-check-squared fs-5 me-2"></i>
                     Simpan NA2

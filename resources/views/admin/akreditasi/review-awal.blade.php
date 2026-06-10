@@ -6,6 +6,7 @@
 @section('content')
 @php
     use App\Models\Akreditasi;
+    $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
     $pesantren = $akreditasi->user?->pesantren;
 @endphp
 
@@ -139,7 +140,7 @@
                 <p class="mt-1 fs-7 text-muted">Terima pengajuan dan lanjutkan ke tahap assessment.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.terima-pengajuan', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.terima-pengajuan', $akreditasi->id) }}">
                     @csrf
                     <div class="mb-4">
                         <label for="catatan_terima" class="block fs-7 fw-medium text-gray-700">
@@ -167,7 +168,7 @@
                 <p class="mt-1 fs-7 text-muted">Tolak pengajuan karena data tidak memenuhi syarat.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.tolak-pengajuan', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-pengajuan', $akreditasi->id) }}">
                     @csrf
                     <div class="mb-4">
                         <label for="reason" class="block fs-7 fw-medium text-gray-700">

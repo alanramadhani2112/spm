@@ -211,7 +211,7 @@ class AkreditasiController extends Controller
             Akreditasi::STATUS_INITIAL_SUBMITTED,
         ])->findOrFail($akreditasiId);
 
-        return view('admin.akreditasi.review-awal', compact('akreditasi'));
+        return view('admin.akreditasi.review-awal', $this->superadminViewData(compact('akreditasi')));
     }
 
     public function terimaPengajuan(Request $request, $akreditasiId)
@@ -249,7 +249,7 @@ class AkreditasiController extends Controller
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            return view('admin.akreditasi.buka-assessment', compact('akreditasi'));
+            return view('admin.akreditasi.buka-assessment', $this->superadminViewData(compact('akreditasi')));
         }
 
         $validated = $request->validate([
@@ -280,7 +280,7 @@ class AkreditasiController extends Controller
             Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
         ])->findOrFail($akreditasiId);
 
-        return view('admin.akreditasi.review-tahap1', compact('akreditasi'));
+        return view('admin.akreditasi.review-tahap1', $this->superadminViewData(compact('akreditasi')));
     }
 
     public function mintaPerbaikanTahap1(Request $request, $akreditasiId)
@@ -325,7 +325,7 @@ class AkreditasiController extends Controller
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
 
-            return view('admin.akreditasi.assign-asesor', compact('akreditasi', 'asesors', 'existing'));
+            return view('admin.akreditasi.assign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing')));
         }
 
         $validated = $request->validate([
@@ -355,7 +355,7 @@ class AkreditasiController extends Controller
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
 
-            return view('admin.akreditasi.reassign-asesor', compact('akreditasi', 'asesors', 'existing'));
+            return view('admin.akreditasi.reassign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing')));
         }
 
         $validated = $request->validate([
@@ -408,7 +408,10 @@ class AkreditasiController extends Controller
             Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
         ])->findOrFail($akreditasiId);
 
-        return view('asesor.ketua.review-tahap2', compact('akreditasi'));
+        return view('asesor.ketua.review-tahap2', $this->superadminViewData(compact('akreditasi'), [
+            'approveRouteName' => 'superadmin.akreditasi.layak-visitasi',
+            'correctionRouteName' => 'superadmin.akreditasi.minta-perbaikan-tahap2',
+        ]));
     }
 
     public function nyatakanLayakVisitasi($akreditasiId)
@@ -453,7 +456,9 @@ class AkreditasiController extends Controller
         ])->findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            return view('asesor.ketua.jadwalkan-visitasi', compact('akreditasi'));
+            return view('asesor.ketua.jadwalkan-visitasi', $this->superadminViewData(compact('akreditasi'), [
+                'scheduleRouteName' => 'superadmin.akreditasi.jadwalkan-visitasi',
+            ]));
         }
 
         $validated = $request->validate([
@@ -495,7 +500,9 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $komponen = MasterEdpmKomponen::with('butirs')->get();
 
-            return view('asesor.ketua.input-na1', compact('akreditasi', 'komponen'));
+            return view('asesor.ketua.input-na1', $this->superadminViewData(compact('akreditasi', 'komponen'), [
+                'inputRouteName' => 'superadmin.akreditasi.input-na1',
+            ]));
         }
 
         $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
@@ -519,7 +526,9 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $komponen = MasterEdpmKomponen::with('butirs')->get();
 
-            return view('asesor.anggota.input-na2', compact('akreditasi', 'komponen'));
+            return view('asesor.anggota.input-na2', $this->superadminViewData(compact('akreditasi', 'komponen'), [
+                'inputRouteName' => 'superadmin.akreditasi.input-na2',
+            ]));
         }
 
         $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
@@ -543,7 +552,9 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $komponen = MasterEdpmKomponen::with('butirs')->get();
 
-            return view('asesor.ketua.input-nk', compact('akreditasi', 'komponen'));
+            return view('asesor.ketua.input-nk', $this->superadminViewData(compact('akreditasi', 'komponen'), [
+                'inputRouteName' => 'superadmin.akreditasi.input-nk',
+            ]));
         }
 
         $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
@@ -565,7 +576,9 @@ class AkreditasiController extends Controller
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            return view('asesor.ketua.upload-laporan', compact('akreditasi'));
+            return view('asesor.ketua.upload-laporan', $this->superadminViewData(compact('akreditasi'), [
+                'uploadRouteName' => 'superadmin.akreditasi.upload-laporan',
+            ]));
         }
 
         $validated = $request->validate([
@@ -630,7 +643,7 @@ class AkreditasiController extends Controller
 
         $nkEntries = AkreditasiEdpm::where('akreditasi_id', $akreditasi->id)->get();
 
-        return view('admin.akreditasi.validasi-akhir', compact('akreditasi', 'nkEntries'));
+        return view('admin.akreditasi.validasi-akhir', $this->superadminViewData(compact('akreditasi', 'nkEntries')));
     }
 
     public function approveFinal(Request $request, $akreditasiId)
@@ -732,6 +745,14 @@ class AkreditasiController extends Controller
 
             return redirect()->back();
         }
+    }
+
+    private function superadminViewData(array $data, array $routes = []): array
+    {
+        return $data + $routes + [
+            'akreditasiRoutePrefix' => 'superadmin.akreditasi',
+            'backRouteName' => 'superadmin.akreditasi.index',
+        ];
     }
 
     private function statusColors(): array

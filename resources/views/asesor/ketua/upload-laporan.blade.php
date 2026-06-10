@@ -6,6 +6,8 @@
 @section('content')
 @php
     use App\Models\Akreditasi;
+    $uploadRouteName = $uploadRouteName ?? 'asesor.ketua.upload-laporan';
+    $backRouteName = $backRouteName ?? 'asesor.ketua.index';
 @endphp
 
 <div class="d-grid gap-6">
@@ -32,7 +34,7 @@
     <x-metronic.card title="Upload Laporan Visitasi">
         <p class="text-muted fs-7">Akreditasi: {{ \Illuminate\Support\Str::limit($akreditasi->uuid, 12, '...') }}</p>
 
-        <form method="POST" action="{{ route('asesor.ketua.upload-laporan', $akreditasi->id) }}" enctype="multipart/form-data" class="mt-6">
+        <form method="POST" action="{{ route($uploadRouteName, $akreditasi->id) }}" enctype="multipart/form-data" class="mt-6">
             @csrf
 
             <div class="d-grid gap-6">
@@ -74,7 +76,7 @@
             </div>
 
             <div class="mt-6 d-flex align-items-center justify-content-end gap-3">
-                <a href="{{ route('asesor.ketua.index') }}" class="btn btn-light">Kembali</a>
+                <a href="{{ route($backRouteName) }}" class="btn btn-light">Kembali</a>
                 <button type="submit" class="btn btn-primary fw-bold">
                     <i class="ki-outline ki-file-up fs-5 me-2"></i>
                     Upload Laporan

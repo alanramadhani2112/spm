@@ -189,6 +189,40 @@ class AkreditasiConsoleTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_review_awal_uses_superadmin_form_routes(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_INITIAL_SUBMITTED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.review-awal', $akreditasi->id))
+            ->assertOk()
+            ->assertSee(route('superadmin.akreditasi.terima-pengajuan', $akreditasi->id), false)
+            ->assertSee(route('superadmin.akreditasi.tolak-pengajuan', $akreditasi->id), false)
+            ->assertDontSee(route('admin.akreditasi.terima-pengajuan', $akreditasi->id), false);
+    }
+
+    public function test_super_admin_review_tahap2_uses_superadmin_form_routes(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.review-tahap2', $akreditasi->id))
+            ->assertOk()
+            ->assertSee(route('superadmin.akreditasi.layak-visitasi', $akreditasi->id), false)
+            ->assertSee(route('superadmin.akreditasi.minta-perbaikan-tahap2', $akreditasi->id), false)
+            ->assertDontSee(route('asesor.ketua.nyatakan-layak-visitasi', $akreditasi->id), false);
+    }
+
     private function createCompletePesantrenData(User $user): void
     {
         $pesantren = Pesantren::create([

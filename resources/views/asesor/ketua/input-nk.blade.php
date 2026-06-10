@@ -6,6 +6,8 @@
 @section('content')
 @php
     use App\Services\ScoringService;
+    $inputRouteName = $inputRouteName ?? 'asesor.ketua.input-nk';
+    $backRouteName = $backRouteName ?? 'asesor.ketua.index';
     $skala = ScoringService::SKALA_NILAI;
 @endphp
 
@@ -73,7 +75,7 @@
             </div>
         </x-slot:header>
 
-        <form method="POST" action="{{ route('asesor.ketua.input-nk', $akreditasi->id) }}">
+        <form method="POST" action="{{ route($inputRouteName, $akreditasi->id) }}">
             @csrf
 
             @foreach($komponen as $k)
@@ -142,11 +144,11 @@
                     Simpan Nilai NK
                 </button>
 
-                <a href="{{ route('asesor.ketua.index') }}" class="btn btn-light">Kembali</a>
+                <a href="{{ route($backRouteName) }}" class="btn btn-light">Kembali</a>
             </div>
             @else
             <div class="mt-6">
-                <a href="{{ route('asesor.ketua.index') }}" class="btn btn-light">
+                <a href="{{ route($backRouteName) }}" class="btn btn-light">
                     <i class="ki-outline ki-arrow-left fs-5 me-2"></i>
                     Kembali ke Dashboard
                 </a>

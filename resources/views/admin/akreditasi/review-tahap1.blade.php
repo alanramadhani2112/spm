@@ -6,6 +6,7 @@
 @section('content')
 @php
     use App\Models\Akreditasi;
+    $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
@@ -134,7 +135,7 @@
                 <p class="mt-1 fs-7 text-muted">Data telah lengkap dan valid. Lanjutkan ke penugasan asesor.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.approve-tahap1', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-tahap1', $akreditasi->id) }}">
                     @csrf
                     <div class="mb-4">
                         <label for="catatan_approve" class="block fs-7 fw-medium text-gray-700">
@@ -162,7 +163,7 @@
                 <p class="mt-1 fs-7 text-muted">Beberapa bagian perlu diperbaiki oleh pesantren.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.minta-perbaikan-tahap1', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.minta-perbaikan-tahap1', $akreditasi->id) }}">
                     @csrf
                     <fieldset class="mb-4">
                         <legend class="fs-7 fw-medium text-gray-700 mb-3">Bagian yang perlu dikoreksi <span class="text-danger">*</span></legend>
@@ -222,7 +223,7 @@
                 </p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.handle-limit-review', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.handle-limit-review', $akreditasi->id) }}">
                     @csrf
                     <div class="row gap-6">
                         <div class="rounded border border-green-100 bg-light-success p-4">

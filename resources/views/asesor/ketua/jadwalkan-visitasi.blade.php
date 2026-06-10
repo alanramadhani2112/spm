@@ -4,6 +4,11 @@
 @section('pageTitle', 'Jadwalkan Visitasi')
 
 @section('content')
+@php
+    $scheduleRouteName = $scheduleRouteName ?? 'asesor.ketua.jadwalkan-visitasi';
+    $backRouteName = $backRouteName ?? 'asesor.ketua.index';
+@endphp
+
 <div class="d-grid gap-6">
 
     @if(session('success'))
@@ -47,7 +52,7 @@
     <x-metronic.card title="{{ $akreditasi->tgl_visitasi ? 'Perbarui' : 'Tetapkan' }} Jadwal Visitasi">
         <p class="text-muted fs-7">Tentukan rentang tanggal pelaksanaan visitasi untuk akreditasi ini.</p>
 
-        <form method="POST" action="{{ route('asesor.ketua.jadwalkan-visitasi', $akreditasi->id) }}" class="mt-6 d-grid gap-5">
+        <form method="POST" action="{{ route($scheduleRouteName, $akreditasi->id) }}" class="mt-6 d-grid gap-5">
             @csrf
 
             <div class="row g-5">
@@ -68,7 +73,7 @@
                     {{ $akreditasi->tgl_visitasi ? 'Perbarui Jadwal' : 'Tetapkan Jadwal' }}
                 </button>
 
-                <a href="{{ route('asesor.ketua.index') }}" class="btn btn-light">Batal</a>
+                <a href="{{ route($backRouteName) }}" class="btn btn-light">Batal</a>
             </div>
         </form>
     </x-metronic.card>

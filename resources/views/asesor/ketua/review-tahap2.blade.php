@@ -6,6 +6,9 @@
 @section('content')
 @php
     use App\Models\Akreditasi;
+    $approveRouteName = $approveRouteName ?? 'asesor.ketua.nyatakan-layak-visitasi';
+    $correctionRouteName = $correctionRouteName ?? 'asesor.ketua.minta-perbaikan-tahap2';
+    $backRouteName = $backRouteName ?? 'asesor.ketua.index';
 @endphp
 
 <div class="d-grid gap-6">
@@ -54,7 +57,7 @@
             <div class="rounded border border-success bg-light-success p-5">
                 <h3 class="fs-6 fw-bold text-gray-900">Nyatakan Layak Visitasi</h3>
                 <p class="mt-1 fs-7 text-gray-700">Akreditasi akan dilanjutkan ke tahap penjadwalan visitasi.</p>
-                <form method="POST" action="{{ route('asesor.ketua.nyatakan-layak-visitasi', $akreditasi->id) }}" class="mt-4">
+                <form method="POST" action="{{ route($approveRouteName, $akreditasi->id) }}" class="mt-4">
                     @csrf
                     <button type="submit"
                             onclick="return confirm('Apakah Anda yakin ingin menyatakan akreditasi ini layak visitasi?')"
@@ -68,7 +71,7 @@
             <div class="rounded border border-warning bg-light-warning p-5">
                 <h3 class="fs-6 fw-bold text-gray-900">Minta Perbaikan Tahap 2</h3>
                 <p class="mt-1 fs-7 text-gray-700">Minta pesantren memperbaiki dokumen yang belum lengkap atau tidak sesuai.</p>
-                <form method="POST" action="{{ route('asesor.ketua.minta-perbaikan-tahap2', $akreditasi->id) }}" class="mt-4 d-grid gap-4">
+                <form method="POST" action="{{ route($correctionRouteName, $akreditasi->id) }}" class="mt-4 d-grid gap-4">
                     @csrf
 
                     <fieldset>
@@ -117,7 +120,7 @@
         </div>
     </x-metronic.card>
 
-    <a href="{{ route('asesor.ketua.index') }}"
+    <a href="{{ route($backRouteName) }}"
        class="btn btn-light">
         <i class="ki-outline ki-arrow-left fs-5 me-2"></i>
         Kembali ke Dashboard

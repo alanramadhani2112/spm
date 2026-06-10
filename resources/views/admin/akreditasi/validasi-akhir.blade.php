@@ -7,6 +7,7 @@
 @php
     use App\Models\Akreditasi;
     use App\Models\AkreditasiEdpm;
+    $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
@@ -109,7 +110,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route('admin.akreditasi.approve-final', $akreditasi->id) }}" id="approveFinalForm">
+            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-final', $akreditasi->id) }}" id="approveFinalForm">
                 @csrf
 
                 <div class="space-y-5">
@@ -182,7 +183,7 @@
                 <p class="mt-1 fs-7 text-muted">Tolak hasil akreditasi karena tidak memenuhi standar.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route('admin.akreditasi.tolak-final', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-final', $akreditasi->id) }}">
                     @csrf
                     <div class="mb-4">
                         <label for="reject_reason" class="block fs-7 fw-medium text-gray-700">
