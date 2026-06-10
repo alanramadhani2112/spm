@@ -1,0 +1,590 @@
+[
+  {
+    "expected": {
+      "na": 100.0,
+      "ik": 4.0,
+      "final_score": 100,
+      "peringkat": "A",
+      "ipr": 4.0
+    },
+    "name": "HIGH",
+    "ipr_scores": [
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4,
+      4
+    ],
+    "butir_scores": [
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 1
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      },
+      {
+        "isian": 4,
+        "komponen_id": 4
+      }
+    ]
+  },
+  {
+    "expected": {
+      "na": 78.15,
+      "ik": 3.18,
+      "final_score": 78,
+      "peringkat": "B",
+      "ipr": 3.0
+    },
+    "name": "MID",
+    "ipr_scores": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "butir_scores": [
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 1
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 2
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 4,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      },
+      {
+        "isian": 3,
+        "komponen_id": 4
+      }
+    ]
+  },
+  {
+    "expected": {
+      "na": 53.15,
+      "ik": 2.18,
+      "final_score": 53,
+      "peringkat": "C",
+      "ipr": 2.0
+    },
+    "name": "EDGE",
+    "ipr_scores": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2
+    ],
+    "butir_scores": [
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 1
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 2,
+        "komponen_id": 2
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 3,
+        "komponen_id": 3
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      },
+      {
+        "isian": 2,
+        "komponen_id": 4
+      }
+    ]
+  }
+]
