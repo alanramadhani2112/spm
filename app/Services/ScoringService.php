@@ -73,6 +73,16 @@ class ScoringService
         return max(self::MIN_SCORE, min(self::MAX_SCORE, round($na)));
     }
 
+    public function calculateFinalScoreFromAverage(float $average): float
+    {
+        return round(max(self::MIN_SCORE, min(self::MAX_SCORE, $average * self::SCALE_MULTIPLIER)), 2);
+    }
+
+    public function calculatePeringkatFromAverage(float $average): string
+    {
+        return $this->calculatePeringkat($this->calculateFinalScoreFromAverage($average));
+    }
+
     public function calculatePeringkat(float $finalScore): string
     {
         if ($finalScore >= self::RANK_A_THRESHOLD) {

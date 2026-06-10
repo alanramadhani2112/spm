@@ -7,19 +7,10 @@
 @php
     use App\Models\Akreditasi;
 
-    $latestRejection = $akreditasi->rejections()
-        ->where('akreditasi_id', $akreditasi->id)
-        ->latest()
-        ->first();
-
+    $latestRejection = $akreditasi->rejections()->latest()->first();
     $correctionSections = $latestRejection ? ($latestRejection->sections ?? []) : [];
     $correctionReason = $latestRejection ? $latestRejection->reason : null;
-    $isStage1 = $akreditasi->status === Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION;
-    $isStage2 = $akreditasi->status === Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION;
-
-    $submitRoute = $isStage1
-        ? route('pesantren.akreditasi.submit-koreksi', $akreditasi->id)
-        : route('pesantren.akreditasi.submit-koreksi', $akreditasi->id);
+    $submitRoute = route('pesantren.akreditasi.submit-koreksi', $akreditasi->id);
 @endphp
 
 <div class="mx-auto">
@@ -42,12 +33,7 @@
                     <p class="fs-7 fw-medium text-warning">Catatan Koreksi:</p>
                     <p class="mt-1 fs-7 text-warning">{{ $correctionReason }}</p>
                     @if(!empty($correctionSections))
-                        <p class="mt-2 fs-8 fw-medium text-warning">
-                            Bagian yang perlu dikoreksi:
-                            <span class="fw-semibold">
-                                {{ implode(', ', array_map(fn($s) => strtoupper($s), $correctionSections)) }}
-                            </span>
-                        </p>
+                        <p class="mt-2 fs-8 fw-medium text-warning">Bagian yang perlu dikoreksi: <span class="fw-semibold">{{ implode(', ', array_map(fn($s) => strtoupper($s), $correctionSections)) }}</span></p>
                     @endif
                 </div>
             </div>
@@ -58,39 +44,24 @@
         @csrf
 
         <div class="d-grid gap-6">
-            {{-- IPM Correction Section --}}
-            @if(in_array('ipm', $correctionSections))
+            @if(in_array('ipm', $correctionSections, true))
                 <x-metronic.card title="Koreksi Data IPM">
-                    <p class="fs-7 text-muted">Perbaiki data Instrumen Penilaian Mutu sesuai catatan.</p>
-
-                    <div class="rounded border border-dashed border-gray-300 bg-light p-6 text-center mt-4">
-                        <i class="ki-outline ki-notepad fs-2x text-gray-400"></i>
-                        <p class="mt-3 fs-7 text-muted">Formulir koreksi IPM akan tersedia setelah data instrumen diisi.</p>
-                    </div>
+                    <p class="fs-7 text-muted mb-6">Perbaiki data Instrumen Penilaian Mutu sesuai catatan.</p>
+                    @include('pesantren.data._ipm-fields', ['ipm' => $ipm])
                 </x-metronic.card>
             @endif
 
-            {{-- SDM Correction Section --}}
-            @if(in_array('sdm', $correctionSections))
+            @if(in_array('sdm', $correctionSections, true))
                 <x-metronic.card title="Koreksi Data SDM">
-                    <p class="fs-7 text-muted">Perbaiki data Sumber Daya Manusia sesuai catatan.</p>
-
-                    <div class="rounded border border-dashed border-gray-300 bg-light p-6 text-center mt-4">
-                        <i class="ki-outline ki-profile-user fs-2x text-gray-400"></i>
-                        <p class="mt-3 fs-7 text-muted">Formulir koreksi SDM akan tersedia setelah data diisi.</p>
-                    </div>
+                    <p class="fs-7 text-muted mb-6">Perbaiki data Sumber Daya Manusia sesuai catatan.</p>
+                    @include('pesantren.data._sdm-fields', ['sdm' => $sdm])
                 </x-metronic.card>
             @endif
 
-            {{-- EDPM Correction Section --}}
-            @if(in_array('edpm', $correctionSections))
+            @if(in_array('edpm', $correctionSections, true))
                 <x-metronic.card title="Koreksi Data EDPM/IPR">
-                    <p class="fs-7 text-muted">Perbaiki data Evaluasi Diri Pesantren sesuai catatan.</p>
-
-                    <div class="rounded border border-dashed border-gray-300 bg-light p-6 text-center mt-4">
-                        <i class="ki-outline ki-chart-simple fs-2x text-gray-400"></i>
-                        <p class="mt-3 fs-7 text-muted">Formulir koreksi EDPM akan tersedia setelah data diisi.</p>
-                    </div>
+                    <p class="fs-7 text-muted mb-6">Perbaiki data Evaluasi Diri Pesantren sesuai catatan.</p>
+                    @include('pesantren.data._edpm-fields', ['edpm' => $edpm])
                 </x-metronic.card>
             @endif
 
@@ -107,12 +78,9 @@
 
         @if(!empty($correctionSections))
             <div class="mt-6 d-flex align-items-center justify-content-end gap-3">
-                <a href="{{ route('pesantren.akreditasi.index') }}" class="btn btn-light btn-sm">
-                    Kembali
-                </a>
+                <a href="{{ route('pesantren.akreditasi.index') }}" class="btn btn-light btn-sm">Kembali</a>
                 <button type="submit" class="btn btn-warning d-inline-flex align-items-center gap-2">
-                    <i class="ki-outline ki-sms fs-5"></i>
-                    Kirim Koreksi
+                    <i class="ki-outline ki-sms fs-5"></i>Kirim Koreksi
                 </button>
             </div>
         @endif

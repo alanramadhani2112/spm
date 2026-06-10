@@ -133,7 +133,7 @@ class BandingService
     private function getBandingDeadlineDays(): int
     {
         return Cache::remember('deadline_banding', 3600, function () {
-            $setting = SuperAdminSetting::where('key', 'banding_deadline_days')->first();
+            $setting = SuperAdminSetting::where('key', 'banding_deadline')->first();
 
             if ($setting && $setting->value !== null) {
                 return (int) $setting->value;

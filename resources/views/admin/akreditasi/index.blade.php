@@ -4,16 +4,16 @@
 @section('pageTitle', 'Dashboard Akreditasi Admin')
 
 @section('toolbar')
-<div class="d-flex align-items-center gap-2 gap-lg-3">
-    <div class="d-flex align-items-center position-relative" data-kt-user-menu-trigger="click" data-kt-user-menu-attach="parent" data-kt-menu-placement="bottom-end">
-        <button type="button" class="btn btn-sm btn-light-primary">
-            <i class="ki-outline ki-calendar fs-2"></i>Periode
-        </button>
-    </div>
-    <a href="#" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export
+<form method="GET" action="{{ route('admin.akreditasi.index') }}" class="d-flex align-items-center gap-2 gap-lg-3">
+    <select name="period" class="form-select form-select-solid form-select-sm w-auto" onchange="this.form.submit()">
+        @foreach(($periodOptions ?? ['all' => 'Semua Periode']) as $value => $label)
+            <option value="{{ $value }}" @selected(($period ?? 'all') == $value)>{{ $label }}</option>
+        @endforeach
+    </select>
+    <a href="{{ route('admin.akreditasi.export', ['period' => $period ?? 'all', 'tab' => request('tab', 'semua')]) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
     </a>
-</div>
+</form>
 @endsection
 
 @section('content')
@@ -102,7 +102,7 @@
                     $isActive = $activeTab === $key;
                 @endphp
                 <li class="nav-item" role="presentation">
-                    <a href="{{ route('admin.akreditasi.index', ['tab' => $key]) }}" class="nav-link btn btn-sm {{ $isActive ? 'btn-primary' : 'btn-light btn-color-gray-600' }} fw-semibold">
+                    <a href="{{ route('admin.akreditasi.index', ['tab' => $key, 'period' => $period ?? 'all']) }}" class="nav-link btn btn-sm {{ $isActive ? 'btn-primary' : 'btn-light btn-color-gray-600' }} fw-semibold">
                         {{ $tab['label'] }}
                         <span class="badge {{ $isActive ? 'badge-light' : 'badge-light-' . $tab['color'] }} ms-2">{{ $count }}</span>
                     </a>

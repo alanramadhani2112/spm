@@ -25,6 +25,7 @@ class AkreditasiWorkflowService
         private readonly DeadlineService $deadlineService,
         private readonly AuditTrailService $auditTrailService,
         private readonly NotificationService $notificationService,
+        private readonly ScoringService $scoringService,
     ) {}
 
     public function submitPengajuanAwal(int $userId): Akreditasi
@@ -1371,19 +1372,11 @@ class AkreditasiWorkflowService
 
     private function finalScoreFromAverage(float $average): float
     {
-        return round(max(0, min(100, $average * 25)), 2);
+        return $this->scoringService->calculateFinalScoreFromAverage($average);
     }
 
     private function peringkatFromFinalScore(float $score): string
     {
-        if ($score >= 86) {
-            return 'A';
-        }
-
-        if ($score >= 71) {
-            return 'B';
-        }
-
-        return 'C';
+        return $this->scoringService->calculatePeringkat($score);
     }
 }

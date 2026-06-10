@@ -22,13 +22,56 @@ class AkreditasiController extends Controller
         private ScoringService $scoringService,
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $akreditasis = Akreditasi::whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
+        $period = $request->query('period', 'all');
+        $akreditasis = $this->akreditasiIndexQuery($period)
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.akreditasi.index', compact('akreditasis'));
+        $periodOptions = $this->periodOptions();
+
+        return view('admin.akreditasi.index', compact('akreditasis', 'period', 'periodOptions'));
+    }
+
+    public function export(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $tab = $request->query('tab', 'semua');
+        $query = $this->akreditasiIndexQuery($period);
+
+        $tabStatuses = [
+            'pengajuan' => [Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_INITIAL_REJECTED],
+            'review-tahap1' => [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW],
+            'assign' => [Akreditasi::STATUS_ASSESSOR_ASSIGNMENT],
+            'validasi-akhir' => [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION],
+            'banding' => [Akreditasi::STATUS_APPEAL_SUBMITTED],
+        ];
+
+        if (isset($tabStatuses[$tab])) {
+            $query->whereIn('status', $tabStatuses[$tab]);
+        }
+
+        $akreditasis = $query->with('user.pesantren')->orderBy('created_at', 'desc')->get();
+
+        return response()->streamDownload(function () use ($akreditasis) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['UUID', 'Pesantren', 'Status', 'Siklus', 'Nilai', 'Peringkat', 'Tanggal']);
+
+            foreach ($akreditasis as $akreditasi) {
+                fputcsv($out, [
+                    $akreditasi->uuid,
+                    $akreditasi->user?->pesantren?->nama_pesantren ?? '-',
+                    $akreditasi->getStatusLabel(),
+                    $akreditasi->correction_cycle ?? 0,
+                    $akreditasi->nilai ?? '-',
+                    $akreditasi->peringkat ?? '-',
+                    $akreditasi->created_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($out);
+        }, 'akreditasi-admin.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function reviewAwal($akreditasiId)
@@ -343,6 +386,15 @@ class AkreditasiController extends Controller
         }
     }
 
+    public function banding($akreditasiId)
+    {
+        $akreditasi = Akreditasi::with(['user.pesantren', 'bandings'])
+            ->where('status', Akreditasi::STATUS_APPEAL_SUBMITTED)
+            ->findOrFail($akreditasiId);
+
+        return view('admin.akreditasi.banding', compact('akreditasi'));
+    }
+
     public function terimaBanding(Request $request, $bandingId)
     {
         $validated = $request->validate([
@@ -386,4 +438,30 @@ class AkreditasiController extends Controller
             return redirect()->back()->withInput();
         }
     }
+
+    private function akreditasiIndexQuery(string $period)
+    {
+        $query = Akreditasi::whereNotIn('status', Akreditasi::TERMINAL_STATUSES);
+
+        if ($period !== 'all') {
+            $query->whereYear('created_at', (int) $period);
+        }
+
+        return $query;
+    }
+
+    private function periodOptions(): array
+    {
+        $years = Akreditasi::query()
+            ->orderByDesc('created_at')
+            ->pluck('created_at')
+            ->filter()
+            ->map(fn ($date) => \Illuminate\Support\Carbon::parse($date)->format('Y'))
+            ->unique()
+            ->mapWithKeys(fn ($year) => [(string) $year => (string) $year])
+            ->all();
+
+        return ['all' => 'Semua Periode'] + $years;
+    }
 }
+

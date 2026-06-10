@@ -88,6 +88,7 @@
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
     <script src="{{ asset('assets/js/widgets.bundle.js') }}"></script>
+    @vite('resources/js/app.js')
     @stack('scripts')
 </body>
 </html>

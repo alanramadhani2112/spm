@@ -125,4 +125,19 @@ class ScoringServiceTest extends TestCase
 
         $this->assertSame($nk, $nv);
     }
+
+    public function test_calculate_final_score_from_average(): void
+    {
+        $this->assertEquals(100.0, $this->service->calculateFinalScoreFromAverage(4.0));
+        $this->assertEquals(87.5, $this->service->calculateFinalScoreFromAverage(3.5));
+        $this->assertEquals(0.0, $this->service->calculateFinalScoreFromAverage(-1));
+        $this->assertEquals(100.0, $this->service->calculateFinalScoreFromAverage(5));
+    }
+
+    public function test_calculate_peringkat_from_average(): void
+    {
+        $this->assertEquals('A', $this->service->calculatePeringkatFromAverage(3.44));
+        $this->assertEquals('B', $this->service->calculatePeringkatFromAverage(2.84));
+        $this->assertEquals('C', $this->service->calculatePeringkatFromAverage(2.0));
+    }
 }

@@ -4,18 +4,16 @@
 @section('pageTitle', 'Dashboard Super Admin')
 
 @section('toolbar')
-<div class="d-flex align-items-center gap-2 gap-lg-3">
-    <div class="d-flex align-items-center position-relative">
-        <select class="form-select form-select-solid w-auto" data-control="select2" data-placeholder="Periode">
-            <option value="all">Semua Periode</option>
-            <option value="2026">Tahun 2026</option>
-            <option value="2025">Tahun 2025</option>
-        </select>
-    </div>
-    <a href="#" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export
+<form method="GET" action="{{ route('superadmin.dashboard') }}" class="d-flex align-items-center gap-2 gap-lg-3">
+    <select name="period" class="form-select form-select-solid form-select-sm w-auto" data-placeholder="Periode" onchange="this.form.submit()">
+        @foreach(($periodOptions ?? ['all' => 'Semua Periode']) as $value => $label)
+            <option value="{{ $value }}" @selected(($period ?? 'all') == $value)>{{ $label }}</option>
+        @endforeach
+    </select>
+    <a href="{{ route('superadmin.dashboard.export', ['period' => $period ?? 'all']) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
     </a>
-</div>
+</form>
 @endsection
 
 @section('content')

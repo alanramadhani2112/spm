@@ -30,6 +30,12 @@
                         </a>
                     </div>
                     <div class="menu-item">
+                        <a href="{{ route('pesantren.data.index') }}" class="{{ $linkClass('pesantren.data.*') }}">
+                            <span class="menu-icon"><i class="ki-outline ki-notepad-edit fs-2"></i></span>
+                            <span class="menu-title">Kelengkapan Data</span>
+                        </a>
+                    </div>
+                    <div class="menu-item">
                         <a href="{{ route('pesantren.akreditasi.pengajuan') }}" class="{{ $linkClass('pesantren.akreditasi.pengajuan') }}">
                             <span class="menu-icon"><i class="ki-outline ki-add-files fs-2"></i></span>
                             <span class="menu-title">Ajukan Baru</span>
@@ -91,6 +97,48 @@
                             <span class="menu-icon"><i class="ki-outline ki-add-files fs-2"></i></span>
                             <span class="menu-title">Pengajuan Baru</span>
                         </a>
+                    </div>
+
+                    <div class="menu-item pt-5"><div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Master Data</span></div></div>
+
+                    <div data-kt-menu-trigger="click" class="menu-item menu-accordion{{ $accordionOpen(['superadmin.master-data.*']) }}">
+                        <span class="menu-link">
+                            <span class="menu-icon"><i class="ki-outline ki-data fs-2"></i></span>
+                            <span class="menu-title">Referensi Sistem</span>
+                            <span class="menu-arrow"></span>
+                        </span>
+                        <div class="menu-sub menu-sub-accordion">
+                            <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.index') }}" class="{{ $linkClass('superadmin.master-data.index') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Ringkasan</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.edpm.index') }}" class="{{ $linkClass('superadmin.master-data.edpm.*') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Master EDPM</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.document-categories.index') }}" class="{{ $linkClass('superadmin.master-data.document-categories.*') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Kategori Dokumen</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.roles.index') }}" class="{{ $linkClass('superadmin.master-data.roles.*') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Role & Permission</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.users.index') }}" class="{{ $linkClass('superadmin.master-data.users.*') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Akun Pengguna</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="menu-item pt-5"><div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Pengaturan</span></div></div>

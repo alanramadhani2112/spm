@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Pesantren\AkreditasiController;
+use App\Http\Controllers\Pesantren\DataController as PesantrenDataController;
 use Illuminate\Support\Facades\Route;
 
 // Auth routes
@@ -33,6 +34,12 @@ Route::post('/login', function () {
 })->middleware('guest');
 
 Route::middleware(['auth', 'role:pesantren,super_admin'])->prefix('pesantren')->name('pesantren.')->group(function () {
+    Route::get('/data', [PesantrenDataController::class, 'index'])->name('data.index');
+    Route::post('/data/profil', [PesantrenDataController::class, 'updateProfile'])->name('data.profile');
+    Route::post('/data/ipm', [PesantrenDataController::class, 'updateIpm'])->name('data.ipm');
+    Route::post('/data/sdm', [PesantrenDataController::class, 'updateSdm'])->name('data.sdm');
+    Route::post('/data/edpm', [PesantrenDataController::class, 'updateEdpm'])->name('data.edpm');
+
     Route::get('/akreditasi', [AkreditasiController::class, 'index'])->name('akreditasi.index');
     Route::get('/akreditasi/pengajuan', [AkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [AkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
@@ -49,6 +56,7 @@ use App\Http\Controllers\Admin\AkreditasiController as AdminAkreditasiController
 
 Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/akreditasi', [AdminAkreditasiController::class, 'index'])->name('akreditasi.index');
+    Route::get('/akreditasi/export', [AdminAkreditasiController::class, 'export'])->name('akreditasi.export');
     Route::get('/akreditasi/{id}/review-awal', [AdminAkreditasiController::class, 'reviewAwal'])->name('akreditasi.review-awal');
     Route::post('/akreditasi/{id}/terima-pengajuan', [AdminAkreditasiController::class, 'terimaPengajuan'])->name('akreditasi.terima-pengajuan');
     Route::post('/akreditasi/{id}/tolak-pengajuan', [AdminAkreditasiController::class, 'tolakPengajuan'])->name('akreditasi.tolak-pengajuan');
@@ -63,6 +71,7 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('ad
     Route::post('/akreditasi/{id}/approve-final', [AdminAkreditasiController::class, 'approveFinal'])->name('akreditasi.approve-final');
     Route::post('/akreditasi/{id}/tolak-final', [AdminAkreditasiController::class, 'tolakFinal'])->name('akreditasi.tolak-final');
     Route::post('/akreditasi/{id}/terbitkan-sk', [AdminAkreditasiController::class, 'terbitkanSK'])->name('akreditasi.terbitkan-sk');
+    Route::get('/akreditasi/{id}/banding', [AdminAkreditasiController::class, 'banding'])->name('akreditasi.banding');
     Route::post('/banding/{id}/terima', [AdminAkreditasiController::class, 'terimaBanding'])->name('banding.terima');
     Route::post('/banding/{id}/tolak', [AdminAkreditasiController::class, 'tolakBanding'])->name('banding.tolak');
 });
@@ -92,10 +101,12 @@ Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/anggota')
 use App\Http\Controllers\SuperAdmin\AuditController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
+use App\Http\Controllers\SuperAdmin\MasterDataController;
 use App\Http\Controllers\SuperAdmin\AkreditasiController as SuperAdminAkreditasiController;
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/export', [DashboardController::class, 'export'])->name('dashboard.export');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
@@ -128,6 +139,26 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])->name('akreditasi.terbitkan-sk');
     Route::post('/banding/{id}/terima', [SuperAdminAkreditasiController::class, 'terimaBanding'])->name('banding.terima');
     Route::post('/banding/{id}/tolak', [SuperAdminAkreditasiController::class, 'tolakBanding'])->name('banding.tolak');
+
+    Route::prefix('master-data')->name('master-data.')->group(function () {
+        Route::get('/', [MasterDataController::class, 'index'])->name('index');
+        Route::get('/edpm', [MasterDataController::class, 'edpm'])->name('edpm.index');
+        Route::post('/edpm/komponen', [MasterDataController::class, 'storeKomponen'])->name('edpm.komponen.store');
+        Route::put('/edpm/komponen/{komponen}', [MasterDataController::class, 'updateKomponen'])->name('edpm.komponen.update');
+        Route::delete('/edpm/komponen/{komponen}', [MasterDataController::class, 'destroyKomponen'])->name('edpm.komponen.destroy');
+        Route::post('/edpm/butir', [MasterDataController::class, 'storeButir'])->name('edpm.butir.store');
+        Route::put('/edpm/butir/{butir}', [MasterDataController::class, 'updateButir'])->name('edpm.butir.update');
+        Route::delete('/edpm/butir/{butir}', [MasterDataController::class, 'destroyButir'])->name('edpm.butir.destroy');
+        Route::get('/document-categories', [MasterDataController::class, 'documentCategories'])->name('document-categories.index');
+        Route::post('/document-categories', [MasterDataController::class, 'storeDocumentCategory'])->name('document-categories.store');
+        Route::put('/document-categories/{category}', [MasterDataController::class, 'updateDocumentCategory'])->name('document-categories.update');
+        Route::patch('/document-categories/{category}/toggle', [MasterDataController::class, 'toggleDocumentCategory'])->name('document-categories.toggle');
+        Route::delete('/document-categories/{category}', [MasterDataController::class, 'destroyDocumentCategory'])->name('document-categories.destroy');
+        Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
+        Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])->name('roles.permissions.update');
+        Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
+        Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])->name('users.update');
+    });
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
