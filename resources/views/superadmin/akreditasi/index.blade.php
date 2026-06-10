@@ -119,29 +119,8 @@
                     @php
                         $color = $statusColors[$akreditasi->status] ?? 'secondary';
                         $statusLabel = Akreditasi::STATUS_LABELS[$akreditasi->status] ?? $akreditasi->status;
-                        $pendingBanding = $akreditasi->bandings->firstWhere('status', 'pending');
                         $nextStep = $nextStepLabels[$akreditasi->status] ?? 'Pantau status pengajuan';
-                        $actions = [];
-                        if ($akreditasi->status === Akreditasi::STATUS_INITIAL_SUBMITTED) {
-                            $actions[] = ['label' => 'Review Awal', 'route' => route('superadmin.akreditasi.review-awal', $akreditasi->id), 'color' => 'primary'];
-                        }
-                        if (in_array($akreditasi->status, [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW], true)) {
-                            $actions[] = ['label' => 'Tahap 1', 'route' => route('superadmin.akreditasi.review-tahap1', $akreditasi->id), 'color' => 'warning'];
-                        }
-                        if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_ASSIGNMENT) {
-                            $actions[] = ['label' => 'Assign', 'route' => route('superadmin.akreditasi.assign-asesor', $akreditasi->id), 'color' => 'info'];
-                        }
-                        if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
-                            $actions[] = ['label' => 'NA1', 'route' => route('superadmin.akreditasi.input-na1', $akreditasi->id), 'color' => 'danger'];
-                            $actions[] = ['label' => 'NA2', 'route' => route('superadmin.akreditasi.input-na2', $akreditasi->id), 'color' => 'danger'];
-                            $actions[] = ['label' => 'NK', 'route' => route('superadmin.akreditasi.input-nk', $akreditasi->id), 'color' => 'danger'];
-                        }
-                        if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true)) {
-                            $actions[] = ['label' => 'Validasi', 'route' => route('superadmin.akreditasi.validasi-akhir', $akreditasi->id), 'color' => 'success'];
-                        }
-                        if ($pendingBanding) {
-                            $actions[] = ['label' => 'Banding', 'route' => route('superadmin.akreditasi.banding', $akreditasi->id), 'color' => 'warning'];
-                        }
+                        $actions = $availableActionsById[$akreditasi->id] ?? [];
                     @endphp
                     <tr>
                         <td class="ps-4"><span class="text-muted fw-bold">#{{ $akreditasi->id }}</span></td>

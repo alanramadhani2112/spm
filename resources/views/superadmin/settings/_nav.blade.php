@@ -1,30 +1,22 @@
-<nav class="d-flex flex-wrap gap-2 mb-6">
-    <a href="{{ route('superadmin.dashboard') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.dashboard') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Dashboard
-    </a>
-    <a href="{{ route('superadmin.settings.deadline') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.deadline') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Deadline
-    </a>
-    <a href="{{ route('superadmin.settings.correction') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.correction') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Koreksi
-    </a>
-    <a href="{{ route('superadmin.settings.dokumen') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.dokumen') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Dokumen
-    </a>
-    <a href="{{ route('superadmin.settings.nv') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.nv') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        NV
-    </a>
-    <a href="{{ route('superadmin.settings.notifikasi') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.notifikasi') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Notifikasi
-    </a>
-    <a href="{{ route('superadmin.settings.banding') }}"
-       class="rounded px-3 py-1.5 fs-8 fw-medium {{ request()->routeIs('superadmin.settings.banding') ? 'bg-light-primary text-primary' : 'text-muted hover:text-gray-700' }}">
-        Banding
-    </a>
+@php
+    $settingTabs = [
+        ['route' => 'superadmin.settings.index', 'label' => 'Ringkasan', 'icon' => 'ki-category'],
+        ['route' => 'superadmin.settings.deadline', 'label' => 'Deadline', 'icon' => 'ki-calendar-tick'],
+        ['route' => 'superadmin.settings.correction', 'label' => 'Koreksi', 'icon' => 'ki-arrows-circle'],
+        ['route' => 'superadmin.settings.dokumen', 'label' => 'Dokumen', 'icon' => 'ki-document'],
+        ['route' => 'superadmin.settings.nv', 'label' => 'NV', 'icon' => 'ki-chart-line'],
+        ['route' => 'superadmin.settings.notifikasi', 'label' => 'Notifikasi', 'icon' => 'ki-notification'],
+        ['route' => 'superadmin.settings.banding', 'label' => 'Banding', 'icon' => 'ki-message-question'],
+    ];
+@endphp
+
+<nav class="d-flex flex-wrap gap-2 mb-8" aria-label="Navigasi pengaturan Super Admin">
+    @foreach($settingTabs as $tab)
+        @php $active = request()->routeIs($tab['route']); @endphp
+        <a href="{{ route($tab['route']) }}"
+           class="btn btn-sm {{ $active ? 'btn-primary' : 'btn-light btn-color-gray-600' }} fw-semibold"
+           @if($active) aria-current="page" @endif>
+            <i class="ki-outline {{ $tab['icon'] }} fs-4"></i>{{ $tab['label'] }}
+        </a>
+    @endforeach
 </nav>

@@ -28,9 +28,24 @@ class AuditController extends Controller
             $query->whereDate('created_at', '<=', $request->input('end_date'));
         }
 
+        $stats = [
+            'total' => (clone $query)->count(),
+            'action_types' => (clone $query)->whereNotNull('action_type')->distinct()->count('action_type'),
+            'actors' => (clone $query)->whereNotNull('user_id')->distinct()->count('user_id'),
+            'today' => (clone $query)->whereDate('created_at', now()->toDateString())->count(),
+        ];
+        $actionOptions = AkreditasiAuditLog::query()
+            ->whereNotNull('action_type')
+            ->distinct()
+            ->orderBy('action_type')
+            ->pluck('action_type')
+            ->mapWithKeys(fn ($action) => [$action => AkreditasiAuditLog::getActionTypeLabel($action)])
+            ->prepend('Semua', '')
+            ->toArray();
+        $hasFilters = $request->filled('actor') || $request->filled('action') || $request->filled('start_date') || $request->filled('end_date');
         $logs = $query->paginate(25)->withQueryString();
 
-        return view('superadmin.audit.index', compact('logs'));
+        return view('superadmin.audit.index', compact('logs', 'stats', 'actionOptions', 'hasFilters'));
     }
 
     public function show(int $id)

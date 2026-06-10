@@ -57,6 +57,9 @@ class AkreditasiController extends Controller
         $statusColors = $this->statusColors();
         $periodOptions = $this->periodOptions();
         $nextStepLabels = $this->nextStepLabels();
+        $availableActionsById = $akreditasis
+            ->mapWithKeys(fn (Akreditasi $akreditasi) => [$akreditasi->id => $this->availableActions($akreditasi)])
+            ->all();
 
         return view('superadmin.akreditasi.index', compact(
             'akreditasis',
@@ -68,6 +71,7 @@ class AkreditasiController extends Controller
             'status',
             'search',
             'nextStepLabels',
+            'availableActionsById',
         ));
     }
 
