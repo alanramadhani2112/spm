@@ -8,6 +8,7 @@
     use App\Models\Akreditasi;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -59,7 +60,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.buka-assessment', $akreditasi->id) }}">
+            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.buka-assessment', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Buka assessment?" data-swal-text="Pesantren akan dapat mengisi instrumen assessment untuk pengajuan {{ $akreditasi->uuid }}." data-swal-icon="question" data-swal-confirm-button="Ya, buka" data-swal-confirm-class="btn btn-primary">
                 @csrf
 
                 <div class="space-y-5">

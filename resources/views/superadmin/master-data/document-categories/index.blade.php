@@ -69,7 +69,7 @@
                 <div class="fs-8 text-muted">Isi nama dokumen, pilih role yang boleh mengakses, lalu tentukan cakupan asesor bila role Asesor dipilih.</div>
             </div>
 
-            <form method="POST" action="{{ route('superadmin.master-data.document-categories.store') }}" enctype="multipart/form-data" class="d-grid gap-4">
+            <form method="POST" action="{{ route('superadmin.master-data.document-categories.store') }}" enctype="multipart/form-data" class="d-grid gap-4" data-swal-confirm="true" data-swal-title="Simpan aturan dokumen baru?" data-swal-text="Aturan dokumen baru akan ditambahkan ke master data." data-swal-icon="question" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <x-metronic.form-input name="name" label="Nama Kategori" :required="true" placeholder="Contoh: Kartu Kendali" />
                 <x-metronic.form-input name="code" label="Kode Dokumen" placeholder="kartu_kendali" />
@@ -145,13 +145,56 @@
                                 <div class="fs-8 text-muted font-monospace">{{ $category->code ?: 'tanpa_kode' }}</div>
                                 <div class="fs-7 text-muted mt-2">{{ $category->description ?? 'Tanpa deskripsi' }}</div>
                             </div>
-                            <div class="text-end">
-                                <span class="badge badge-light-info">{{ $category->required_for_phase ? ($phaseOptions[$category->required_for_phase] ?? $category->required_for_phase) : 'Semua fase' }}</span>
-                                @if($category->template_path)
-                                    <div class="fs-8 text-success mt-2"><i class="ki-outline ki-file fs-6"></i> Template tersedia</div>
-                                @else
-                                    <div class="fs-8 text-muted mt-2">Belum ada template</div>
-                                @endif
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="text-end">
+                                    <span class="badge badge-light-info">{{ $category->required_for_phase ? ($phaseOptions[$category->required_for_phase] ?? $category->required_for_phase) : 'Semua fase' }}</span>
+                                    @if($category->template_path)
+                                        <div class="fs-8 text-success mt-2"><i class="ki-outline ki-file fs-6"></i> Template tersedia</div>
+                                    @else
+                                        <div class="fs-8 text-muted mt-2">Belum ada template</div>
+                                    @endif
+                                </div>
+                                <x-superadmin.action-menu label="Buka aksi kategori {{ $category->name }}">
+                                    <div class="menu-item px-3">
+                                        <button type="button" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#edit-document-category-{{ $category->id }}">
+                                            <i class="ki-outline ki-pencil fs-4"></i>
+                                            <span>Edit Aturan</span>
+                                        </button>
+                                    </div>
+                                    <div class="menu-item px-3">
+                                        <form method="POST"
+                                              action="{{ route('superadmin.master-data.document-categories.toggle', $category) }}"
+                                              data-swal-confirm="true"
+                                              data-swal-title="{{ $category->is_active ? 'Nonaktifkan' : 'Aktifkan' }} kategori dokumen?"
+                                              data-swal-text="Status aturan dokumen {{ $category->name }} akan diubah."
+                                              data-swal-icon="warning"
+                                              data-swal-confirm-button="Ya, ubah status"
+                                              data-swal-confirm-class="btn btn-warning">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start text-warning">
+                                                <i class="ki-outline ki-switch fs-4"></i>
+                                                <span>{{ $category->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="separator my-2"></div>
+                                    <div class="menu-item px-3">
+                                        <form method="POST"
+                                              action="{{ route('superadmin.master-data.document-categories.destroy', $category) }}"
+                                              data-swal-confirm="true"
+                                              data-swal-title="Hapus kategori dokumen?"
+                                              data-swal-text="Kategori {{ $category->name }} akan dihapus dari master data. Aksi ini tidak dapat dibatalkan."
+                                              data-swal-icon="warning"
+                                              data-swal-confirm-button="Ya, hapus"
+                                              data-swal-confirm-class="btn btn-danger">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start text-danger">
+                                                <i class="ki-outline ki-trash fs-4"></i>
+                                                <span>Hapus</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </x-superadmin.action-menu>
                             </div>
                         </div>
 
@@ -166,19 +209,32 @@
                             @endif
                         </div>
 
-                        <form method="POST" action="{{ route('superadmin.master-data.document-categories.update', $category) }}" enctype="multipart/form-data" class="row g-3 align-items-end">
+                    </div>
+
+                    <x-metronic.modal id="edit-document-category-{{ $category->id }}" title="Edit Aturan Dokumen" size="xl" scrollable>
+                        <form id="edit-document-category-form-{{ $category->id }}"
+                              method="POST"
+                              action="{{ route('superadmin.master-data.document-categories.update', $category) }}"
+                              enctype="multipart/form-data"
+                              class="row g-4"
+                              data-swal-confirm="true"
+                              data-swal-title="Simpan perubahan aturan dokumen?"
+                              data-swal-text="Aturan {{ $category->name }} akan diperbarui dan perubahan tercatat sebagai aktivitas Super Admin."
+                              data-swal-icon="question"
+                              data-swal-confirm-button="Ya, simpan"
+                              data-swal-confirm-class="btn btn-primary">
                             @csrf @method('PUT')
                             <div class="col-md-6">
                                 <label class="form-label">Nama</label>
-                                <input name="name" value="{{ $category->name }}" class="form-control form-control-sm form-control-solid" required>
+                                <input name="name" value="{{ $category->name }}" class="form-control form-control-solid" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Kode</label>
-                                <input name="code" value="{{ $category->code }}" class="form-control form-control-sm form-control-solid">
+                                <input name="code" value="{{ $category->code }}" class="form-control form-control-solid">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Fase</label>
-                                <select name="required_for_phase" class="form-select form-select-sm form-select-solid">
+                                <select name="required_for_phase" class="form-select form-select-solid">
                                     @foreach($phaseOptions as $value => $label)
                                         <option value="{{ $value }}" @selected(($category->required_for_phase ?? '') === $value)>{{ $label }}</option>
                                     @endforeach
@@ -186,7 +242,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Cakupan Asesor</label>
-                                <select name="asesor_scope" class="form-select form-select-sm form-select-solid">
+                                <select name="asesor_scope" class="form-select form-select-solid">
                                     @foreach($asesorScopeOptions as $value => $label)
                                         <option value="{{ $value }}" @selected(($category->asesor_scope ?: 'all') === $value)>{{ $label }}</option>
                                     @endforeach
@@ -194,7 +250,7 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Ganti Template</label>
-                                <input type="file" name="template" class="form-control form-control-sm form-control-solid" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+                                <input type="file" name="template" class="form-control form-control-solid" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Role Akses</label>
@@ -213,24 +269,14 @@
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Deskripsi</label>
-                                <textarea name="description" rows="2" class="form-control form-control-sm form-control-solid">{{ $category->description }}</textarea>
-                            </div>
-                            <div class="col-12">
-                                <button class="btn btn-sm btn-light-primary">Simpan Perubahan</button>
+                                <textarea name="description" rows="3" class="form-control form-control-solid">{{ $category->description }}</textarea>
                             </div>
                         </form>
-
-                        <div class="d-flex flex-wrap gap-2 justify-content-end mt-3">
-                            <form method="POST" action="{{ route('superadmin.master-data.document-categories.toggle', $category) }}">
-                                @csrf @method('PATCH')
-                                <button class="btn btn-sm btn-light-warning">{{ $category->is_active ? 'Nonaktifkan' : 'Aktifkan' }}</button>
-                            </form>
-                            <form method="POST" action="{{ route('superadmin.master-data.document-categories.destroy', $category) }}" onsubmit="return confirm('Hapus kategori dokumen ini?')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-light-danger">Hapus</button>
-                            </form>
-                        </div>
-                    </div>
+                        <x-slot:footer>
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" form="edit-document-category-form-{{ $category->id }}" class="btn btn-primary">Simpan Perubahan</button>
+                        </x-slot:footer>
+                    </x-metronic.modal>
                 @empty
                     <div class="text-center py-12 text-muted border rounded bg-light">Belum ada kategori dokumen. Buat aturan pertama dari form di sebelah kiri.</div>
                 @endforelse

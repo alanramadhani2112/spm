@@ -8,6 +8,7 @@
     use App\Models\Akreditasi;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -135,7 +136,7 @@
                 <p class="mt-1 fs-7 text-muted">Data telah lengkap dan valid. Lanjutkan ke penugasan asesor.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-tahap1', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-tahap1', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Setujui tahap 1?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan dilanjutkan ke penugasan asesor." data-swal-icon="question" data-swal-confirm-button="Ya, setujui" data-swal-confirm-class="btn btn-success">
                     @csrf
                     <div class="mb-4">
                         <label for="catatan_approve" class="block fs-7 fw-medium text-gray-700">
@@ -163,7 +164,7 @@
                 <p class="mt-1 fs-7 text-muted">Beberapa bagian perlu diperbaiki oleh pesantren.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.minta-perbaikan-tahap1', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.minta-perbaikan-tahap1', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Minta perbaikan tahap 1?" data-swal-text="Pesantren akan diminta memperbaiki bagian yang dipilih untuk pengajuan {{ $akreditasi->uuid }}." data-swal-icon="warning" data-swal-confirm-button="Ya, kirim" data-swal-confirm-class="btn btn-warning">
                     @csrf
                     <fieldset class="mb-4">
                         <legend class="fs-7 fw-medium text-gray-700 mb-3">Bagian yang perlu dikoreksi <span class="text-danger">*</span></legend>
@@ -223,7 +224,7 @@
                 </p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.handle-limit-review', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.handle-limit-review', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Proses keputusan batas koreksi?" data-swal-text="Keputusan batas koreksi untuk pengajuan {{ $akreditasi->uuid }} akan diproses." data-swal-icon="warning" data-swal-confirm-button="Ya, proses" data-swal-confirm-class="btn btn-warning">
                     @csrf
                     <div class="row gap-6">
                         <div class="rounded border border-green-100 bg-light-success p-4">

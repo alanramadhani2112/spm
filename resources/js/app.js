@@ -170,9 +170,66 @@ const initStatusFilters = () => {
     });
 };
 
+const swalOptionsFrom = (element) => ({
+    title: element.dataset.swalTitle || 'Konfirmasi aksi',
+    text: element.dataset.swalText || element.dataset.swalConfirm || 'Pastikan data sudah benar sebelum melanjutkan.',
+    icon: element.dataset.swalIcon || 'question',
+    showCancelButton: true,
+    confirmButtonText: element.dataset.swalConfirmButton || 'Ya, lanjutkan',
+    cancelButtonText: element.dataset.swalCancelButton || 'Batal',
+    buttonsStyling: false,
+    customClass: {
+        confirmButton: element.dataset.swalConfirmClass || 'btn btn-primary',
+        cancelButton: 'btn btn-light',
+    },
+});
+
+const initSweetAlertConfirmations = () => {
+    if (!window.Swal) {
+        return;
+    }
+
+    document.querySelectorAll('form[data-swal-confirm]').forEach((form) => {
+        form.addEventListener('submit', (event) => {
+            if (form.dataset.swalConfirmed === 'true') {
+                delete form.dataset.swalConfirmed;
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                return;
+            }
+
+            event.preventDefault();
+
+            window.Swal.fire(swalOptionsFrom(form)).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                form.dataset.swalConfirmed = 'true';
+                form.requestSubmit();
+            });
+        });
+    });
+
+    document.querySelectorAll('a[data-swal-confirm]').forEach((link) => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+
+            window.Swal.fire(swalOptionsFrom(link)).then((result) => {
+                if (result.isConfirmed && link.href) {
+                    window.location.href = link.href;
+                }
+            });
+        });
+    });
+};
+
 ready(() => {
     ensureCloakStyle();
     initLiteDirectives();
     initTableSearch();
     initStatusFilters();
+    initSweetAlertConfirmations();
 });

@@ -10,7 +10,7 @@
     <div class="d-grid gap-6">
         {{-- superadmin_receives_admin_notif --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="superadmin_receives_admin_notif">
                 <label class="fs-6 fw-bold text-gray-800">Super Admin Menerima Notifikasi Admin</label>
@@ -38,7 +38,7 @@
 
         {{-- reminder_days --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="reminder_days">
                 <label class="fs-6 fw-bold text-gray-800">Jumlah Hari Pengingat</label>

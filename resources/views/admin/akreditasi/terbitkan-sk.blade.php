@@ -6,7 +6,9 @@
 @section('content')
 @php
     use App\Models\Akreditasi;
+    $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -63,7 +65,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route('admin.akreditasi.terbitkan-sk', $akreditasi->id) }}">
+            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.terbitkan-sk', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Terbitkan SK akreditasi?" data-swal-text="SK untuk pengajuan {{ $akreditasi->uuid }} akan diterbitkan dan status menjadi selesai." data-swal-icon="warning" data-swal-confirm-button="Ya, terbitkan" data-swal-confirm-class="btn btn-success">
                 @csrf
 
                 <div class="space-y-5">
@@ -106,7 +108,7 @@
                     </div>
 
                     <div class="d-flex align-items-center justify-content-end gap-3 pt-2">
-                        <a href="{{ route('admin.akreditasi.index') }}"
+                        <a href="{{ route($akreditasiRoutePrefix.'.index') }}"
                            class="rounded border border-gray-200 bg-white px-4 py-2 fs-7 fw-medium text-gray-600 shadow-sm">
                             Batal
                         </a>

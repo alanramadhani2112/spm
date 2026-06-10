@@ -58,16 +58,32 @@
 <div class="row g-5 g-xl-8">
     <div class="col-xl-4">
         <x-metronic.card title="Action Center">
+            <x-slot:header>
+                @if(! empty($actions))
+                    <x-superadmin.action-menu label="Buka aksi workflow akreditasi {{ $akreditasi->uuid }}">
+                        @foreach($actions as $action)
+                            <div class="menu-item px-3">
+                                <a href="{{ $action['route'] }}"
+                                   class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
+                                   data-swal-confirm="true"
+                                   data-swal-title="Buka aksi {{ $action['label'] }}?"
+                                   data-swal-text="Anda akan masuk ke halaman {{ $action['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                                   data-swal-icon="question"
+                                   data-swal-confirm-button="Ya, buka">
+                                    <i class="ki-outline ki-right-square fs-4"></i>
+                                    <span>{{ $action['label'] }}</span>
+                                </a>
+                            </div>
+                        @endforeach
+                    </x-superadmin.action-menu>
+                @endif
+            </x-slot:header>
+
             @if(empty($actions))
                 <x-metronic.alert type="info" message="Tidak ada aksi workflow aktif untuk status ini." />
             @else
-                <div class="d-grid gap-3">
-                    @foreach($actions as $action)
-                        <a href="{{ $action['route'] }}" class="btn btn-light-{{ $action['color'] }} d-flex justify-content-between align-items-center">
-                            <span>{{ $action['label'] }}</span>
-                            <i class="ki-outline ki-right fs-3"></i>
-                        </a>
-                    @endforeach
+                <div class="rounded bg-light-primary p-4 fs-7 text-gray-700">
+                    Gunakan icon aksi di kanan atas kartu ini untuk membuka opsi workflow yang tersedia.
                 </div>
             @endif
         </x-metronic.card>

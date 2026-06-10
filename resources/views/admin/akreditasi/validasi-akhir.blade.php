@@ -9,6 +9,7 @@
     use App\Models\AkreditasiEdpm;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -110,7 +111,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-final', $akreditasi->id) }}" id="approveFinalForm">
+            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.approve-final', $akreditasi->id) }}" id="approveFinalForm" data-swal-confirm="true" data-swal-title="Setujui validasi akhir?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan disetujui pada tahap validasi akhir." data-swal-icon="question" data-swal-confirm-button="Ya, setujui" data-swal-confirm-class="btn btn-success">
                 @csrf
 
                 <div class="space-y-5">
@@ -183,7 +184,7 @@
                 <p class="mt-1 fs-7 text-muted">Tolak hasil akreditasi karena tidak memenuhi standar.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-final', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-final', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Tolak validasi akhir?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan ditolak pada tahap validasi akhir." data-swal-icon="warning" data-swal-confirm-button="Ya, tolak" data-swal-confirm-class="btn btn-danger">
                     @csrf
                     <div class="mb-4">
                         <label for="reject_reason" class="block fs-7 fw-medium text-gray-700">

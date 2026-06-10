@@ -111,7 +111,7 @@
                     <th class="min-w-190px">Asesor</th>
                     <th class="min-w-150px">Nilai</th>
                     <th class="min-w-130px">Tanggal</th>
-                    <th class="text-end min-w-260px pe-4">Aksi</th>
+                    <th class="text-end min-w-90px pe-4">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -168,14 +168,34 @@
                         </td>
                         <td><span class="text-muted fs-7">{{ $akreditasi->created_at->format('d M Y') }}</span></td>
                         <td class="text-end pe-4">
-                            <div class="d-flex flex-wrap justify-content-end gap-2">
-                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-primary">Detail</a>
+                            <x-superadmin.action-menu label="Buka aksi akreditasi {{ $akreditasi->uuid }}">
+                                <div class="menu-item px-3">
+                                    <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                        <i class="ki-outline ki-eye fs-4"></i>
+                                        <span>Detail</span>
+                                    </a>
+                                </div>
                                 @forelse($actions as $action)
-                                    <a href="{{ $action['route'] }}" class="btn btn-sm btn-light-{{ $action['color'] }}">{{ $action['label'] }}</a>
+                                    <div class="menu-item px-3">
+                                        <a href="{{ $action['route'] }}"
+                                           class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
+                                           data-swal-confirm="true"
+                                           data-swal-title="Buka aksi {{ $action['label'] }}?"
+                                           data-swal-text="Anda akan masuk ke halaman {{ $action['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                                           data-swal-icon="question"
+                                           data-swal-confirm-button="Ya, buka">
+                                            <i class="ki-outline ki-right-square fs-4"></i>
+                                            <span>{{ $action['label'] }}</span>
+                                        </a>
+                                    </div>
                                 @empty
-                                    <span class="badge badge-light-secondary align-self-center">Tidak ada aksi</span>
+                                    <div class="menu-item px-3">
+                                        <span class="menu-link px-3 text-muted">
+                                            <i class="ki-outline ki-information-5 fs-4 me-2"></i>Tidak ada aksi
+                                        </span>
+                                    </div>
                                 @endforelse
-                            </div>
+                            </x-superadmin.action-menu>
                         </td>
                     </tr>
                 @empty

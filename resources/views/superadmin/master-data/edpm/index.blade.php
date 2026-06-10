@@ -41,7 +41,7 @@
                 <div class="fw-semibold text-primary mb-1">Komponen adalah kelompok penilaian</div>
                 <div class="fs-8 text-muted">Contoh: Mutu Lulusan, Proses Pembelajaran, atau Manajemen Pesantren.</div>
             </div>
-            <form method="POST" action="{{ route('superadmin.master-data.edpm.komponen.store') }}" class="d-grid gap-4">
+            <form method="POST" action="{{ route('superadmin.master-data.edpm.komponen.store') }}" class="d-grid gap-4" data-swal-confirm="true" data-swal-title="Tambah komponen EDPM?" data-swal-text="Komponen baru akan ditambahkan ke master EDPM/IPR." data-swal-icon="question" data-swal-confirm-button="Ya, tambah" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <x-metronic.form-input name="kode" label="Kode Komponen" :required="true" placeholder="Contoh: MUTU_LULUSAN" />
                 <x-metronic.form-input name="nama" label="Nama Komponen" :required="true" placeholder="Contoh: Mutu Lulusan" />
@@ -62,7 +62,7 @@
                             <th class="ps-4 min-w-120px">Kode</th>
                             <th class="min-w-220px">Komponen</th>
                             <th class="min-w-100px">Butir</th>
-                            <th class="text-end min-w-260px pe-4">Edit Cepat</th>
+                            <th class="text-end min-w-90px pe-4">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,17 +74,59 @@
                                     <div class="fs-8 text-muted">Kelompok butir penilaian EDPM/IPR</div>
                                 </td>
                                 <td><span class="badge badge-light-{{ $komponen->butirs_count ? 'success' : 'warning' }}">{{ $komponen->butirs_count }} butir</span></td>
-                                <td class="pe-4">
-                                    <form method="POST" action="{{ route('superadmin.master-data.edpm.komponen.update', $komponen) }}" class="d-flex flex-wrap gap-2 justify-content-end mb-2">
-                                        @csrf @method('PUT')
-                                        <input name="kode" value="{{ $komponen->kode }}" class="form-control form-control-sm form-control-solid w-125px" aria-label="Kode komponen">
-                                        <input name="nama" value="{{ $komponen->nama ?? $komponen->name }}" class="form-control form-control-sm form-control-solid w-200px" aria-label="Nama komponen">
-                                        <button class="btn btn-sm btn-light-primary">Simpan</button>
-                                    </form>
-                                    <form method="POST" action="{{ route('superadmin.master-data.edpm.komponen.destroy', $komponen) }}" onsubmit="return confirm('Hapus komponen dan seluruh butirnya?')" class="text-end">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-light-danger">Hapus</button>
-                                    </form>
+                                <td class="text-end pe-4">
+                                    <x-superadmin.action-menu label="Buka aksi komponen {{ $komponen->kode }}">
+                                        <div class="menu-item px-3">
+                                            <button type="button" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#edit-komponen-{{ $komponen->id }}">
+                                                <i class="ki-outline ki-pencil fs-4"></i>
+                                                <span>Edit Komponen</span>
+                                            </button>
+                                        </div>
+                                        <div class="separator my-2"></div>
+                                        <div class="menu-item px-3">
+                                            <form method="POST"
+                                                  action="{{ route('superadmin.master-data.edpm.komponen.destroy', $komponen) }}"
+                                                  data-swal-confirm="true"
+                                                  data-swal-title="Hapus komponen EDPM?"
+                                                  data-swal-text="Komponen {{ $komponen->kode }} dan relasi butirnya akan dihapus. Aksi ini tidak dapat dibatalkan."
+                                                  data-swal-icon="warning"
+                                                  data-swal-confirm-button="Ya, hapus"
+                                                  data-swal-confirm-class="btn btn-danger">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start text-danger">
+                                                    <i class="ki-outline ki-trash fs-4"></i>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </x-superadmin.action-menu>
+
+                                    <x-metronic.modal id="edit-komponen-{{ $komponen->id }}" title="Edit Komponen EDPM" size="sm">
+                                        <form id="edit-komponen-form-{{ $komponen->id }}"
+                                              method="POST"
+                                              action="{{ route('superadmin.master-data.edpm.komponen.update', $komponen) }}"
+                                              class="d-grid gap-4 text-start"
+                                              data-swal-confirm="true"
+                                              data-swal-title="Simpan perubahan komponen?"
+                                              data-swal-text="Komponen {{ $komponen->kode }} akan diperbarui."
+                                              data-swal-icon="question"
+                                              data-swal-confirm-button="Ya, simpan"
+                                              data-swal-confirm-class="btn btn-primary">
+                                            @csrf @method('PUT')
+                                            <div>
+                                                <label class="form-label">Kode Komponen</label>
+                                                <input name="kode" value="{{ $komponen->kode }}" class="form-control form-control-solid" required>
+                                            </div>
+                                            <div>
+                                                <label class="form-label">Nama Komponen</label>
+                                                <input name="nama" value="{{ $komponen->nama ?? $komponen->name }}" class="form-control form-control-solid" required>
+                                            </div>
+                                        </form>
+                                        <x-slot:footer>
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" form="edit-komponen-form-{{ $komponen->id }}" class="btn btn-primary">Simpan</button>
+                                        </x-slot:footer>
+                                    </x-metronic.modal>
                                 </td>
                             </tr>
                         @empty
@@ -104,7 +146,7 @@
                 <div class="fw-semibold text-success mb-1">Butir adalah pertanyaan/indikator</div>
                 <div class="fs-8 text-muted">Setiap butir harus masuk ke salah satu komponen agar mudah dipahami asesor.</div>
             </div>
-            <form method="POST" action="{{ route('superadmin.master-data.edpm.butir.store') }}" class="d-grid gap-4">
+            <form method="POST" action="{{ route('superadmin.master-data.edpm.butir.store') }}" class="d-grid gap-4" data-swal-confirm="true" data-swal-title="Tambah butir EDPM?" data-swal-text="Butir penilaian baru akan ditambahkan ke master EDPM/IPR." data-swal-icon="question" data-swal-confirm-button="Ya, tambah" data-swal-confirm-class="btn btn-success">
                 @csrf
                 <x-metronic.form-input name="komponen_id" label="Komponen" type="select" :options="$komponens->mapWithKeys(fn($k) => [$k->id => ($k->kode.' — '.($k->nama ?? $k->name))])->toArray()" :required="true" />
                 <x-metronic.form-input name="kode" label="Kode Butir" placeholder="Contoh: 1.1" />
@@ -135,44 +177,76 @@
 
                         @forelse($groupedButirs as $butir)
                             <div class="border-top py-4">
-                                <div class="d-flex flex-wrap justify-content-between gap-4 mb-3">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-3">
                                     <div>
                                         <div class="fw-semibold text-gray-900"><span class="badge badge-light-secondary me-2">{{ $butir->kode ?? '—' }}</span>{{ $butir->nama ?? $butir->name }}</div>
                                         <div class="fs-8 text-muted mt-1">{{ $butir->deskripsi ?? 'Tanpa deskripsi' }}</div>
                                     </div>
+                                    <x-superadmin.action-menu label="Buka aksi butir {{ $butir->kode ?? $butir->id }}">
+                                        <div class="menu-item px-3">
+                                            <button type="button" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#edit-butir-{{ $butir->id }}">
+                                                <i class="ki-outline ki-pencil fs-4"></i>
+                                                <span>Edit Butir</span>
+                                            </button>
+                                        </div>
+                                        <div class="separator my-2"></div>
+                                        <div class="menu-item px-3">
+                                            <form method="POST"
+                                                  action="{{ route('superadmin.master-data.edpm.butir.destroy', $butir) }}"
+                                                  data-swal-confirm="true"
+                                                  data-swal-title="Hapus butir EDPM?"
+                                                  data-swal-text="Butir {{ $butir->kode ?? $butir->id }} akan dihapus dari master penilaian."
+                                                  data-swal-icon="warning"
+                                                  data-swal-confirm-button="Ya, hapus"
+                                                  data-swal-confirm-class="btn btn-danger">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start text-danger">
+                                                    <i class="ki-outline ki-trash fs-4"></i>
+                                                    <span>Hapus</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </x-superadmin.action-menu>
                                 </div>
-                                <form method="POST" action="{{ route('superadmin.master-data.edpm.butir.update', $butir) }}" class="row g-2 align-items-end">
-                                    @csrf @method('PUT')
-                                    <div class="col-md-4">
-                                        <label class="form-label fs-8">Komponen</label>
-                                        <select name="komponen_id" class="form-select form-select-sm form-select-solid">
-                                            @foreach($komponens as $option)
-                                                <option value="{{ $option->id }}" @selected($butir->komponen_id == $option->id)>{{ $option->kode }} — {{ $option->nama ?? $option->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label fs-8">Kode</label>
-                                        <input name="kode" value="{{ $butir->kode }}" class="form-control form-control-sm form-control-solid">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label fs-8">Nama</label>
-                                        <input name="nama" value="{{ $butir->nama ?? $butir->name }}" class="form-control form-control-sm form-control-solid">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label fs-8">Deskripsi</label>
-                                        <textarea name="deskripsi" rows="2" class="form-control form-control-sm form-control-solid">{{ $butir->deskripsi }}</textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <button class="btn btn-sm btn-light-primary">Simpan Butir</button>
-                                    </div>
-                                </form>
-                                <div class="d-flex justify-content-end mt-2">
-                                    <form method="POST" action="{{ route('superadmin.master-data.edpm.butir.destroy', $butir) }}" onsubmit="return confirm('Hapus butir ini?')">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-light-danger">Hapus</button>
+
+                                <x-metronic.modal id="edit-butir-{{ $butir->id }}" title="Edit Butir EDPM" size="lg" scrollable>
+                                    <form id="edit-butir-form-{{ $butir->id }}"
+                                          method="POST"
+                                          action="{{ route('superadmin.master-data.edpm.butir.update', $butir) }}"
+                                          class="row g-4 text-start"
+                                          data-swal-confirm="true"
+                                          data-swal-title="Simpan perubahan butir?"
+                                          data-swal-text="Butir {{ $butir->kode ?? $butir->id }} akan diperbarui."
+                                          data-swal-icon="question"
+                                          data-swal-confirm-button="Ya, simpan"
+                                          data-swal-confirm-class="btn btn-primary">
+                                        @csrf @method('PUT')
+                                        <div class="col-md-6">
+                                            <label class="form-label">Komponen</label>
+                                            <select name="komponen_id" class="form-select form-select-solid">
+                                                @foreach($komponens as $option)
+                                                    <option value="{{ $option->id }}" @selected($butir->komponen_id == $option->id)>{{ $option->kode }} — {{ $option->nama ?? $option->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label">Kode</label>
+                                            <input name="kode" value="{{ $butir->kode }}" class="form-control form-control-solid">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label required">Nama</label>
+                                            <input name="nama" value="{{ $butir->nama ?? $butir->name }}" class="form-control form-control-solid" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Deskripsi</label>
+                                            <textarea name="deskripsi" rows="3" class="form-control form-control-solid">{{ $butir->deskripsi }}</textarea>
+                                        </div>
                                     </form>
-                                </div>
+                                    <x-slot:footer>
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" form="edit-butir-form-{{ $butir->id }}" class="btn btn-primary">Simpan Butir</button>
+                                    </x-slot:footer>
+                                </x-metronic.modal>
                             </div>
                         @empty
                             <div class="border-top py-5 text-muted fs-7">Belum ada butir untuk komponen ini.</div>

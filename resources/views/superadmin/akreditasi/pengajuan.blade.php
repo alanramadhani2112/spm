@@ -5,7 +5,14 @@
 
 @section('content')
 <x-metronic.card title="Pilih Pesantren untuk Pengajuan">
-    <form method="POST" action="{{ route('superadmin.akreditasi.submit-pengajuan') }}">
+    <form method="POST"
+          action="{{ route('superadmin.akreditasi.submit-pengajuan') }}"
+          data-swal-confirm="true"
+          data-swal-title="Ajukan akreditasi baru?"
+          data-swal-text="Pengajuan akreditasi akan dibuat untuk pesantren yang dipilih."
+          data-swal-icon="question"
+          data-swal-confirm-button="Ya, ajukan"
+          data-swal-confirm-class="btn btn-primary">
         @csrf
 
         <div class="mb-6">

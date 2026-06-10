@@ -9,6 +9,7 @@
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
     $pesantren = $akreditasi->user?->pesantren;
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -140,7 +141,7 @@
                 <p class="mt-1 fs-7 text-muted">Terima pengajuan dan lanjutkan ke tahap assessment.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.terima-pengajuan', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.terima-pengajuan', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Terima pengajuan?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan diterima dan dilanjutkan ke assessment." data-swal-icon="question" data-swal-confirm-button="Ya, terima" data-swal-confirm-class="btn btn-success">
                     @csrf
                     <div class="mb-4">
                         <label for="catatan_terima" class="block fs-7 fw-medium text-gray-700">
@@ -168,7 +169,7 @@
                 <p class="mt-1 fs-7 text-muted">Tolak pengajuan karena data tidak memenuhi syarat.</p>
             </div>
             <div class="px-6 py-5">
-                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-pengajuan', $akreditasi->id) }}">
+                <form method="POST" action="{{ route($akreditasiRoutePrefix.'.tolak-pengajuan', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Tolak pengajuan?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan ditolak. Pastikan alasan penolakan sudah jelas." data-swal-icon="warning" data-swal-confirm-button="Ya, tolak" data-swal-confirm-class="btn btn-danger">
                     @csrf
                     <div class="mb-4">
                         <label for="reason" class="block fs-7 fw-medium text-gray-700">

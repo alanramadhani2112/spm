@@ -10,6 +10,8 @@
     $backRouteName = $backRouteName ?? 'asesor.ketua.index';
 @endphp
 
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
+
 <div class="d-grid gap-6">
 
     @if(session('success'))
@@ -34,7 +36,7 @@
     <x-metronic.card title="Upload Laporan Visitasi">
         <p class="text-muted fs-7">Akreditasi: {{ \Illuminate\Support\Str::limit($akreditasi->uuid, 12, '...') }}</p>
 
-        <form method="POST" action="{{ route($uploadRouteName, $akreditasi->id) }}" enctype="multipart/form-data" class="mt-6">
+        <form method="POST" action="{{ route($uploadRouteName, $akreditasi->id) }}" enctype="multipart/form-data" class="mt-6" data-swal-confirm="true" data-swal-title="Upload laporan visitasi?" data-swal-text="Laporan visitasi untuk pengajuan {{ $akreditasi->uuid }} akan diunggah." data-swal-icon="question" data-swal-confirm-button="Ya, upload" data-swal-confirm-class="btn btn-primary">
             @csrf
 
             <div class="d-grid gap-6">

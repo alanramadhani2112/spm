@@ -10,7 +10,7 @@
     <div class="d-grid gap-6">
         {{-- kartu_kendali_wajib_before --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="kartu_kendali_wajib_before">
                 <label class="fs-6 fw-bold text-gray-800">Kartu Kendali Wajib Diunggah Sebelum</label>
@@ -41,7 +41,7 @@
 
         {{-- laporan_wajib_before --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="laporan_wajib_before">
                 <label class="fs-6 fw-bold text-gray-800">Laporan Wajib Diunggah Sebelum</label>

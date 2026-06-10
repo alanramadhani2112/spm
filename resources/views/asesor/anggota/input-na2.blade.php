@@ -11,6 +11,8 @@
     $skala = ScoringService::SKALA_NILAI;
 @endphp
 
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
+
 <div class="d-grid gap-6">
 
     @if(session('success'))
@@ -47,7 +49,7 @@
             </div>
         </x-slot:header>
 
-        <form method="POST" action="{{ route($inputRouteName, $akreditasi->id) }}" id="na2-form">
+        <form method="POST" action="{{ route($inputRouteName, $akreditasi->id) }}" id="na2-form" data-swal-confirm="true" data-swal-title="Simpan nilai NA2?" data-swal-text="Nilai NA2 untuk pengajuan {{ $akreditasi->uuid }} akan disimpan. Jika finalisasi dicentang, nilai tidak dapat diubah kembali." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-danger">
             @csrf
 
             @foreach($komponen as $k)

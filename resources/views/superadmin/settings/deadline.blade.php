@@ -10,7 +10,7 @@
     <div class="d-grid gap-6">
         {{-- review_awal_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="review_awal_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Review Awal (hari)</label>
@@ -27,7 +27,7 @@
 
         {{-- assessment_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="assessment_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Asesmen (hari)</label>
@@ -44,7 +44,7 @@
 
         {{-- review_tahap1_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="review_tahap1_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Review Tahap 1 (hari)</label>
@@ -61,7 +61,7 @@
 
         {{-- correction_tahap1_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="correction_tahap1_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Koreksi Tahap 1 (hari)</label>
@@ -78,7 +78,7 @@
 
         {{-- review_tahap2_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="review_tahap2_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Review Tahap 2 (hari)</label>
@@ -95,7 +95,7 @@
 
         {{-- correction_tahap2_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="correction_tahap2_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Koreksi Tahap 2 (hari)</label>
@@ -112,7 +112,7 @@
 
         {{-- scoring_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="scoring_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Penilaian (hari)</label>
@@ -129,7 +129,7 @@
 
         {{-- banding_deadline --}}
         <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3">
+            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
                 @csrf
                 <input type="hidden" name="key" value="banding_deadline">
                 <label class="fs-6 fw-bold text-gray-800">Deadline Banding (hari)</label>

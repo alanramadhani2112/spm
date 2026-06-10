@@ -8,6 +8,7 @@
     use App\Models\Akreditasi;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -89,7 +90,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.reassign-asesor', $akreditasi->id) }}">
+            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.reassign-asesor', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Reassign asesor?" data-swal-text="Tim asesor lama untuk pengajuan {{ $akreditasi->uuid }} akan diganti dengan tim baru." data-swal-icon="warning" data-swal-confirm-button="Ya, reassign" data-swal-confirm-class="btn btn-danger">
                 @csrf
 
                 <div class="d-grid gap-6">

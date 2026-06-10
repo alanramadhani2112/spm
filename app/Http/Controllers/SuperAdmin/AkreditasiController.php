@@ -710,7 +710,9 @@ class AkreditasiController extends Controller
             ->findOrFail($akreditasiId);
         $bandingRoutePrefix = 'superadmin.banding';
 
-        return view('admin.akreditasi.banding', compact('akreditasi', 'bandingRoutePrefix'));
+        return view('admin.akreditasi.banding', $this->superadminViewData(
+            compact('akreditasi', 'bandingRoutePrefix')
+        ));
     }
 
     public function terimaBanding(Request $request, $id)
@@ -754,6 +756,8 @@ class AkreditasiController extends Controller
         return $data + $routes + [
             'akreditasiRoutePrefix' => 'superadmin.akreditasi',
             'backRouteName' => 'superadmin.akreditasi.index',
+            'isSuperAdminView' => true,
+            'superadminBackRoute' => route('superadmin.akreditasi.index'),
         ];
     }
 

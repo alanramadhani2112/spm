@@ -15,7 +15,14 @@
                 <span class="badge badge-light-primary">{{ $role->parameter }}</span>
             </x-slot:header>
 
-            <form method="POST" action="{{ route('superadmin.master-data.roles.permissions.update', $role) }}">
+            <form method="POST"
+                  action="{{ route('superadmin.master-data.roles.permissions.update', $role) }}"
+                  data-swal-confirm="true"
+                  data-swal-title="Simpan permission role?"
+                  data-swal-text="Permission untuk role {{ $role->name }} akan diperbarui. Pastikan akses sudah sesuai."
+                  data-swal-icon="warning"
+                  data-swal-confirm-button="Ya, simpan"
+                  data-swal-confirm-class="btn btn-primary">
                 @csrf @method('PUT')
 
                 @if($role->parameter === 'super_admin')

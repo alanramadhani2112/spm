@@ -9,6 +9,7 @@
     $bandings = $akreditasi->bandings()->where('status', 'pending')->orderBy('created_at', 'desc')->get();
     $bandingRoutePrefix = $bandingRoutePrefix ?? 'admin.banding';
 @endphp
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
     <div class="mb-6 flex flex-wrap align-items-center justify-content-between gap-4">
         <div>
@@ -97,7 +98,7 @@
                         {{-- Terima Banding --}}
                         <div class="rounded border border-green-100 bg-light-success p-4">
                             <h3 class="fs-7 fw-semibold text-success mb-3">Terima Banding</h3>
-                            <form method="POST" action="{{ route($bandingRoutePrefix.'.terima', $banding->id) }}">
+                            <form method="POST" action="{{ route($bandingRoutePrefix.'.terima', $banding->id) }}" data-swal-confirm="true" data-swal-title="Terima banding?" data-swal-text="Permohonan banding ini akan diterima dan proses akreditasi dibuka kembali sesuai aturan." data-swal-icon="question" data-swal-confirm-button="Ya, terima" data-swal-confirm-class="btn btn-success">
                                 @csrf
                                 <div class="mb-3">
                                     <label for="response_terima_{{ $banding->id }}" class="block fs-8 fw-medium text-success">
@@ -120,7 +121,7 @@
                         {{-- Tolak Banding --}}
                         <div class="rounded border border-red-100 bg-light-danger p-4">
                             <h3 class="fs-7 fw-semibold text-danger mb-3">Tolak Banding</h3>
-                            <form method="POST" action="{{ route($bandingRoutePrefix.'.tolak', $banding->id) }}">
+                            <form method="POST" action="{{ route($bandingRoutePrefix.'.tolak', $banding->id) }}" data-swal-confirm="true" data-swal-title="Tolak banding?" data-swal-text="Permohonan banding ini akan ditolak. Pastikan respon sudah jelas." data-swal-icon="warning" data-swal-confirm-button="Ya, tolak" data-swal-confirm-class="btn btn-danger">
                                 @csrf
                                 <div class="mb-3">
                                     <label for="response_tolak_{{ $banding->id }}" class="block fs-8 fw-medium text-danger">

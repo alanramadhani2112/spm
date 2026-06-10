@@ -11,6 +11,8 @@
     $backRouteName = $backRouteName ?? 'asesor.ketua.index';
 @endphp
 
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
+
 <div class="d-grid gap-6">
 
     @if(session('success'))
@@ -57,10 +59,9 @@
             <div class="rounded border border-success bg-light-success p-5">
                 <h3 class="fs-6 fw-bold text-gray-900">Nyatakan Layak Visitasi</h3>
                 <p class="mt-1 fs-7 text-gray-700">Akreditasi akan dilanjutkan ke tahap penjadwalan visitasi.</p>
-                <form method="POST" action="{{ route($approveRouteName, $akreditasi->id) }}" class="mt-4">
+                <form method="POST" action="{{ route($approveRouteName, $akreditasi->id) }}" class="mt-4" data-swal-confirm="true" data-swal-title="Nyatakan layak visitasi?" data-swal-text="Pengajuan {{ $akreditasi->uuid }} akan dilanjutkan ke tahap penjadwalan visitasi." data-swal-icon="question" data-swal-confirm-button="Ya, lanjutkan" data-swal-confirm-class="btn btn-success">
                     @csrf
                     <button type="submit"
-                            onclick="return confirm('Apakah Anda yakin ingin menyatakan akreditasi ini layak visitasi?')"
                             class="btn btn-success fw-bold">
                         <i class="ki-outline ki-check-squared fs-5 me-2"></i>
                         Setujui & Lanjutkan
@@ -71,7 +72,7 @@
             <div class="rounded border border-warning bg-light-warning p-5">
                 <h3 class="fs-6 fw-bold text-gray-900">Minta Perbaikan Tahap 2</h3>
                 <p class="mt-1 fs-7 text-gray-700">Minta pesantren memperbaiki dokumen yang belum lengkap atau tidak sesuai.</p>
-                <form method="POST" action="{{ route($correctionRouteName, $akreditasi->id) }}" class="mt-4 d-grid gap-4">
+                <form method="POST" action="{{ route($correctionRouteName, $akreditasi->id) }}" class="mt-4 d-grid gap-4" data-swal-confirm="true" data-swal-title="Minta perbaikan tahap 2?" data-swal-text="Pesantren akan diminta memperbaiki dokumen yang dipilih untuk pengajuan {{ $akreditasi->uuid }}." data-swal-icon="warning" data-swal-confirm-button="Ya, kirim" data-swal-confirm-class="btn btn-warning">
                     @csrf
 
                     <fieldset>

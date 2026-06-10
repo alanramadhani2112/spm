@@ -9,6 +9,8 @@
     $backRouteName = $backRouteName ?? 'asesor.ketua.index';
 @endphp
 
+    @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
+
 <div class="d-grid gap-6">
 
     @if(session('success'))
@@ -52,7 +54,7 @@
     <x-metronic.card title="{{ $akreditasi->tgl_visitasi ? 'Perbarui' : 'Tetapkan' }} Jadwal Visitasi">
         <p class="text-muted fs-7">Tentukan rentang tanggal pelaksanaan visitasi untuk akreditasi ini.</p>
 
-        <form method="POST" action="{{ route($scheduleRouteName, $akreditasi->id) }}" class="mt-6 d-grid gap-5">
+        <form method="POST" action="{{ route($scheduleRouteName, $akreditasi->id) }}" class="mt-6 d-grid gap-5" data-swal-confirm="true" data-swal-title="Simpan jadwal visitasi?" data-swal-text="Jadwal visitasi untuk pengajuan {{ $akreditasi->uuid }} akan disimpan." data-swal-icon="question" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
             @csrf
 
             <div class="row g-5">
