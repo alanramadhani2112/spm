@@ -7,6 +7,7 @@ use App\Models\Akreditasi;
 use App\Models\AkreditasiEdpm;
 use App\Models\AkreditasiRejection;
 use App\Models\Assessment;
+use App\Models\Document;
 use App\Models\Edpm;
 use App\Models\Ipm;
 use App\Models\Pesantren;
@@ -136,7 +137,7 @@ class AkreditasiWorkflowService
             $reason ?? 'Admin menolak pengajuan awal'
         );
 
-        $rejection = new AkreditasiRejection();
+        $rejection = new AkreditasiRejection;
         $rejection->forceFill([
             'akreditasi_id' => $akreditasi->id,
             'type' => 'initial',
@@ -206,33 +207,15 @@ class AkreditasiWorkflowService
 
         DB::transaction(function () use ($akreditasi, $user, $data, $userId) {
             if (isset($data['ipm'])) {
-                $ipm = Ipm::where('user_id', $userId)->first();
-                if ($ipm) {
-                    $ipm->forceFill($data['ipm'])->save();
-                } else {
-                    $newIpm = new Ipm();
-                    $newIpm->forceFill(array_merge($data['ipm'], ['user_id' => $userId]))->save();
-                }
+                $this->storeAssessmentPayload(Ipm::class, $userId, $data['ipm']);
             }
 
             if (isset($data['sdm'])) {
-                $sdm = SdmPesantren::where('user_id', $userId)->first();
-                if ($sdm) {
-                    $sdm->forceFill($data['sdm'])->save();
-                } else {
-                    $newSdm = new SdmPesantren();
-                    $newSdm->forceFill(array_merge($data['sdm'], ['user_id' => $userId]))->save();
-                }
+                $this->storeAssessmentPayload(SdmPesantren::class, $userId, $data['sdm']);
             }
 
             if (isset($data['edpm'])) {
-                $edpm = Edpm::where('user_id', $userId)->first();
-                if ($edpm) {
-                    $edpm->forceFill($data['edpm'])->save();
-                } else {
-                    $newEdpm = new Edpm();
-                    $newEdpm->forceFill(array_merge($data['edpm'], ['user_id' => $userId]))->save();
-                }
+                $this->storeAssessmentPayload(Edpm::class, $userId, $data['edpm']);
             }
 
             $this->stateMachine->transition(
@@ -317,7 +300,7 @@ class AkreditasiWorkflowService
                 $reason ?? 'Admin meminta koreksi tahap 1'
             );
 
-            $rejection = new AkreditasiRejection();
+            $rejection = new AkreditasiRejection;
             $rejection->forceFill([
                 'akreditasi_id' => $akreditasi->id,
                 'type' => 'stage_1',
@@ -345,7 +328,7 @@ class AkreditasiWorkflowService
             $reason ?? 'Admin menolak secara administratif'
         );
 
-        $rejection = new AkreditasiRejection();
+        $rejection = new AkreditasiRejection;
         $rejection->forceFill([
             'akreditasi_id' => $akreditasi->id,
             'type' => 'administrative',
@@ -388,24 +371,15 @@ class AkreditasiWorkflowService
             $userId = $akreditasi->user_id;
 
             if (in_array('ipm', $correctionSections, true) && isset($correctionData['ipm'])) {
-                $ipm = Ipm::where('user_id', $userId)->first();
-                if ($ipm) {
-                    $ipm->forceFill($correctionData['ipm'])->save();
-                }
+                $this->storeAssessmentPayload(Ipm::class, $userId, $correctionData['ipm']);
             }
 
             if (in_array('sdm', $correctionSections, true) && isset($correctionData['sdm'])) {
-                $sdm = SdmPesantren::where('user_id', $userId)->first();
-                if ($sdm) {
-                    $sdm->forceFill($correctionData['sdm'])->save();
-                }
+                $this->storeAssessmentPayload(SdmPesantren::class, $userId, $correctionData['sdm']);
             }
 
             if (in_array('edpm', $correctionSections, true) && isset($correctionData['edpm'])) {
-                $edpm = Edpm::where('user_id', $userId)->first();
-                if ($edpm) {
-                    $edpm->forceFill($correctionData['edpm'])->save();
-                }
+                $this->storeAssessmentPayload(Edpm::class, $userId, $correctionData['edpm']);
             }
 
             $this->stateMachine->transition(
@@ -480,7 +454,7 @@ class AkreditasiWorkflowService
             $reason ?? 'Admin menolak secara administratif (batas koreksi tercapai)'
         );
 
-        $rejection = new AkreditasiRejection();
+        $rejection = new AkreditasiRejection;
         $rejection->forceFill([
             'akreditasi_id' => $akreditasi->id,
             'type' => 'administrative',
@@ -536,7 +510,7 @@ class AkreditasiWorkflowService
                 'Admin menugaskan asesor'
             );
 
-            $assessmentKetua = new Assessment();
+            $assessmentKetua = new Assessment;
             $assessmentKetua->forceFill([
                 'akreditasi_id' => $akreditasi->id,
                 'asesor_id' => $ketuaId,
@@ -544,7 +518,7 @@ class AkreditasiWorkflowService
             ])->save();
 
             foreach ($anggotaIds as $anggotaId) {
-                $assessmentAnggota = new Assessment();
+                $assessmentAnggota = new Assessment;
                 $assessmentAnggota->forceFill([
                     'akreditasi_id' => $akreditasi->id,
                     'asesor_id' => $anggotaId,
@@ -638,7 +612,7 @@ class AkreditasiWorkflowService
                 $reason ?? 'Ketua asesor meminta koreksi tahap 2'
             );
 
-            $rejection = new AkreditasiRejection();
+            $rejection = new AkreditasiRejection;
             $rejection->forceFill([
                 'akreditasi_id' => $akreditasi->id,
                 'type' => 'stage_2',
@@ -700,24 +674,15 @@ class AkreditasiWorkflowService
             $userId = $akreditasi->user_id;
 
             if (in_array('ipm', $correctionSections, true) && isset($correctionData['ipm'])) {
-                $ipm = Ipm::where('user_id', $userId)->first();
-                if ($ipm) {
-                    $ipm->forceFill($correctionData['ipm'])->save();
-                }
+                $this->storeAssessmentPayload(Ipm::class, $userId, $correctionData['ipm']);
             }
 
             if (in_array('sdm', $correctionSections, true) && isset($correctionData['sdm'])) {
-                $sdm = SdmPesantren::where('user_id', $userId)->first();
-                if ($sdm) {
-                    $sdm->forceFill($correctionData['sdm'])->save();
-                }
+                $this->storeAssessmentPayload(SdmPesantren::class, $userId, $correctionData['sdm']);
             }
 
             if (in_array('edpm', $correctionSections, true) && isset($correctionData['edpm'])) {
-                $edpm = Edpm::where('user_id', $userId)->first();
-                if ($edpm) {
-                    $edpm->forceFill($correctionData['edpm'])->save();
-                }
+                $this->storeAssessmentPayload(Edpm::class, $userId, $correctionData['edpm']);
             }
 
             $this->stateMachine->transition(
@@ -814,7 +779,7 @@ class AkreditasiWorkflowService
         }
 
         DB::transaction(function () use ($akreditasi, $ketua) {
-            $this->stateMachine->transition(
+            $visitasiCompleted = $this->stateMachine->transition(
                 $akreditasi,
                 Akreditasi::STATUS_VISITASI_COMPLETED,
                 $ketua,
@@ -822,7 +787,7 @@ class AkreditasiWorkflowService
             );
 
             $this->stateMachine->transition(
-                $akreditasi,
+                $visitasiCompleted,
                 Akreditasi::STATUS_POST_VISITASI_SCORING,
                 $ketua,
                 'Otomatis masuk ke penilaian pasca visitasi'
@@ -880,7 +845,10 @@ class AkreditasiWorkflowService
 
             if ($setFinal) {
                 $akreditasi = Akreditasi::findOrFail($akreditasiId);
-                $akreditasi->forceFill(['is_na1_final' => true])->save();
+                $akreditasi->forceFill([
+                    'na1' => $this->averageScore($butirValues),
+                    'is_na1_final' => true,
+                ])->save();
             }
         });
 
@@ -933,7 +901,10 @@ class AkreditasiWorkflowService
 
             if ($setFinal) {
                 $akreditasi = Akreditasi::findOrFail($akreditasiId);
-                $akreditasi->forceFill(['is_na2_final' => true])->save();
+                $akreditasi->forceFill([
+                    'na2' => $this->averageScore($butirValues),
+                    'is_na2_final' => true,
+                ])->save();
             }
         });
 
@@ -986,7 +957,10 @@ class AkreditasiWorkflowService
 
             if ($setFinal) {
                 $akreditasi = Akreditasi::findOrFail($akreditasiId);
-                $akreditasi->forceFill(['is_nk_final' => true])->save();
+                $akreditasi->forceFill([
+                    'nk' => $this->averageScore($nkValues),
+                    'is_nk_final' => true,
+                ])->save();
             }
         });
 
@@ -1011,11 +985,11 @@ class AkreditasiWorkflowService
             );
         }
 
-        $documentService = new \App\Services\DocumentService();
+        $documentService = new DocumentService;
         $documentService->upload([
             'file' => $file,
             'akreditasi_id' => $akreditasiId,
-            'type' => \App\Services\DocumentService::TYPE_KARTU_KENDALI,
+            'type' => DocumentService::TYPE_KARTU_KENDALI,
             'uploaded_by_user_id' => $pesantrenUserId,
         ]);
 
@@ -1040,19 +1014,19 @@ class AkreditasiWorkflowService
             );
         }
 
-        $documentService = new \App\Services\DocumentService();
+        $documentService = new DocumentService;
 
         $documentService->upload([
             'file' => $individuFile,
             'akreditasi_id' => $akreditasiId,
-            'type' => \App\Services\DocumentService::TYPE_LAPORAN_ASESOR,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
             'uploaded_by_user_id' => $ketuaUserId,
         ]);
 
         $documentService->upload([
             'file' => $kelompokFile,
             'akreditasi_id' => $akreditasiId,
-            'type' => \App\Services\DocumentService::TYPE_LAPORAN_ASESOR,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
             'uploaded_by_user_id' => $ketuaUserId,
         ]);
 
@@ -1079,11 +1053,11 @@ class AkreditasiWorkflowService
             );
         }
 
-        $documentService = new \App\Services\DocumentService();
+        $documentService = new DocumentService;
         $documentService->upload([
             'file' => $file,
             'akreditasi_id' => $akreditasiId,
-            'type' => \App\Services\DocumentService::TYPE_LAPORAN_ASESOR,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
             'uploaded_by_user_id' => $anggotaUserId,
         ]);
 
@@ -1134,8 +1108,8 @@ class AkreditasiWorkflowService
             );
         }
 
-        $laporanCount = \App\Models\Document::where('akreditasi_id', $akreditasiId)
-            ->where('type', \App\Services\DocumentService::TYPE_LAPORAN_ASESOR)
+        $laporanCount = Document::where('akreditasi_id', $akreditasiId)
+            ->where('type', DocumentService::TYPE_LAPORAN_ASESOR)
             ->count();
 
         if ($laporanCount === 0) {
@@ -1246,6 +1220,8 @@ class AkreditasiWorkflowService
 
         $akreditasi->forceFill([
             'nv' => $computedNv,
+            'nilai' => $this->finalScoreFromAverage((float) $computedNv),
+            'peringkat' => $this->peringkatFromFinalScore($this->finalScoreFromAverage((float) $computedNv)),
             'is_nv_final' => true,
             'nv_override' => $hasOverride,
             'nv_override_reason' => $hasOverride ? $reason : null,
@@ -1279,7 +1255,7 @@ class AkreditasiWorkflowService
                 $reason
             );
 
-            $rejection = new AkreditasiRejection();
+            $rejection = new AkreditasiRejection;
             $rejection->forceFill([
                 'akreditasi_id' => $akreditasi->id,
                 'type' => 'final',
@@ -1356,7 +1332,7 @@ class AkreditasiWorkflowService
             );
         }
 
-        $bandingService = app(\App\Services\BandingService::class);
+        $bandingService = app(BandingService::class);
         $bandingService->createBanding($akreditasiId, $pesantrenUserId, $alasan);
 
         $akreditasi->refresh();
@@ -1371,5 +1347,43 @@ class AkreditasiWorkflowService
         $this->notificationService->notifyEvent('appeal_submitted', $akreditasi->id);
 
         return $akreditasi;
+    }
+
+    private function storeAssessmentPayload(string $modelClass, int $userId, array $payload): void
+    {
+        $record = $modelClass::firstOrNew(['user_id' => $userId]);
+        $record->forceFill([
+            'user_id' => $userId,
+            'data' => array_replace($record->data ?? [], $payload),
+        ])->save();
+    }
+
+    private function averageScore(array $values): float
+    {
+        $numericValues = array_map('floatval', array_values($values));
+
+        if ($numericValues === []) {
+            return 0;
+        }
+
+        return round(array_sum($numericValues) / count($numericValues), 2);
+    }
+
+    private function finalScoreFromAverage(float $average): float
+    {
+        return round(max(0, min(100, $average * 25)), 2);
+    }
+
+    private function peringkatFromFinalScore(float $score): string
+    {
+        if ($score >= 86) {
+            return 'A';
+        }
+
+        if ($score >= 71) {
+            return 'B';
+        }
+
+        return 'C';
     }
 }
