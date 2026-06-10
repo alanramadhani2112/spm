@@ -5,6 +5,9 @@
 
 @section('toolbar')
 <div class="d-flex align-items-center gap-2 gap-lg-3">
+    <a href="{{ route('superadmin.akreditasi.export', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
+    </a>
     <a href="{{ route('superadmin.akreditasi.pengajuan') }}" class="btn btn-sm btn-primary">
         <i class="ki-outline ki-add-files fs-2"></i>Pengajuan Baru
     </a>
@@ -117,7 +120,7 @@
                                     <a href="{{ route('superadmin.akreditasi.validasi-akhir', $akreditasi->id) }}" class="btn btn-sm btn-light-success">Validasi</a>
                                 @endif
                                 @if ($pendingBanding)
-                                    <a href="{{ route('admin.akreditasi.banding', $akreditasi->id) }}" class="btn btn-sm btn-light-warning">Banding</a>
+                                    <a href="{{ route('superadmin.akreditasi.banding', $akreditasi->id) }}" class="btn btn-sm btn-light-warning">Banding</a>
                                 @endif
                             </div>
                         </td>

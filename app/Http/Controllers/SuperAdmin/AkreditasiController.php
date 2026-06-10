@@ -10,6 +10,7 @@ use App\Models\Banding;
 use App\Models\Document;
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\MasterEdpmKomponen;
 use App\Models\Pesantren;
 use App\Models\SdmPesantren;
 use App\Models\User;
@@ -18,6 +19,7 @@ use App\Services\BandingService;
 use App\Services\ScoringService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 /**
  * SuperAdmin Akreditasi Controller
@@ -46,20 +48,8 @@ class AkreditasiController extends Controller
         $status = $request->query('status', 'all');
         $search = trim((string) $request->query('q', ''));
 
-        $query = Akreditasi::with(['user.pesantren', 'assessments.asesor', 'bandings'])
-            ->when($period !== 'all', fn ($q) => $q->whereYear('created_at', (int) $period))
-            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
-            ->when($search !== '', function ($q) use ($search) {
-                $q->where(function ($subQuery) use ($search) {
-                    $subQuery->where('uuid', 'like', "%{$search}%")
-                        ->orWhereHas('user', fn ($userQuery) => $userQuery
-                            ->where('name', 'like', "%{$search}%")
-                            ->orWhere('email', 'like', "%{$search}%"))
-                        ->orWhereHas('user.pesantren', fn ($pesantrenQuery) => $pesantrenQuery
-                            ->where('nama_pesantren', 'like', "%{$search}%")
-                            ->orWhere('ns_pesantren', 'like', "%{$search}%"));
-                });
-            });
+        $query = $this->akreditasiIndexQuery($period, $status, $search)
+            ->with(['user.pesantren', 'assessments.asesor', 'bandings']);
 
         $akreditasis = $query->orderBy('created_at', 'desc')->get();
         $stats = $this->summaryStats(Akreditasi::query()->get());
@@ -79,6 +69,42 @@ class AkreditasiController extends Controller
         ));
     }
 
+    public function export(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $search = trim((string) $request->query('q', ''));
+        $akreditasis = $this->akreditasiIndexQuery($period, $status, $search)
+            ->with(['user.pesantren', 'assessments.asesor'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->streamDownload(function () use ($akreditasis) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['UUID', 'Pesantren', 'Email', 'Status', 'Asesor', 'Siklus', 'NA1', 'NA2', 'NK', 'NV', 'Nilai', 'Peringkat', 'Tanggal']);
+
+            foreach ($akreditasis as $akreditasi) {
+                fputcsv($out, [
+                    $akreditasi->uuid,
+                    $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '-',
+                    $akreditasi->user?->email ?? '-',
+                    $akreditasi->getStatusLabel(),
+                    $akreditasi->assessments->map(fn (Assessment $assessment) => ($assessment->tipe ? strtoupper($assessment->tipe).': ' : '').($assessment->asesor?->name ?? '-'))->implode(' | '),
+                    $akreditasi->correction_cycle ?? 0,
+                    $akreditasi->na1 ?? '-',
+                    $akreditasi->na2 ?? '-',
+                    $akreditasi->nk ?? '-',
+                    $akreditasi->nv ?? '-',
+                    $akreditasi->nilai ?? '-',
+                    $akreditasi->peringkat ?? '-',
+                    $akreditasi->created_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($out);
+        }, 'akreditasi-superadmin.csv', ['Content-Type' => 'text/csv']);
+    }
+
     // ============================================================
     // PENGAJUAN — superadmin ajukan untuk pesantren tertentu
     // ============================================================
@@ -86,6 +112,7 @@ class AkreditasiController extends Controller
     public function pengajuanForm()
     {
         $pesantren = User::whereHas('role', fn ($query) => $query->where('parameter', 'pesantren'))->get();
+
         return view('superadmin.akreditasi.pengajuan', compact('pesantren'));
     }
 
@@ -99,9 +126,11 @@ class AkreditasiController extends Controller
             $this->workflowService->submitPengajuanAwal((int) $validated['pesantren_id']);
 
             session()->flash('success', 'Pengajuan akreditasi berhasil dibuat.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -172,7 +201,6 @@ class AkreditasiController extends Controller
         ));
     }
 
-
     // ============================================================
     // ADMIN ACTIONS — review awal, tahap 1, assign, validasi, SK
     // ============================================================
@@ -191,9 +219,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminReviewAwal($akreditasiId, auth()->id(), 'accept', $request->input('catatan'));
             session()->flash('success', 'Pengajuan akreditasi diterima.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -205,9 +235,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminReviewAwal($akreditasiId, auth()->id(), 'reject', $validated['reason']);
             session()->flash('success', 'Pengajuan akreditasi ditolak.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -232,9 +264,11 @@ class AkreditasiController extends Controller
             }
 
             session()->flash('success', 'Assessment berhasil dibuka.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -260,9 +294,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminStage1Review($akreditasiId, auth()->id(), 'correction', $validated['sections'], $validated['reason'] ?? null);
             session()->flash('success', 'Permintaan perbaikan tahap 1 dikirim.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -272,9 +308,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminStage1Review($akreditasiId, auth()->id(), 'approve', [], $request->input('catatan'));
             session()->flash('success', 'Tahap 1 disetujui.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -286,6 +324,7 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
+
             return view('admin.akreditasi.assign-asesor', compact('akreditasi', 'asesors', 'existing'));
         }
 
@@ -299,9 +338,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminAssignAsesor($akreditasiId, (int) $validated['ketua_id'], array_map('intval', $validated['anggota_ids'] ?? []), auth()->id());
             session()->flash('success', 'Asesor berhasil ditugaskan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -313,6 +354,7 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
+
             return view('admin.akreditasi.reassign-asesor', compact('akreditasi', 'asesors', 'existing'));
         }
 
@@ -327,9 +369,11 @@ class AkreditasiController extends Controller
             Assessment::where('akreditasi_id', $akreditasiId)->delete();
             $this->workflowService->adminAssignAsesor($akreditasiId, (int) $validated['ketua_id'], array_map('intval', $validated['anggota_ids'] ?? []), auth()->id());
             session()->flash('success', 'Asesor berhasil ditugaskan ulang.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -344,9 +388,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminHandleStage1Limit($akreditasiId, auth()->id(), $validated['action'], $validated['reason'] ?? $request->input('catatan'));
             session()->flash('success', 'Keputusan batas koreksi diproses.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -370,9 +416,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaAsesorStage2Review($akreditasiId, auth()->id(), 'approve');
             session()->flash('success', 'Akreditasi dinyatakan layak visitasi.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -388,9 +436,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaAsesorStage2Review($akreditasiId, auth()->id(), 'correction', $validated['sections'], $validated['reason'] ?? null);
             session()->flash('success', 'Permintaan perbaikan tahap 2 dikirim.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -415,9 +465,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaJadwalkanVisitasi($akreditasiId, auth()->id(), $validated['tgl_mulai'], $validated['tgl_akhir'], $validated['catatan'] ?? null);
             session()->flash('success', 'Visitasi berhasil dijadwalkan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -427,9 +479,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaTandaiVisitasiSelesai($akreditasiId, auth()->id());
             session()->flash('success', 'Visitasi ditandai selesai.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -439,7 +493,8 @@ class AkreditasiController extends Controller
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            $komponen = \App\Models\MasterEdpmKomponen::with('butirs')->get();
+            $komponen = MasterEdpmKomponen::with('butirs')->get();
+
             return view('asesor.ketua.input-na1', compact('akreditasi', 'komponen'));
         }
 
@@ -448,9 +503,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->submitNA1($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
             session()->flash('success', 'Nilai NA1 berhasil disimpan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -460,7 +517,8 @@ class AkreditasiController extends Controller
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            $komponen = \App\Models\MasterEdpmKomponen::with('butirs')->get();
+            $komponen = MasterEdpmKomponen::with('butirs')->get();
+
             return view('asesor.anggota.input-na2', compact('akreditasi', 'komponen'));
         }
 
@@ -469,9 +527,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->submitNA2($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
             session()->flash('success', 'Nilai NA2 berhasil disimpan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -481,7 +541,8 @@ class AkreditasiController extends Controller
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
         if ($request->isMethod('get')) {
-            $komponen = \App\Models\MasterEdpmKomponen::with('butirs')->get();
+            $komponen = MasterEdpmKomponen::with('butirs')->get();
+
             return view('asesor.ketua.input-nk', compact('akreditasi', 'komponen'));
         }
 
@@ -490,9 +551,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaInputNK($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
             session()->flash('success', 'Nilai NK berhasil disimpan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -513,9 +576,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaUploadLaporan($akreditasiId, auth()->id(), $validated['laporan_individu'], $validated['laporan_kelompok']);
             session()->flash('success', 'Laporan berhasil diupload.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -525,9 +590,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->ketuaSubmitHasilVisitasi($akreditasiId, auth()->id());
             session()->flash('success', 'Hasil visitasi berhasil dikirim.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -541,9 +608,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->pesantrenUploadKartuKendali($akreditasiId, auth()->id(), $request->file('file'));
             session()->flash('success', 'Kartu kendali berhasil diupload.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -575,9 +644,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminValidasiAkhir($akreditasiId, auth()->id(), true, $validated['reason'] ?? null, $validated['nv_values'] ?? null);
             session()->flash('success', 'Akreditasi disetujui.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -589,9 +660,11 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminValidasiAkhir($akreditasiId, auth()->id(), false, $validated['reason']);
             session()->flash('success', 'Akreditasi ditolak.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -606,11 +679,23 @@ class AkreditasiController extends Controller
         try {
             $this->workflowService->adminTerbitkanSK($akreditasiId, auth()->id(), $validated['nomor_sk'], $validated['masa_berlaku']);
             session()->flash('success', 'SK berhasil diterbitkan.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
+    }
+
+    public function banding($akreditasiId)
+    {
+        $akreditasi = Akreditasi::with(['user.pesantren', 'bandings'])
+            ->where('status', Akreditasi::STATUS_APPEAL_SUBMITTED)
+            ->findOrFail($akreditasiId);
+        $bandingRoutePrefix = 'superadmin.banding';
+
+        return view('admin.akreditasi.banding', compact('akreditasi', 'bandingRoutePrefix'));
     }
 
     public function terimaBanding(Request $request, $id)
@@ -622,9 +707,11 @@ class AkreditasiController extends Controller
         try {
             $this->bandingService->processBanding($id, auth()->id(), 'accept', $validated['response'] ?? null);
             session()->flash('success', 'Banding diterima.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -638,9 +725,11 @@ class AkreditasiController extends Controller
         try {
             $this->bandingService->processBanding($id, auth()->id(), 'reject', $validated['response']);
             session()->flash('success', 'Banding ditolak.');
+
             return redirect()->route('superadmin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back();
         }
     }
@@ -691,12 +780,30 @@ class AkreditasiController extends Controller
             ->orderByDesc('created_at')
             ->pluck('created_at')
             ->filter()
-            ->map(fn ($date) => \Illuminate\Support\Carbon::parse($date)->format('Y'))
+            ->map(fn ($date) => Carbon::parse($date)->format('Y'))
             ->unique()
             ->mapWithKeys(fn ($year) => [(string) $year => (string) $year])
             ->all();
 
         return ['all' => 'Semua Periode'] + $years;
+    }
+
+    private function akreditasiIndexQuery(string $period, string $status, string $search)
+    {
+        return Akreditasi::query()
+            ->when($period !== 'all', fn ($q) => $q->whereYear('created_at', (int) $period))
+            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('uuid', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($userQuery) => $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('user.pesantren', fn ($pesantrenQuery) => $pesantrenQuery
+                            ->where('nama_pesantren', 'like', "%{$search}%")
+                            ->orWhere('ns_pesantren', 'like', "%{$search}%"));
+                });
+            });
     }
 
     private function availableActions(Akreditasi $akreditasi): array
@@ -734,11 +841,10 @@ class AkreditasiController extends Controller
         if ($akreditasi->status === Akreditasi::STATUS_APPEAL_SUBMITTED) {
             $pendingBanding = $akreditasi->bandings->firstWhere('status', 'pending');
             if ($pendingBanding) {
-                $actions[] = ['label' => 'Proses Banding', 'route' => route('admin.akreditasi.banding', $akreditasi), 'color' => 'warning'];
+                $actions[] = ['label' => 'Proses Banding', 'route' => route('superadmin.akreditasi.banding', $akreditasi), 'color' => 'warning'];
             }
         }
 
         return $actions;
     }
 }
-

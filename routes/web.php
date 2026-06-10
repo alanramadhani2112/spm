@@ -19,6 +19,7 @@ Route::post('/login', function () {
         request()->session()->regenerate();
 
         $user = auth()->user();
+
         return match ($user->role?->parameter) {
             'super_admin', 'superadmin' => redirect()->route('superadmin.dashboard'),
             'admin' => redirect()->route('admin.akreditasi.index'),
@@ -76,8 +77,8 @@ Route::middleware(['auth', 'role:admin,super_admin'])->prefix('admin')->name('ad
     Route::post('/banding/{id}/tolak', [AdminAkreditasiController::class, 'tolakBanding'])->name('banding.tolak');
 });
 
-use App\Http\Controllers\Asesor\KetuaAsesorController;
 use App\Http\Controllers\Asesor\AnggotaAsesorController;
+use App\Http\Controllers\Asesor\KetuaAsesorController;
 
 Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/ketua')->name('asesor.ketua.')->group(function () {
     Route::get('/akreditasi', [KetuaAsesorController::class, 'index'])->name('index');
@@ -98,11 +99,11 @@ Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/anggota')
     Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan-individu', [AnggotaAsesorController::class, 'uploadLaporanIndividu'])->name('upload-laporan-individu');
 });
 
+use App\Http\Controllers\SuperAdmin\AkreditasiController as SuperAdminAkreditasiController;
 use App\Http\Controllers\SuperAdmin\AuditController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
-use App\Http\Controllers\SuperAdmin\SettingsController;
 use App\Http\Controllers\SuperAdmin\MasterDataController;
-use App\Http\Controllers\SuperAdmin\AkreditasiController as SuperAdminAkreditasiController;
+use App\Http\Controllers\SuperAdmin\SettingsController;
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -110,6 +111,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
+    Route::get('/akreditasi/export', [SuperAdminAkreditasiController::class, 'export'])->name('akreditasi.export');
     Route::get('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
     Route::get('/akreditasi/{id}', [SuperAdminAkreditasiController::class, 'show'])->name('akreditasi.show');
@@ -138,6 +140,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/akreditasi/{id}/approve-final', [SuperAdminAkreditasiController::class, 'approveFinal'])->name('akreditasi.approve-final');
     Route::post('/akreditasi/{id}/tolak-final', [SuperAdminAkreditasiController::class, 'tolakFinal'])->name('akreditasi.tolak-final');
     Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])->name('akreditasi.terbitkan-sk');
+    Route::get('/akreditasi/{id}/banding', [SuperAdminAkreditasiController::class, 'banding'])->name('akreditasi.banding');
     Route::post('/banding/{id}/terima', [SuperAdminAkreditasiController::class, 'terimaBanding'])->name('banding.terima');
     Route::post('/banding/{id}/tolak', [SuperAdminAkreditasiController::class, 'tolakBanding'])->name('banding.tolak');
 
@@ -177,6 +180,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 Route::get('/', function () {
     if (auth()->check()) {
         $user = auth()->user();
+
         return match ($user->role?->parameter) {
             'super_admin', 'superadmin' => redirect()->route('superadmin.dashboard'),
             'admin' => redirect()->route('admin.akreditasi.index'),
@@ -185,6 +189,7 @@ Route::get('/', function () {
             default => redirect()->route('login'),
         };
     }
+
     return redirect()->route('login');
 });
 
@@ -192,5 +197,6 @@ Route::post('/logout', function () {
     auth()->logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
+
     return redirect('/');
 })->middleware('auth')->name('logout');
