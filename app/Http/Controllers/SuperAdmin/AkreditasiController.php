@@ -7,6 +7,11 @@ use App\Models\Akreditasi;
 use App\Models\AkreditasiEdpm;
 use App\Models\Assessment;
 use App\Models\Banding;
+use App\Models\Document;
+use App\Models\Edpm;
+use App\Models\Ipm;
+use App\Models\Pesantren;
+use App\Models\SdmPesantren;
 use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
 use App\Services\BandingService;
@@ -35,13 +40,43 @@ class AkreditasiController extends Controller
     // INDEX — lihat semua akreditasi (termasuk terminal)
     // ============================================================
 
-    public function index()
+    public function index(Request $request)
     {
-        $akreditasis = Akreditasi::with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $search = trim((string) $request->query('q', ''));
 
-        return view('superadmin.akreditasi.index', compact('akreditasis'));
+        $query = Akreditasi::with(['user.pesantren', 'assessments.asesor', 'bandings'])
+            ->when($period !== 'all', fn ($q) => $q->whereYear('created_at', (int) $period))
+            ->when($status !== 'all', fn ($q) => $q->where('status', $status))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('uuid', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($userQuery) => $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('user.pesantren', fn ($pesantrenQuery) => $pesantrenQuery
+                            ->where('nama_pesantren', 'like', "%{$search}%")
+                            ->orWhere('ns_pesantren', 'like', "%{$search}%"));
+                });
+            });
+
+        $akreditasis = $query->orderBy('created_at', 'desc')->get();
+        $stats = $this->summaryStats(Akreditasi::query()->get());
+        $statusOptions = Akreditasi::STATUS_LABELS;
+        $statusColors = $this->statusColors();
+        $periodOptions = $this->periodOptions();
+
+        return view('superadmin.akreditasi.index', compact(
+            'akreditasis',
+            'stats',
+            'statusOptions',
+            'statusColors',
+            'periodOptions',
+            'period',
+            'status',
+            'search',
+        ));
     }
 
     // ============================================================
@@ -69,6 +104,72 @@ class AkreditasiController extends Controller
             session()->flash('error', $e->getMessage());
             return redirect()->back()->withInput();
         }
+    }
+
+    public function show($akreditasiId)
+    {
+        $akreditasi = Akreditasi::with([
+            'user.pesantren.units',
+            'assessments.asesor',
+            'bandings.user',
+            'bandings.processor',
+            'auditLogs.user',
+        ])->findOrFail($akreditasiId);
+
+        $userId = $akreditasi->user_id;
+        $pesantren = Pesantren::with('units')->where('user_id', $userId)->first();
+        $ipm = Ipm::where('user_id', $userId)->first();
+        $sdm = SdmPesantren::where('user_id', $userId)->first();
+        $edpm = Edpm::where('user_id', $userId)->first();
+        $documents = Document::with(['category', 'uploader'])
+            ->where('akreditasi_id', $akreditasi->id)
+            ->latest()
+            ->get();
+        $edpmScores = AkreditasiEdpm::with(['asesor', 'butir'])
+            ->where('akreditasi_id', $akreditasi->id)
+            ->latest()
+            ->get()
+            ->groupBy('type');
+        $actorUsers = User::whereIn('id', $akreditasi->auditLogs->pluck('actor_user_id')->filter()->unique())
+            ->get()
+            ->keyBy('id');
+        $actions = $this->availableActions($akreditasi);
+        $statusColors = $this->statusColors();
+        $dataCompleteness = [
+            'profil' => (bool) $pesantren,
+            'unit' => (bool) ($pesantren?->units?->isNotEmpty()),
+            'ipm' => (bool) $ipm,
+            'sdm' => (bool) $sdm,
+            'edpm' => (bool) $edpm,
+        ];
+        $documentFields = [
+            'dok_profil' => 'Dokumen Profil',
+            'dok_nsp' => 'Sertifikat NSP',
+            'dok_renstra' => 'Renstra',
+            'dok_rk_anggaran' => 'RK Anggaran',
+            'dok_kurikulum' => 'Kurikulum',
+            'dok_silabus_rpp' => 'Silabus/RPP',
+            'dok_kepengasuhan' => 'Kepengasuhan',
+            'dok_peraturan_kepegawaian' => 'Peraturan Kepegawaian',
+            'dok_sarpras' => 'Sarpras',
+            'dok_laporan_tahunan' => 'Laporan Tahunan',
+            'dok_sop' => 'SOP',
+        ];
+
+        return view('superadmin.akreditasi.show', compact(
+            'akreditasi',
+            'pesantren',
+            'ipm',
+            'sdm',
+            'edpm',
+            'documents',
+            'edpmScores',
+            'actorUsers',
+            'actions',
+            'statusColors',
+            'dataCompleteness',
+            'documentFields',
+        ));
     }
 
 
@@ -543,4 +644,101 @@ class AkreditasiController extends Controller
             return redirect()->back();
         }
     }
+
+    private function statusColors(): array
+    {
+        return [
+            Akreditasi::STATUS_DRAFT_PROFILE => 'secondary',
+            Akreditasi::STATUS_INITIAL_SUBMITTED => 'primary',
+            Akreditasi::STATUS_ASSESSMENT_OPEN => 'info',
+            Akreditasi::STATUS_INITIAL_REJECTED => 'danger',
+            Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW => 'warning',
+            Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION => 'warning',
+            Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW => 'warning',
+            Akreditasi::STATUS_ASSESSOR_ASSIGNMENT => 'info',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW => 'warning',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION => 'warning',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW => 'warning',
+            Akreditasi::STATUS_VISITASI_SCHEDULED => 'info',
+            Akreditasi::STATUS_VISITASI_COMPLETED => 'info',
+            Akreditasi::STATUS_POST_VISITASI_SCORING => 'danger',
+            Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED => 'primary',
+            Akreditasi::STATUS_ADMIN_FINAL_VALIDATION => 'warning',
+            Akreditasi::STATUS_ADMINISTRATIVE_REJECTED => 'danger',
+            Akreditasi::STATUS_FINAL_APPROVED => 'success',
+            Akreditasi::STATUS_FINAL_REJECTED => 'danger',
+            Akreditasi::STATUS_APPEAL_SUBMITTED => 'warning',
+            Akreditasi::STATUS_COMPLETED => 'success',
+        ];
+    }
+
+    private function summaryStats($akreditasis): array
+    {
+        return [
+            'total' => $akreditasis->count(),
+            'active' => $akreditasis->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)->count(),
+            'completed' => $akreditasis->whereIn('status', Akreditasi::TERMINAL_STATUSES)->count(),
+            'appeal' => $akreditasis->where('status', Akreditasi::STATUS_APPEAL_SUBMITTED)->count(),
+            'overdue' => $akreditasis
+                ->filter(fn (Akreditasi $akreditasi) => $akreditasi->assessment_deadline && $akreditasi->assessment_deadline->isPast() && ! $akreditasi->isTerminal())
+                ->count(),
+        ];
+    }
+
+    private function periodOptions(): array
+    {
+        $years = Akreditasi::query()
+            ->orderByDesc('created_at')
+            ->pluck('created_at')
+            ->filter()
+            ->map(fn ($date) => \Illuminate\Support\Carbon::parse($date)->format('Y'))
+            ->unique()
+            ->mapWithKeys(fn ($year) => [(string) $year => (string) $year])
+            ->all();
+
+        return ['all' => 'Semua Periode'] + $years;
+    }
+
+    private function availableActions(Akreditasi $akreditasi): array
+    {
+        $actions = [];
+
+        if ($akreditasi->status === Akreditasi::STATUS_INITIAL_SUBMITTED) {
+            $actions[] = ['label' => 'Review Awal', 'route' => route('superadmin.akreditasi.review-awal', $akreditasi), 'color' => 'primary'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_ASSESSMENT_OPEN) {
+            $actions[] = ['label' => 'Buka/Atur Assessment', 'route' => route('superadmin.akreditasi.buka-assessment', $akreditasi), 'color' => 'info'];
+        }
+        if (in_array($akreditasi->status, [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW], true)) {
+            $actions[] = ['label' => 'Review Tahap 1', 'route' => route('superadmin.akreditasi.review-tahap1', $akreditasi), 'color' => 'warning'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_ASSIGNMENT) {
+            $actions[] = ['label' => 'Assign Asesor', 'route' => route('superadmin.akreditasi.assign-asesor', $akreditasi), 'color' => 'info'];
+        }
+        if (in_array($akreditasi->status, [Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW], true)) {
+            $actions[] = ['label' => 'Review Tahap 2', 'route' => route('superadmin.akreditasi.review-tahap2', $akreditasi), 'color' => 'warning'];
+            $actions[] = ['label' => 'Jadwalkan Visitasi', 'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi), 'color' => 'info'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED) {
+            $actions[] = ['label' => 'Jadwal Visitasi', 'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi), 'color' => 'info'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
+            $actions[] = ['label' => 'Input NA1', 'route' => route('superadmin.akreditasi.input-na1', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Input NA2', 'route' => route('superadmin.akreditasi.input-na2', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Input NK', 'route' => route('superadmin.akreditasi.input-nk', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Upload Laporan', 'route' => route('superadmin.akreditasi.upload-laporan', $akreditasi), 'color' => 'primary'];
+        }
+        if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true)) {
+            $actions[] = ['label' => 'Validasi Akhir', 'route' => route('superadmin.akreditasi.validasi-akhir', $akreditasi), 'color' => 'success'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_APPEAL_SUBMITTED) {
+            $pendingBanding = $akreditasi->bandings->firstWhere('status', 'pending');
+            if ($pendingBanding) {
+                $actions[] = ['label' => 'Proses Banding', 'route' => route('admin.akreditasi.banding', $akreditasi), 'color' => 'warning'];
+            }
+        }
+
+        return $actions;
+    }
 }
+

@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
     Route::get('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
+    Route::get('/akreditasi/{id}', [SuperAdminAkreditasiController::class, 'show'])->name('akreditasi.show');
     Route::get('/akreditasi/{id}/review-awal', [SuperAdminAkreditasiController::class, 'reviewAwal'])->name('akreditasi.review-awal');
     Route::post('/akreditasi/{id}/terima-pengajuan', [SuperAdminAkreditasiController::class, 'terimaPengajuan'])->name('akreditasi.terima-pengajuan');
     Route::post('/akreditasi/{id}/tolak-pengajuan', [SuperAdminAkreditasiController::class, 'tolakPengajuan'])->name('akreditasi.tolak-pengajuan');
