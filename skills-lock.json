@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "laravel-development": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "laravel-development/SKILL.md",
+      "computedHash": "293485b159d5bcda79671fdb2b17977563e771629a97a0b7055187d8be60025f"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "6337038fe1fe6bbe1b9f252ab678ee575859190bab6f0f246f4061824eb40875"
+    }
+  }
+}
