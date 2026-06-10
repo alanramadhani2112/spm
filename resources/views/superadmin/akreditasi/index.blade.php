@@ -4,7 +4,7 @@
 @section('pageTitle', 'Manajemen Akreditasi')
 
 @section('toolbar')
-<div class="d-flex align-items-center gap-2 gap-lg-3">
+<div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3">
     <a href="{{ route('superadmin.akreditasi.export', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
         <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
     </a>
@@ -19,6 +19,17 @@
     use App\Models\Akreditasi;
 @endphp
 
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
+    <div>
+        <h2 class="fs-2 fw-bold text-gray-900 mb-2">Workflow Console Akreditasi</h2>
+        <p class="fs-7 text-muted mb-0">Pantau semua pengajuan, temukan status kritis, dan jalankan aksi operasional dari satu console.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-chart-pie-4 fs-3"></i>Dashboard</a>
+        <a href="{{ route('superadmin.audit.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-time fs-3"></i>Audit Log</a>
+    </div>
+</div>
+
 <div class="row g-5 g-xl-8 mb-8">
     <div class="col-xl col-md-4"><x-metronic.stat-card value="{{ $stats['total'] ?? $akreditasis->count() }}" label="Total" icon="ki-document" color="primary" /></div>
     <div class="col-xl col-md-4"><x-metronic.stat-card value="{{ $stats['active'] ?? 0 }}" label="Aktif" icon="ki-timer" color="warning" /></div>
@@ -27,50 +38,80 @@
     <div class="col-xl col-md-4"><x-metronic.stat-card value="{{ $stats['overdue'] ?? 0 }}" label="Overdue" icon="ki-warning" color="danger" /></div>
 </div>
 
-<x-metronic.card title="Workflow Console Akreditasi" flush>
+<div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
+    <div class="card-body p-7">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-5">
+            <div class="d-flex align-items-start gap-4">
+                <div class="symbol symbol-45px">
+                    <span class="symbol-label bg-primary"><i class="ki-outline ki-compass fs-2 text-white"></i></span>
+                </div>
+                <div>
+                    <h3 class="fw-bold text-gray-900 mb-1">Gunakan status sebagai petunjuk aksi berikutnya</h3>
+                    <div class="fs-7 text-muted">Setiap baris menampilkan status, langkah berikutnya, asesor, nilai, dan aksi yang relevan. Mulai dari tombol <span class="fw-semibold text-gray-900">Detail</span> bila perlu melihat konteks lengkap.</div>
+                </div>
+            </div>
+            <span class="badge badge-light-primary">{{ $akreditasis->count() }} data ditampilkan</span>
+        </div>
+    </div>
+</div>
+
+<x-metronic.card title="Filter & Daftar Akreditasi" flush>
     <x-slot:header>
-        <span class="badge badge-light-primary">{{ $akreditasis->count() }} ditampilkan</span>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            @if(($period ?? 'all') !== 'all')
+                <span class="badge badge-light-info">Periode: {{ $period }}</span>
+            @endif
+            @if(($status ?? 'all') !== 'all')
+                <span class="badge badge-light-warning">Status: {{ $statusOptions[$status] ?? $status }}</span>
+            @endif
+            @if(($search ?? '') !== '')
+                <span class="badge badge-light-primary">Cari: {{ $search }}</span>
+            @endif
+        </div>
     </x-slot:header>
 
     <form method="GET" action="{{ route('superadmin.akreditasi.index') }}" class="row g-3 align-items-end mb-8">
-        <div class="col-md-3">
-            <label class="form-label">Periode</label>
-            <select name="period" class="form-select form-select-solid">
+        <div class="col-lg-3 col-md-6">
+            <label for="filter_period" class="form-label">Periode</label>
+            <select id="filter_period" name="period" class="form-select form-select-solid">
                 @foreach(($periodOptions ?? ['all' => 'Semua Periode']) as $value => $label)
                     <option value="{{ $value }}" @selected(($period ?? 'all') == $value)>{{ $label }}</option>
                 @endforeach
             </select>
+            <div class="fs-8 text-muted mt-1">Batasi data berdasarkan tahun pengajuan.</div>
         </div>
-        <div class="col-md-3">
-            <label class="form-label">Status</label>
-            <select name="status" class="form-select form-select-solid">
+        <div class="col-lg-3 col-md-6">
+            <label for="filter_status" class="form-label">Status Workflow</label>
+            <select id="filter_status" name="status" class="form-select form-select-solid">
                 <option value="all" @selected(($status ?? 'all') === 'all')>Semua Status</option>
                 @foreach($statusOptions ?? Akreditasi::STATUS_LABELS as $key => $label)
                     <option value="{{ $key }}" @selected(($status ?? 'all') === $key)>{{ $label }}</option>
                 @endforeach
             </select>
+            <div class="fs-8 text-muted mt-1">Pilih status untuk fokus pada antrian tertentu.</div>
         </div>
-        <div class="col-md-4">
-            <label class="form-label">Cari</label>
-            <input type="search" name="q" value="{{ $search ?? '' }}" class="form-control form-control-solid" placeholder="UUID, pesantren, email...">
+        <div class="col-lg-4 col-md-8">
+            <label for="filter_search" class="form-label">Cari Pengajuan</label>
+            <input id="filter_search" type="search" name="q" value="{{ $search ?? '' }}" class="form-control form-control-solid" placeholder="UUID, pesantren, NSP, email...">
+            <div class="fs-8 text-muted mt-1">Gunakan nama pesantren, UUID, NSP, atau email.</div>
         </div>
-        <div class="col-md-2 d-flex gap-2">
-            <button class="btn btn-primary w-100">Filter</button>
-            <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-light">Reset</a>
+        <div class="col-lg-2 col-md-4 d-flex gap-2">
+            <button class="btn btn-primary flex-grow-1">Terapkan</button>
+            <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-light" aria-label="Reset filter akreditasi">Reset</a>
         </div>
     </form>
 
     <div class="table-responsive">
-        <table class="table table-striped table-row-bordered align-middle gs-0 gy-4">
+        <table class="table table-row-bordered align-middle gs-0 gy-4">
             <thead>
                 <tr class="fw-bold text-muted bg-light">
-                    <th class="ps-4 min-w-70px">ID</th>
-                    <th class="min-w-220px">Pesantren</th>
-                    <th class="min-w-170px">Status</th>
-                    <th class="min-w-130px">Asesor</th>
-                    <th class="min-w-130px">Nilai</th>
-                    <th class="min-w-120px">Tanggal</th>
-                    <th class="text-end min-w-240px pe-4">Aksi</th>
+                    <th class="ps-4 min-w-80px">ID</th>
+                    <th class="min-w-260px">Pesantren</th>
+                    <th class="min-w-240px">Status dan Langkah Berikutnya</th>
+                    <th class="min-w-190px">Asesor</th>
+                    <th class="min-w-150px">Nilai</th>
+                    <th class="min-w-130px">Tanggal</th>
+                    <th class="text-end min-w-260px pe-4">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -79,6 +120,28 @@
                         $color = $statusColors[$akreditasi->status] ?? 'secondary';
                         $statusLabel = Akreditasi::STATUS_LABELS[$akreditasi->status] ?? $akreditasi->status;
                         $pendingBanding = $akreditasi->bandings->firstWhere('status', 'pending');
+                        $nextStep = $nextStepLabels[$akreditasi->status] ?? 'Pantau status pengajuan';
+                        $actions = [];
+                        if ($akreditasi->status === Akreditasi::STATUS_INITIAL_SUBMITTED) {
+                            $actions[] = ['label' => 'Review Awal', 'route' => route('superadmin.akreditasi.review-awal', $akreditasi->id), 'color' => 'primary'];
+                        }
+                        if (in_array($akreditasi->status, [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW], true)) {
+                            $actions[] = ['label' => 'Tahap 1', 'route' => route('superadmin.akreditasi.review-tahap1', $akreditasi->id), 'color' => 'warning'];
+                        }
+                        if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_ASSIGNMENT) {
+                            $actions[] = ['label' => 'Assign', 'route' => route('superadmin.akreditasi.assign-asesor', $akreditasi->id), 'color' => 'info'];
+                        }
+                        if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
+                            $actions[] = ['label' => 'NA1', 'route' => route('superadmin.akreditasi.input-na1', $akreditasi->id), 'color' => 'danger'];
+                            $actions[] = ['label' => 'NA2', 'route' => route('superadmin.akreditasi.input-na2', $akreditasi->id), 'color' => 'danger'];
+                            $actions[] = ['label' => 'NK', 'route' => route('superadmin.akreditasi.input-nk', $akreditasi->id), 'color' => 'danger'];
+                        }
+                        if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true)) {
+                            $actions[] = ['label' => 'Validasi', 'route' => route('superadmin.akreditasi.validasi-akhir', $akreditasi->id), 'color' => 'success'];
+                        }
+                        if ($pendingBanding) {
+                            $actions[] = ['label' => 'Banding', 'route' => route('superadmin.akreditasi.banding', $akreditasi->id), 'color' => 'warning'];
+                        }
                     @endphp
                     <tr>
                         <td class="ps-4"><span class="text-muted fw-bold">#{{ $akreditasi->id }}</span></td>
@@ -86,10 +149,15 @@
                             <div class="fw-bold text-gray-900">{{ $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '—' }}</div>
                             <div class="text-muted fs-8">{{ $akreditasi->user?->email }} · {{ \Illuminate\Support\Str::limit($akreditasi->uuid, 18) }}</div>
                         </td>
-                        <td><span class="badge badge-light-{{ $color }}">{{ $statusLabel }}</span></td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <span class="badge badge-light-{{ $color }} w-fit-content">{{ $statusLabel }}</span>
+                                <span class="fs-8 text-gray-700">{{ $nextStep }}</span>
+                            </div>
+                        </td>
                         <td>
                             @forelse($akreditasi->assessments as $assessment)
-                                <div class="fs-8"><span class="badge badge-light-info me-1">{{ $assessment->tipe }}</span>{{ $assessment->asesor?->name ?? '—' }}</div>
+                                <div class="fs-8 mb-1"><span class="badge badge-light-info me-1">{{ strtoupper($assessment->tipe) }}</span>{{ $assessment->asesor?->name ?? '—' }}</div>
                             @empty
                                 <span class="text-muted fs-8">Belum ditugaskan</span>
                             @endforelse
@@ -101,32 +169,27 @@
                         <td><span class="text-muted fs-7">{{ $akreditasi->created_at->format('d M Y') }}</span></td>
                         <td class="text-end pe-4">
                             <div class="d-flex flex-wrap justify-content-end gap-2">
-                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-light-primary">Detail</a>
-                                @if ($akreditasi->status === Akreditasi::STATUS_INITIAL_SUBMITTED)
-                                    <a href="{{ route('superadmin.akreditasi.review-awal', $akreditasi->id) }}" class="btn btn-sm btn-light">Review Awal</a>
-                                @endif
-                                @if (in_array($akreditasi->status, [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW], true))
-                                    <a href="{{ route('superadmin.akreditasi.review-tahap1', $akreditasi->id) }}" class="btn btn-sm btn-light-warning">Tahap 1</a>
-                                @endif
-                                @if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_ASSIGNMENT)
-                                    <a href="{{ route('superadmin.akreditasi.assign-asesor', $akreditasi->id) }}" class="btn btn-sm btn-light-info">Assign</a>
-                                @endif
-                                @if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING)
-                                    <a href="{{ route('superadmin.akreditasi.input-na1', $akreditasi->id) }}" class="btn btn-sm btn-light-danger">NA1</a>
-                                    <a href="{{ route('superadmin.akreditasi.input-na2', $akreditasi->id) }}" class="btn btn-sm btn-light-danger">NA2</a>
-                                    <a href="{{ route('superadmin.akreditasi.input-nk', $akreditasi->id) }}" class="btn btn-sm btn-light-danger">NK</a>
-                                @endif
-                                @if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true))
-                                    <a href="{{ route('superadmin.akreditasi.validasi-akhir', $akreditasi->id) }}" class="btn btn-sm btn-light-success">Validasi</a>
-                                @endif
-                                @if ($pendingBanding)
-                                    <a href="{{ route('superadmin.akreditasi.banding', $akreditasi->id) }}" class="btn btn-sm btn-light-warning">Banding</a>
-                                @endif
+                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-primary">Detail</a>
+                                @forelse($actions as $action)
+                                    <a href="{{ $action['route'] }}" class="btn btn-sm btn-light-{{ $action['color'] }}">{{ $action['label'] }}</a>
+                                @empty
+                                    <span class="badge badge-light-secondary align-self-center">Tidak ada aksi</span>
+                                @endforelse
                             </div>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center py-8 text-muted">Belum ada akreditasi.</td></tr>
+                    <tr>
+                        <td colspan="7">
+                            <div class="text-center py-12 text-muted border rounded bg-light">
+                                Belum ada akreditasi yang cocok dengan filter ini. Coba reset filter atau buat pengajuan baru.
+                                <div class="mt-4">
+                                    <a href="{{ route('superadmin.akreditasi.pengajuan') }}" class="btn btn-sm btn-primary">Buat Pengajuan</a>
+                                    <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">Reset Filter</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
                 @endforelse
             </tbody>
         </table>

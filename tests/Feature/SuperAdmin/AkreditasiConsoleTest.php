@@ -42,6 +42,8 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.index'))
             ->assertOk()
             ->assertSee('Workflow Console Akreditasi')
+            ->assertSee('Gunakan status sebagai petunjuk aksi berikutnya')
+            ->assertSee('Status dan Langkah Berikutnya')
             ->assertSee('Pesantren Detail')
             ->assertSee('Detail');
     }

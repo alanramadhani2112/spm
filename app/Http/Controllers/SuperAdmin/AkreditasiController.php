@@ -56,6 +56,7 @@ class AkreditasiController extends Controller
         $statusOptions = Akreditasi::STATUS_LABELS;
         $statusColors = $this->statusColors();
         $periodOptions = $this->periodOptions();
+        $nextStepLabels = $this->nextStepLabels();
 
         return view('superadmin.akreditasi.index', compact(
             'akreditasis',
@@ -66,6 +67,7 @@ class AkreditasiController extends Controller
             'period',
             'status',
             'search',
+            'nextStepLabels',
         ));
     }
 
@@ -752,6 +754,33 @@ class AkreditasiController extends Controller
         return $data + $routes + [
             'akreditasiRoutePrefix' => 'superadmin.akreditasi',
             'backRouteName' => 'superadmin.akreditasi.index',
+        ];
+    }
+
+    private function nextStepLabels(): array
+    {
+        return [
+            Akreditasi::STATUS_DRAFT_PROFILE => 'Lengkapi profil pesantren',
+            Akreditasi::STATUS_INITIAL_SUBMITTED => 'Review pengajuan awal',
+            Akreditasi::STATUS_ASSESSMENT_OPEN => 'Menunggu assessment pesantren',
+            Akreditasi::STATUS_INITIAL_REJECTED => 'Menunggu resubmit pesantren',
+            Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW => 'Review administrasi tahap 1',
+            Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION => 'Menunggu perbaikan tahap 1',
+            Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW => 'Putuskan batas koreksi tahap 1',
+            Akreditasi::STATUS_ASSESSOR_ASSIGNMENT => 'Tugaskan asesor',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW => 'Review asesor tahap 2',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION => 'Menunggu perbaikan tahap 2',
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW => 'Putuskan batas koreksi tahap 2',
+            Akreditasi::STATUS_VISITASI_SCHEDULED => 'Pantau jadwal visitasi',
+            Akreditasi::STATUS_VISITASI_COMPLETED => 'Input nilai pasca visitasi',
+            Akreditasi::STATUS_POST_VISITASI_SCORING => 'Lengkapi NA1, NA2, dan NK',
+            Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED => 'Validasi hasil visitasi',
+            Akreditasi::STATUS_ADMIN_FINAL_VALIDATION => 'Finalisasi validasi akhir',
+            Akreditasi::STATUS_ADMINISTRATIVE_REJECTED => 'Menunggu tindak lanjut administratif',
+            Akreditasi::STATUS_FINAL_APPROVED => 'Terbitkan SK / selesaikan',
+            Akreditasi::STATUS_FINAL_REJECTED => 'Menunggu potensi banding',
+            Akreditasi::STATUS_APPEAL_SUBMITTED => 'Proses permohonan banding',
+            Akreditasi::STATUS_COMPLETED => 'Selesai',
         ];
     }
 

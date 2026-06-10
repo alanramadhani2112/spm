@@ -25,7 +25,10 @@ class DashboardExportTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('superadmin.dashboard', ['period' => 'all']))
             ->assertOk()
-            ->assertSee('Dashboard Super Admin');
+            ->assertSee('Dashboard Super Admin')
+            ->assertSee('Ringkasan Nasional Akreditasi')
+            ->assertSee('Apa yang perlu dipantau hari ini?')
+            ->assertSee('Prioritas', false);
 
         $this->actingAs($superAdmin)
             ->get(route('superadmin.dashboard.export'))
