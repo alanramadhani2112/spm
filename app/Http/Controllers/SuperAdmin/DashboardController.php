@@ -4,6 +4,8 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
+use App\Models\Assessment;
+use App\Support\SuperAdminSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -35,6 +37,10 @@ class DashboardController extends Controller
         $periodOptions = $this->periodOptions();
         $statusColors = $this->statusColors();
         $priorityCards = $this->priorityCards($baseQuery, $overdueCount);
+        $operationalQueues = $this->operationalQueues($baseQuery, $period);
+        $slaBreaches = $this->slaBreaches($baseQuery, $period);
+        $assessorWorkloads = $this->assessorWorkloads($period);
+        $urgentAkreditasis = $this->urgentAkreditasis($baseQuery);
         $recentAkreditasis = (clone $baseQuery)
             ->with('user.pesantren')
             ->latest()
@@ -51,6 +57,10 @@ class DashboardController extends Controller
             'periodOptions',
             'statusColors',
             'priorityCards',
+            'operationalQueues',
+            'slaBreaches',
+            'assessorWorkloads',
+            'urgentAkreditasis',
             'recentAkreditasis',
         ));
     }
@@ -155,6 +165,166 @@ class DashboardController extends Controller
                 'route' => route('superadmin.akreditasi.index'),
             ],
         ];
+    }
+
+    private function operationalQueues($baseQuery, string $period): array
+    {
+        return [
+            $this->queueCard($baseQuery, 'Review Awal', 'Pengajuan baru menunggu keputusan.', [Akreditasi::STATUS_INITIAL_SUBMITTED], 'primary', 'ki-search-list', $period),
+            $this->queueCard($baseQuery, 'Tahap 1', 'Administrasi dan limit koreksi tahap 1.', [
+                Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
+                Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
+            ], 'warning', 'ki-notepad-edit', $period),
+            $this->queueCard($baseQuery, 'Assign Asesor', 'Belum punya tim asesor aktif.', [Akreditasi::STATUS_ASSESSOR_ASSIGNMENT], 'info', 'ki-people', $period),
+            $this->queueCard($baseQuery, 'Tahap 2', 'Review asesor dan limit koreksi tahap 2.', [
+                Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+                Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
+            ], 'warning', 'ki-teacher', $period),
+            $this->queueCard($baseQuery, 'Visitasi', 'Jadwal visitasi yang perlu dipantau.', [Akreditasi::STATUS_VISITASI_SCHEDULED], 'info', 'ki-calendar-tick', $period),
+            $this->queueCard($baseQuery, 'Scoring', 'NA1, NA2, NK, dan laporan visitasi.', [Akreditasi::STATUS_POST_VISITASI_SCORING], 'danger', 'ki-chart-line', $period),
+            $this->queueCard($baseQuery, 'Validasi Akhir', 'Hasil visitasi siap difinalisasi.', [
+                Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+                Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+            ], 'success', 'ki-shield-tick', $period),
+            $this->queueCard($baseQuery, 'Terbitkan SK', 'Final approved belum selesai/SK.', [Akreditasi::STATUS_FINAL_APPROVED], 'success', 'ki-award', $period),
+            $this->queueCard($baseQuery, 'Banding', 'Permohonan banding perlu keputusan.', [Akreditasi::STATUS_APPEAL_SUBMITTED], 'warning', 'ki-message-question', $period),
+        ];
+    }
+
+    private function queueCard($baseQuery, string $label, string $description, array $statuses, string $color, string $icon, string $period): array
+    {
+        $count = (clone $baseQuery)->whereIn('status', $statuses)->count();
+        $status = count($statuses) === 1 ? $statuses[0] : $statuses[0];
+
+        return [
+            'label' => $label,
+            'description' => $description,
+            'count' => $count,
+            'color' => $color,
+            'icon' => $icon,
+            'route' => route('superadmin.akreditasi.index', [
+                'period' => $period,
+                'status' => $status,
+            ]),
+        ];
+    }
+
+    private function slaBreaches($baseQuery, string $period): array
+    {
+        $phaseMap = [
+            'initial_review' => [
+                'label' => 'Review Awal',
+                'statuses' => [Akreditasi::STATUS_INITIAL_SUBMITTED],
+            ],
+            'assessment_awal' => [
+                'label' => 'Assessment',
+                'statuses' => [Akreditasi::STATUS_ASSESSMENT_OPEN],
+            ],
+            'admin_stage_1' => [
+                'label' => 'Review Tahap 1',
+                'statuses' => [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW],
+            ],
+            'stage_1_correction' => [
+                'label' => 'Koreksi Tahap 1',
+                'statuses' => [Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION],
+            ],
+            'assessor_stage_2' => [
+                'label' => 'Review Tahap 2',
+                'statuses' => [Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW],
+            ],
+            'stage_2_correction' => [
+                'label' => 'Koreksi Tahap 2',
+                'statuses' => [Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION],
+            ],
+            'scoring' => [
+                'label' => 'Scoring',
+                'statuses' => [Akreditasi::STATUS_POST_VISITASI_SCORING],
+            ],
+        ];
+
+        return collect($phaseMap)
+            ->map(function (array $phase, string $phaseKey) use ($baseQuery, $period) {
+                $settingKey = SuperAdminSettings::deadlineKeyForPhase($phaseKey);
+                $days = $settingKey ? SuperAdminSettings::int($settingKey) : null;
+
+                if ($days === null) {
+                    $count = 0;
+                } else {
+                    $cutoff = now()->subDays($days);
+                    $count = (clone $baseQuery)
+                        ->whereIn('status', $phase['statuses'])
+                        ->where(function ($query) use ($cutoff) {
+                            $query->where('status_changed_at', '<=', $cutoff)
+                                ->orWhere(function ($fallbackQuery) use ($cutoff) {
+                                    $fallbackQuery->whereNull('status_changed_at')
+                                        ->where('created_at', '<=', $cutoff);
+                                });
+                        })
+                        ->count();
+                }
+
+                return [
+                    'label' => $phase['label'],
+                    'days' => $days,
+                    'count' => $count,
+                    'route' => route('superadmin.akreditasi.index', [
+                        'period' => $period,
+                        'status' => $phase['statuses'][0],
+                    ]),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function assessorWorkloads(string $period)
+    {
+        return Assessment::query()
+            ->with(['asesor', 'akreditasi'])
+            ->whereHas('akreditasi', function ($query) use ($period) {
+                $query->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
+                    ->when($period !== 'all', fn ($periodQuery) => $periodQuery->whereYear('created_at', (int) $period));
+            })
+            ->get()
+            ->groupBy('asesor_id')
+            ->map(function ($assignments) {
+                $asesor = $assignments->first()?->asesor;
+
+                return [
+                    'name' => $asesor?->name ?? 'Asesor',
+                    'email' => $asesor?->email,
+                    'total' => $assignments->count(),
+                    'ketua' => $assignments->where('tipe', 'ketua')->count(),
+                    'anggota' => $assignments->where('tipe', 'anggota')->count(),
+                ];
+            })
+            ->sortByDesc('total')
+            ->take(5)
+            ->values();
+    }
+
+    private function urgentAkreditasis($baseQuery)
+    {
+        $priorityStatuses = [
+            Akreditasi::STATUS_INITIAL_SUBMITTED,
+            Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
+            Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
+            Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
+            Akreditasi::STATUS_POST_VISITASI_SCORING,
+            Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+            Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+            Akreditasi::STATUS_FINAL_APPROVED,
+            Akreditasi::STATUS_APPEAL_SUBMITTED,
+        ];
+
+        return (clone $baseQuery)
+            ->with(['user.pesantren', 'bandings'])
+            ->whereIn('status', $priorityStatuses)
+            ->orderByRaw('COALESCE(status_changed_at, created_at) asc')
+            ->limit(6)
+            ->get();
     }
 
     private function statusColors(): array

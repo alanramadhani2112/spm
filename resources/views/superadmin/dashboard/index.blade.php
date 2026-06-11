@@ -94,6 +94,155 @@
     @endforeach
 </div>
 
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-gray-900 mb-0">Operational Board</h3>
+    <span class="fs-8 text-muted">Antrian kerja lintas status Super Admin</span>
+</div>
+
+<div class="row g-5 g-xl-8 mb-8">
+    <div class="col-xl-8">
+        <div class="card card-flush h-100">
+            <div class="card-header align-items-center py-5">
+                <div class="card-title d-flex flex-column">
+                    <h3 class="fw-bold text-gray-900 m-0">Antrian God Mode</h3>
+                    <span class="text-muted fs-7 mt-1">Setiap kartu membuka workflow console pada status terkait.</span>
+                </div>
+            </div>
+            <div class="card-body pt-0">
+                <div class="row g-4">
+                    @foreach($operationalQueues as $queue)
+                        <div class="col-md-4">
+                            <a href="{{ $queue['route'] }}" class="border border-gray-300 border-dashed rounded p-4 d-flex align-items-center justify-content-between gap-3 text-decoration-none hover-elevate-up h-100">
+                                <div class="d-flex align-items-center gap-3 min-w-0">
+                                    <span class="symbol symbol-35px flex-shrink-0">
+                                        <span class="symbol-label bg-light-{{ $queue['color'] }}"><i class="ki-outline {{ $queue['icon'] }} fs-4 text-{{ $queue['color'] }}"></i></span>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div class="fw-bold text-gray-900 text-truncate">{{ $queue['label'] }}</div>
+                                        <div class="fs-8 text-muted text-truncate">{{ $queue['description'] }}</div>
+                                    </div>
+                                </div>
+                                <span class="badge badge-light-{{ $queue['color'] }} fs-7">{{ $queue['count'] }}</span>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card card-flush h-100">
+            <div class="card-header py-5">
+                <div class="card-title d-flex flex-column">
+                    <h3 class="fw-bold text-gray-900 m-0">SLA Breach</h3>
+                    <span class="text-muted fs-7 mt-1">Berdasarkan deadline Super Admin Settings.</span>
+                </div>
+            </div>
+            <div class="card-body pt-0">
+                <div class="d-grid gap-3">
+                    @foreach($slaBreaches as $breach)
+                        <a href="{{ $breach['route'] }}" class="d-flex align-items-center justify-content-between gap-3 py-2 text-decoration-none">
+                            <div>
+                                <div class="fw-semibold text-gray-900">{{ $breach['label'] }}</div>
+                                <div class="fs-8 text-muted">{{ $breach['days'] ?? '-' }} hari batas kerja</div>
+                            </div>
+                            <span class="badge badge-light-{{ $breach['count'] > 0 ? 'danger' : 'success' }}">{{ $breach['count'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-5 g-xl-8 mb-8">
+    <div class="col-xl-7">
+        <div class="card card-flush h-100">
+            <div class="card-header py-5">
+                <div class="card-title d-flex flex-column">
+                    <h3 class="fw-bold text-gray-900 m-0">Antrian Paling Mendesak</h3>
+                    <span class="text-muted fs-7 mt-1">Diurutkan dari perubahan status paling lama.</span>
+                </div>
+            </div>
+            <div class="card-body pt-0">
+                <div class="table-responsive">
+                    <table class="table align-middle table-row-dashed table-row-gray-300 fs-6 gy-4 mb-0">
+                        <thead>
+                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                <th class="min-w-220px">Pesantren</th>
+                                <th class="min-w-160px">Status</th>
+                                <th class="text-end min-w-100px">Umur</th>
+                                <th class="text-end min-w-80px">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="fw-semibold text-gray-700">
+                            @forelse($urgentAkreditasis as $akreditasi)
+                                @php
+                                    $color = $statusColors[$akreditasi->status] ?? 'secondary';
+                                    $anchorDate = $akreditasi->status_changed_at ?? $akreditasi->created_at;
+                                @endphp
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-gray-900">{{ $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? 'Pesantren' }}</div>
+                                        <div class="fs-8 text-muted">{{ $akreditasi->uuid }}</div>
+                                    </td>
+                                    <td><span class="badge badge-light-{{ $color }}">{{ $akreditasi->getStatusLabel() }}</span></td>
+                                    <td class="text-end">{{ $anchorDate ? (int) $anchorDate->diffInDays(now()) : 0 }} hari</td>
+                                    <td class="text-end">
+                                        <a href="{{ route('superadmin.akreditasi.show', $akreditasi) }}" class="btn btn-sm btn-light-primary">Detail</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="text-center py-10 text-muted border rounded bg-light">Tidak ada antrian prioritas untuk periode ini.</div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card card-flush h-100">
+            <div class="card-header py-5">
+                <div class="card-title d-flex flex-column">
+                    <h3 class="fw-bold text-gray-900 m-0">Workload Asesor</h3>
+                    <span class="text-muted fs-7 mt-1">Assignment aktif tertinggi pada periode terpilih.</span>
+                </div>
+            </div>
+            <div class="card-body pt-0">
+                <div class="d-grid gap-5">
+                    @forelse($assessorWorkloads as $workload)
+                        @php $loadPct = min(100, $workload['total'] * 20); @endphp
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                <div class="min-w-0">
+                                    <div class="fw-bold text-gray-900 text-truncate">{{ $workload['name'] }}</div>
+                                    <div class="fs-8 text-muted text-truncate">{{ $workload['email'] ?? 'Email belum tersedia' }}</div>
+                                </div>
+                                <span class="badge badge-light-primary">{{ $workload['total'] }}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="progress h-8px flex-grow-1 bg-light-primary">
+                                    <div class="progress-bar bg-primary" style="width: {{ $loadPct }}%"></div>
+                                </div>
+                                <span class="fs-8 text-muted min-w-90px">K: {{ $workload['ketua'] }} / A: {{ $workload['anggota'] }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-10 text-muted border rounded bg-light">Belum ada assignment asesor aktif.</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-5 g-xl-8">
     <div class="col-xl-8">
         <div class="card card-flush h-100">
