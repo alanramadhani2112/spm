@@ -10,6 +10,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -272,10 +273,17 @@ class MasterDataController extends Controller
 
     public function roles()
     {
-        $roles = Role::with('permissions')->orderBy('id')->get();
+        $roles = Role::with('permissions')->withCount('users')->orderBy('id')->get();
         $permissions = Permission::orderBy('key')->get()->groupBy(fn (Permission $permission) => str($permission->key)->before('.')->toString());
+        $totalPermissions = $permissions->flatten()->count();
+        $roleStats = [
+            'total' => $roles->count(),
+            'permissions' => $totalPermissions,
+            'assigned_permissions' => $roles->sum(fn (Role $role) => $role->parameter === 'super_admin' ? $totalPermissions : $role->permissions->count()),
+            'with_users' => $roles->filter(fn (Role $role) => $role->users_count > 0)->count(),
+        ];
 
-        return view('superadmin.master-data.roles.index', compact('roles', 'permissions'));
+        return view('superadmin.master-data.roles.index', compact('roles', 'permissions', 'roleStats', 'totalPermissions'));
     }
 
     public function updateRolePermissions(Request $request, Role $role)
@@ -294,12 +302,77 @@ class MasterDataController extends Controller
         return redirect()->route('superadmin.master-data.roles.index')->with('success', 'Permission role berhasil diperbarui.');
     }
 
-    public function users()
+    public function users(Request $request)
     {
-        $users = User::with('role')->orderBy('name')->get();
-        $roles = Role::orderBy('id')->get();
+        $statusOptions = [
+            'active' => 'Aktif',
+            'inactive' => 'Nonaktif',
+        ];
+        $filters = [
+            'q' => trim((string) $request->query('q', '')),
+            'role' => $request->query('role'),
+            'status' => $request->query('status'),
+        ];
 
-        return view('superadmin.master-data.users.index', compact('users', 'roles'));
+        if (! array_key_exists((string) $filters['status'], $statusOptions)) {
+            $filters['status'] = null;
+        }
+
+        $roles = Role::withCount('users')->orderBy('id')->get();
+        $query = User::with('role')
+            ->when($filters['q'] !== '', function ($query) use ($filters) {
+                $keyword = '%'.$filters['q'].'%';
+
+                $query->where(function ($query) use ($keyword) {
+                    $query->where('name', 'like', $keyword)
+                        ->orWhere('email', 'like', $keyword)
+                        ->orWhere('uuid', 'like', $keyword)
+                        ->orWhere('sso_id', 'like', $keyword)
+                        ->orWhere('m_id', 'like', $keyword)
+                        ->orWhere('nbm', 'like', $keyword)
+                        ->orWhereHas('role', fn ($roleQuery) => $roleQuery->where('name', 'like', $keyword));
+                });
+            })
+            ->when(filled($filters['role']), fn ($query) => $query->where('role_id', $filters['role']))
+            ->when(filled($filters['status']), fn ($query) => $query->where('status', $filters['status']))
+            ->orderBy('name');
+
+        $users = $query->get();
+        $hasFilters = collect($filters)->contains(fn ($value) => filled($value));
+        $userStats = [
+            'total' => User::count(),
+            'active' => User::where('status', 'active')->count(),
+            'inactive' => User::where('status', 'inactive')->count(),
+            'roles' => $roles->count(),
+            'linked_sso' => User::whereNotNull('sso_id')->count(),
+        ];
+
+        return view('superadmin.master-data.users.index', compact('users', 'roles', 'filters', 'hasFilters', 'statusOptions', 'userStats'));
+    }
+
+    public function storeUser(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+            'status' => ['required', 'string', Rule::in(['active', 'inactive'])],
+            'm_id' => ['nullable', 'string', 'max:100'],
+            'nbm' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        User::forceCreate([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make(Str::random(64)),
+            'role_id' => $validated['role_id'],
+            'uuid' => (string) Str::uuid(),
+            'status' => $validated['status'],
+            'm_id' => $validated['m_id'] ?? null,
+            'nbm' => $validated['nbm'] ?? null,
+        ]);
+
+        return redirect()->route('superadmin.master-data.users.index')->with('success', 'Pengguna berhasil diundang. Akun siap ditautkan saat login Muhammadiyah ID.');
     }
 
     public function updateUser(Request $request, User $user)

@@ -127,6 +127,59 @@ class MasterDataTest extends TestCase
             ->assertSee('Cakupan Asesor');
     }
 
+    public function test_roles_page_displays_permission_matrix_polish(): void
+    {
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.roles.index'))
+            ->assertOk()
+            ->assertSeeText('Matriks Role & Permission')
+            ->assertSeeText('Ringkasan Role')
+            ->assertSeeText('Mode aman aktif')
+            ->assertSeeText('Edit Permission')
+            ->assertSeeText('Permission Tersedia');
+    }
+
+    public function test_users_page_displays_access_control_polish(): void
+    {
+        $user = User::factory()->create(['role_id' => 3, 'status' => 'active']);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.index'))
+            ->assertOk()
+            ->assertSeeText('Control Center Akses Pengguna')
+            ->assertSeeText('Filter Akun')
+            ->assertSeeText('Tambah / Undang Pengguna')
+            ->assertSeeText('Menunggu SSO')
+            ->assertSee($user->email)
+            ->assertSeeText('Role & Permission');
+    }
+
+    public function test_super_admin_can_pre_register_user_for_muhammadiyah_sso(): void
+    {
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.store'), [
+                'name' => 'User SSO Test',
+                'email' => 'user.sso@example.com',
+                'm_id' => '0000 0000 0000 0001',
+                'nbm' => '123456',
+                'role_id' => $role->id,
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'User SSO Test',
+            'email' => 'user.sso@example.com',
+            'm_id' => '0000 0000 0000 0001',
+            'nbm' => '123456',
+            'role_id' => $role->id,
+            'status' => 'active',
+            'sso_id' => null,
+        ]);
+    }
+
     public function test_super_admin_can_update_role_permissions(): void
     {
         $role = Role::where('parameter', 'pesantren')->firstOrFail();

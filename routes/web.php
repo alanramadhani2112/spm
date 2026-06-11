@@ -161,6 +161,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
+        Route::post('/users', [MasterDataController::class, 'storeUser'])->name('users.store');
         Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])->name('users.update');
     });
 
