@@ -6,12 +6,14 @@ use App\Models\AkreditasiAuditLog;
 
 class AuditTrailService
 {
-    public function log(string $actionType, int $akreditasiId, int $userId, array $metadata = []): void
+    public function log(string $actionType, ?int $akreditasiId, int $userId, array $metadata = [], ?string $reason = null): void
     {
         AkreditasiAuditLog::create([
             'action_type' => $actionType,
-            'akreditasi_id' => $akreditasiId,
+            'akreditasi_id' => $akreditasiId ?: null,
             'user_id' => $userId,
+            'actor_user_id' => $userId,
+            'reason' => $reason,
             'metadata' => $metadata,
         ]);
     }

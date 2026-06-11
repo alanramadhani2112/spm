@@ -9,6 +9,7 @@ use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -16,6 +17,10 @@ use Illuminate\Validation\Rule;
 
 class MasterDataController extends Controller
 {
+    public function __construct(
+        private AuditTrailService $auditTrail,
+    ) {}
+
     public function index()
     {
         $stats = [
@@ -44,10 +49,15 @@ class MasterDataController extends Controller
             'nama' => ['required', 'string', 'max:255'],
         ]);
 
-        MasterEdpmKomponen::create([
+        $komponen = MasterEdpmKomponen::create([
             'kode' => $validated['kode'],
             'name' => $validated['nama'],
             'nama' => $validated['nama'],
+        ]);
+
+        $this->auditTrail->log('master_edpm_komponen_created', null, auth()->id(), [
+            'komponen_id' => $komponen->id,
+            'new' => $komponen->only(['kode', 'nama']),
         ]);
 
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Komponen EDPM berhasil ditambahkan.');
@@ -60,10 +70,18 @@ class MasterDataController extends Controller
             'nama' => ['required', 'string', 'max:255'],
         ]);
 
+        $before = $komponen->only(['kode', 'nama']);
+
         $komponen->update([
             'kode' => $validated['kode'],
             'name' => $validated['nama'],
             'nama' => $validated['nama'],
+        ]);
+
+        $this->auditTrail->log('master_edpm_komponen_updated', null, auth()->id(), [
+            'komponen_id' => $komponen->id,
+            'old' => $before,
+            'new' => $komponen->fresh()->only(['kode', 'nama']),
         ]);
 
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Komponen EDPM berhasil diperbarui.');
@@ -71,7 +89,13 @@ class MasterDataController extends Controller
 
     public function destroyKomponen(MasterEdpmKomponen $komponen)
     {
+        $before = $komponen->only(['id', 'kode', 'nama']);
+
         $komponen->delete();
+
+        $this->auditTrail->log('master_edpm_komponen_deleted', null, auth()->id(), [
+            'old' => $before,
+        ]);
 
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Komponen EDPM berhasil dihapus.');
     }
@@ -85,12 +109,17 @@ class MasterDataController extends Controller
             'deskripsi' => ['nullable', 'string'],
         ]);
 
-        MasterEdpmButir::create([
+        $butir = MasterEdpmButir::create([
             'komponen_id' => $validated['komponen_id'],
             'kode' => $validated['kode'] ?? null,
             'name' => $validated['nama'],
             'nama' => $validated['nama'],
             'deskripsi' => $validated['deskripsi'] ?? null,
+        ]);
+
+        $this->auditTrail->log('master_edpm_butir_created', null, auth()->id(), [
+            'butir_id' => $butir->id,
+            'new' => $butir->only(['komponen_id', 'kode', 'nama', 'deskripsi']),
         ]);
 
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Butir EDPM berhasil ditambahkan.');
@@ -105,6 +134,8 @@ class MasterDataController extends Controller
             'deskripsi' => ['nullable', 'string'],
         ]);
 
+        $before = $butir->only(['komponen_id', 'kode', 'nama', 'deskripsi']);
+
         $butir->update([
             'komponen_id' => $validated['komponen_id'],
             'kode' => $validated['kode'] ?? null,
@@ -113,12 +144,24 @@ class MasterDataController extends Controller
             'deskripsi' => $validated['deskripsi'] ?? null,
         ]);
 
+        $this->auditTrail->log('master_edpm_butir_updated', null, auth()->id(), [
+            'butir_id' => $butir->id,
+            'old' => $before,
+            'new' => $butir->fresh()->only(['komponen_id', 'kode', 'nama', 'deskripsi']),
+        ]);
+
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Butir EDPM berhasil diperbarui.');
     }
 
     public function destroyButir(MasterEdpmButir $butir)
     {
+        $before = $butir->only(['id', 'komponen_id', 'kode', 'nama', 'deskripsi']);
+
         $butir->delete();
+
+        $this->auditTrail->log('master_edpm_butir_deleted', null, auth()->id(), [
+            'old' => $before,
+        ]);
 
         return redirect()->route('superadmin.master-data.edpm.index')->with('success', 'Butir EDPM berhasil dihapus.');
     }
@@ -154,7 +197,12 @@ class MasterDataController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['template_path'] = $this->storeDocumentCategoryTemplate($request);
 
-        DocumentCategory::create($validated);
+        $category = DocumentCategory::create($validated);
+
+        $this->auditTrail->log('document_category_created', null, auth()->id(), [
+            'category_id' => $category->id,
+            'new' => $category->only(['name', 'code', 'required_for_phase', 'visible_to_roles', 'asesor_scope', 'is_active', 'template_path']),
+        ]);
 
         return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Aturan kategori dokumen berhasil ditambahkan.');
     }
@@ -169,21 +217,43 @@ class MasterDataController extends Controller
             $validated['template_path'] = $templatePath;
         }
 
+        $before = $category->only(['name', 'code', 'required_for_phase', 'visible_to_roles', 'asesor_scope', 'is_active', 'template_path']);
+
         $category->update($validated);
+
+        $this->auditTrail->log('document_category_updated', null, auth()->id(), [
+            'category_id' => $category->id,
+            'old' => $before,
+            'new' => $category->fresh()->only(['name', 'code', 'required_for_phase', 'visible_to_roles', 'asesor_scope', 'is_active', 'template_path']),
+        ]);
 
         return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Aturan kategori dokumen berhasil diperbarui.');
     }
 
     public function toggleDocumentCategory(DocumentCategory $category)
     {
+        $oldStatus = $category->is_active;
+
         $category->update(['is_active' => ! $category->is_active]);
+
+        $this->auditTrail->log('document_category_toggled', null, auth()->id(), [
+            'category_id' => $category->id,
+            'old' => ['is_active' => $oldStatus],
+            'new' => ['is_active' => $category->fresh()->is_active],
+        ]);
 
         return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Status kategori dokumen berhasil diubah.');
     }
 
     public function destroyDocumentCategory(DocumentCategory $category)
     {
+        $before = $category->only(['id', 'name', 'code', 'required_for_phase', 'visible_to_roles', 'asesor_scope', 'is_active', 'template_path']);
+
         $category->delete();
+
+        $this->auditTrail->log('document_category_deleted', null, auth()->id(), [
+            'old' => $before,
+        ]);
 
         return redirect()->route('superadmin.master-data.document-categories.index')->with('success', 'Kategori dokumen berhasil dihapus.');
     }
@@ -291,13 +361,28 @@ class MasterDataController extends Controller
         $validated = $request->validate([
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['integer', 'exists:permissions,id'],
+            'reason' => ['required', 'string', 'min:3'],
         ]);
 
+        $oldPermissionIds = $role->permissions()->pluck('permissions.id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+
         if ($role->parameter === 'super_admin') {
-            $role->permissions()->sync(Permission::pluck('id')->all());
+            $newPermissionIds = Permission::pluck('id')->map(fn ($id) => (int) $id)->sort()->values()->all();
+            $role->permissions()->sync($newPermissionIds);
         } else {
-            $role->permissions()->sync($validated['permissions'] ?? []);
+            $newPermissionIds = collect($validated['permissions'] ?? [])->map(fn ($id) => (int) $id)->sort()->values()->all();
+            $role->permissions()->sync($newPermissionIds);
         }
+
+        $this->auditTrail->log('role_permissions_updated', null, auth()->id(), [
+            'role_id' => $role->id,
+            'role_name' => $role->name,
+            'role_parameter' => $role->parameter,
+            'old_permission_ids' => $oldPermissionIds,
+            'new_permission_ids' => $newPermissionIds,
+            'added_permission_ids' => array_values(array_diff($newPermissionIds, $oldPermissionIds)),
+            'removed_permission_ids' => array_values(array_diff($oldPermissionIds, $newPermissionIds)),
+        ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.roles.index')->with('success', 'Permission role berhasil diperbarui.');
     }
@@ -361,7 +446,7 @@ class MasterDataController extends Controller
             'nbm' => ['nullable', 'string', 'max:100'],
         ]);
 
-        User::forceCreate([
+        $user = User::forceCreate([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make(Str::random(64)),
@@ -372,6 +457,11 @@ class MasterDataController extends Controller
             'nbm' => $validated['nbm'] ?? null,
         ]);
 
+        $this->auditTrail->log('user_invited', null, auth()->id(), [
+            'user_id' => $user->id,
+            'new' => $user->only(['name', 'email', 'role_id', 'status', 'm_id', 'nbm']),
+        ]);
+
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Pengguna berhasil diundang. Akun siap ditautkan saat login Muhammadiyah ID.');
     }
 
@@ -380,9 +470,22 @@ class MasterDataController extends Controller
         $validated = $request->validate([
             'role_id' => ['required', 'integer', 'exists:roles,id'],
             'status' => ['required', 'string', Rule::in(['active', 'inactive'])],
+            'reason' => ['required', 'string', 'min:3'],
         ]);
 
-        $user->forceFill($validated)->save();
+        $before = $user->only(['role_id', 'status']);
+
+        $user->forceFill([
+            'role_id' => $validated['role_id'],
+            'status' => $validated['status'],
+        ])->save();
+
+        $this->auditTrail->log('user_access_updated', null, auth()->id(), [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'old' => $before,
+            'new' => $user->fresh()->only(['role_id', 'status']),
+        ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Akun pengguna berhasil diperbarui.');
     }

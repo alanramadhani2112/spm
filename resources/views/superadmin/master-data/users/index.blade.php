@@ -282,6 +282,11 @@
                                             </select>
                                             <div class="fs-8 text-muted mt-1">Nonaktifkan akun bila akses perlu dihentikan sementara.</div>
                                         </div>
+                                        <div>
+                                            <label for="user_reason_{{ $user->id }}" class="form-label required">Alasan Perubahan</label>
+                                            <textarea id="user_reason_{{ $user->id }}" name="reason" class="form-control form-control-solid" rows="3" placeholder="Jelaskan alasan perubahan role/status akun ini" required></textarea>
+                                            <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di audit log.</div>
+                                        </div>
                                     </form>
                                     <x-slot:footer>
                                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>

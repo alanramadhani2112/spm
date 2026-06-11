@@ -52,6 +52,11 @@ class MasterDataTest extends TestCase
             ->assertRedirect(route('superadmin.master-data.edpm.index'));
 
         $komponen = MasterEdpmKomponen::where('kode', 'KOMP_TEST')->firstOrFail();
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'master_edpm_komponen_created',
+            'user_id' => $this->superAdmin->id,
+            'akreditasi_id' => null,
+        ]);
 
         $this->actingAs($this->superAdmin)
             ->post(route('superadmin.master-data.edpm.butir.store'), [
@@ -178,6 +183,11 @@ class MasterDataTest extends TestCase
             'status' => 'active',
             'sso_id' => null,
         ]);
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'user_invited',
+            'user_id' => $this->superAdmin->id,
+            'akreditasi_id' => null,
+        ]);
     }
 
     public function test_super_admin_can_update_role_permissions(): void
@@ -188,10 +198,17 @@ class MasterDataTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->put(route('superadmin.master-data.roles.permissions.update', $role), [
                 'permissions' => [$permission->id],
+                'reason' => 'Menyesuaikan akses role pesantren.',
             ])
             ->assertRedirect(route('superadmin.master-data.roles.index'));
 
         $this->assertTrue($role->fresh()->permissions()->where('permissions.id', $permission->id)->exists());
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'role_permissions_updated',
+            'user_id' => $this->superAdmin->id,
+            'akreditasi_id' => null,
+            'reason' => 'Menyesuaikan akses role pesantren.',
+        ]);
     }
 
     public function test_super_admin_can_update_user_role_and_status(): void
@@ -203,11 +220,18 @@ class MasterDataTest extends TestCase
             ->put(route('superadmin.master-data.users.update', $user), [
                 'role_id' => $adminRole->id,
                 'status' => 'inactive',
+                'reason' => 'Akun dipindahkan ke role admin untuk pengujian.',
             ])
             ->assertRedirect(route('superadmin.master-data.users.index'));
 
         $user->refresh();
         $this->assertSame($adminRole->id, $user->role_id);
         $this->assertSame('inactive', $user->status);
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'user_access_updated',
+            'user_id' => $this->superAdmin->id,
+            'akreditasi_id' => null,
+            'reason' => 'Akun dipindahkan ke role admin untuk pengujian.',
+        ]);
     }
 }

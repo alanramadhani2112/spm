@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\AuditTrailService;
 use App\Services\MuhammadiyahIdService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Throwable;
 
 class MuhammadiyahIdController extends Controller
 {
+    public function __construct(
+        private AuditTrailService $auditTrail,
+    ) {}
+
     public function redirect(MuhammadiyahIdService $muhammadiyahId): RedirectResponse
     {
         try {
@@ -60,6 +65,7 @@ class MuhammadiyahIdController extends Controller
                 $muhammadiyahId->getUserInfo((string) $token['access_token'])
             );
             $user = $this->findOrCreateLocalUser($profile);
+            $wasLinkedToSso = filled($user->sso_id);
 
             if (($user->status ?? 'active') !== 'active') {
                 return redirect()->route('login')->withErrors([
@@ -79,6 +85,16 @@ class MuhammadiyahIdController extends Controller
                 'sso_groups' => $profile['sso_groups'],
                 'last_sso_login_at' => now(),
             ])->save();
+
+            if (! $wasLinkedToSso) {
+                $this->auditTrail->log('sso_user_linked', null, $user->id, [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'sso_id' => $profile['sso_id'],
+                    'm_id' => $profile['m_id'],
+                    'nbm' => $profile['nbm'],
+                ]);
+            }
 
             Auth::login($user, true);
             $request->session()->regenerate();

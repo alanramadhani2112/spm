@@ -200,6 +200,12 @@
                         <div class="fs-7 text-muted">Checkbox hanya aktif di modal ini untuk mengurangi perubahan tidak sengaja. Pastikan role, jumlah akun, dan cakupan permission sudah benar.</div>
                     </div>
 
+                    <div class="mb-6">
+                        <label for="permission_reason_{{ $role->id }}" class="form-label required">Alasan Perubahan</label>
+                        <textarea id="permission_reason_{{ $role->id }}" name="reason" class="form-control form-control-solid" rows="3" placeholder="Jelaskan kebutuhan perubahan permission role ini" required></textarea>
+                        <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di audit log untuk mengurangi human error dan mendukung akuntabilitas.</div>
+                    </div>
+
                     @if($permissions->isEmpty())
                         <div class="text-center py-12 text-muted border rounded bg-light">Belum ada permission.</div>
                     @else
