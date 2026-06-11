@@ -6,143 +6,33 @@
 @section('content')
 @include('superadmin.settings._nav')
 
+@php
+    $settingCards = [
+        ['key' => 'review_awal_deadline', 'label' => 'Deadline Review Awal', 'description' => 'Batas waktu tim admin melakukan review awal pengajuan.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-search-list', 'color' => 'primary', 'help' => 'Disarankan cukup singkat agar pengajuan baru cepat diproses.'],
+        ['key' => 'assessment_deadline', 'label' => 'Deadline Asesmen', 'description' => 'Batas waktu pesantren melengkapi instrumen assessment.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-document', 'color' => 'info', 'help' => 'Beri ruang cukup untuk pengisian IPM, SDM, dan EDPM/IPR.'],
+        ['key' => 'review_tahap1_deadline', 'label' => 'Deadline Review Tahap 1', 'description' => 'Batas waktu review administratif tahap 1.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-check-square', 'color' => 'warning'],
+        ['key' => 'correction_tahap1_deadline', 'label' => 'Deadline Koreksi Tahap 1', 'description' => 'Batas waktu pesantren memperbaiki data tahap 1.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-arrows-circle', 'color' => 'warning'],
+        ['key' => 'review_tahap2_deadline', 'label' => 'Deadline Review Tahap 2', 'description' => 'Batas waktu asesor melakukan review dokumen tahap 2.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-profile-user', 'color' => 'success'],
+        ['key' => 'correction_tahap2_deadline', 'label' => 'Deadline Koreksi Tahap 2', 'description' => 'Batas waktu pesantren memperbaiki dokumen tahap 2.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-notepad-edit', 'color' => 'success'],
+        ['key' => 'scoring_deadline', 'label' => 'Deadline Penilaian', 'description' => 'Batas waktu pengisian nilai setelah visitasi.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-chart-line', 'color' => 'danger'],
+        ['key' => 'banding_deadline', 'label' => 'Deadline Banding', 'description' => 'Batas waktu pesantren mengajukan banding setelah hasil diterbitkan.', 'type' => 'number', 'unit' => 'hari', 'icon' => 'ki-message-question', 'color' => 'secondary'],
+    ];
+@endphp
+
 <x-metronic.card title="Pengaturan Deadline">
-    <div class="d-grid gap-6">
-        {{-- review_awal_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="review_awal_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Review Awal (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['review_awal_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
+    <x-slot:header>
+        <span class="badge badge-light-primary">{{ count($settingCards) }} parameter</span>
+    </x-slot:header>
 
-        {{-- assessment_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="assessment_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Asesmen (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['assessment_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
+    <div class="rounded bg-light-primary p-5 mb-6">
+        <div class="fw-bold text-primary mb-1">SLA Workflow Akreditasi</div>
+        <div class="fs-7 text-muted">Atur batas hari setiap tahapan. Setiap perubahan wajib memiliki alasan dan akan tercatat di audit log.</div>
+    </div>
 
-        {{-- review_tahap1_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="review_tahap1_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Review Tahap 1 (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['review_tahap1_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
-
-        {{-- correction_tahap1_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="correction_tahap1_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Koreksi Tahap 1 (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['correction_tahap1_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
-
-        {{-- review_tahap2_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="review_tahap2_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Review Tahap 2 (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['review_tahap2_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
-
-        {{-- correction_tahap2_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="correction_tahap2_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Koreksi Tahap 2 (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['correction_tahap2_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
-
-        {{-- scoring_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="scoring_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Penilaian (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['scoring_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
-
-        {{-- banding_deadline --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="banding_deadline">
-                <label class="fs-6 fw-bold text-gray-800">Deadline Banding (hari)</label>
-                <div class="d-flex align-items-center gap-3">
-                    <x-metronic.form-input name="value" type="number" :value="old('value', $settings['banding_deadline'])" required="true" />
-                    <span class="fs-7 text-muted">hari</span>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
+    <div class="d-grid gap-5">
+        @foreach($settingCards as $setting)
+            @include('superadmin.settings._setting-card', ['setting' => $setting, 'settings' => $settings])
+        @endforeach
     </div>
 </x-metronic.card>
 @endsection

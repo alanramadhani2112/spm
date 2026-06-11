@@ -6,63 +6,27 @@
 @section('content')
 @include('superadmin.settings._nav')
 
-<x-metronic.card title="Pengaturan Nilai Visitasi (NV)">
-    <div class="d-grid gap-6">
-        {{-- nv_override_allowed --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="nv_override_allowed">
-                <label class="fs-6 fw-bold text-gray-800">Izinkan Override NV</label>
-                <p class="fs-7 text-muted">Mengizinkan admin untuk menimpa nilai visitasi yang dihitung otomatis.</p>
-                <div class="d-flex align-items-center gap-4">
-                    <label class="d-flex align-items-center gap-2 cursor-pointer fs-6 text-gray-700">
-                        <input type="radio" name="value" value="1"
-                               class="text-primary border-gray-300"
-                               {{ old('value', $settings['nv_override_allowed']) == true ? 'checked' : '' }} required>
-                        Ya
-                    </label>
-                    <label class="d-flex align-items-center gap-2 cursor-pointer fs-6 text-gray-700">
-                        <input type="radio" name="value" value="0"
-                               class="text-primary border-gray-300"
-                               {{ old('value', $settings['nv_override_allowed']) == false ? 'checked' : '' }} required>
-                        Tidak
-                    </label>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
+@php
+    $settingCards = [
+        ['key' => 'nv_override_allowed', 'label' => 'Izinkan Override NV', 'description' => 'Mengizinkan admin menimpa nilai visitasi yang dihitung otomatis.', 'type' => 'radio', 'options' => ['1' => 'Ya', '0' => 'Tidak'], 'icon' => 'ki-switch', 'color' => 'success', 'help' => 'Matikan jika nilai visitasi harus selalu mengikuti perhitungan sistem.'],
+        ['key' => 'nv_reason_mode', 'label' => 'Mode Alasan Override NV', 'description' => 'Mengatur apakah alasan override dikumpulkan kolektif atau per butir.', 'type' => 'radio', 'options' => ['collective' => 'Kolektif — Satu alasan untuk seluruh NV', 'per_butir' => 'Per Butir — Alasan untuk setiap butir penilaian'], 'icon' => 'ki-notepad-edit', 'color' => 'primary', 'help' => 'Mode per butir memberi audit lebih detail, tetapi membutuhkan input lebih banyak.'],
+    ];
+@endphp
 
-        {{-- nv_reason_mode --}}
-        <div class="rounded border border-gray-200 p-4">
-            <form method="POST" action="{{ route('superadmin.settings.update') }}" class="d-grid gap-3" data-swal-confirm="true" data-swal-title="Simpan perubahan setting?" data-swal-text="Setting Super Admin ini akan diperbarui dan tercatat di audit log." data-swal-icon="warning" data-swal-confirm-button="Ya, simpan" data-swal-confirm-class="btn btn-primary">
-                @csrf
-                <input type="hidden" name="key" value="nv_reason_mode">
-                <label class="fs-6 fw-bold text-gray-800">Mode Alasan Override NV</label>
-                <div class="d-grid gap-2">
-                    @php $reasonValue = old('value', $settings['nv_reason_mode']); @endphp
-                    <label class="d-flex align-items-center gap-2 cursor-pointer fs-6 text-gray-700">
-                        <input type="radio" name="value" value="collective"
-                               class="text-primary border-gray-300"
-                               {{ $reasonValue === 'collective' ? 'checked' : '' }} required>
-                        Kolektif — Satu alasan untuk seluruh NV
-                    </label>
-                    <label class="d-flex align-items-center gap-2 cursor-pointer fs-6 text-gray-700">
-                        <input type="radio" name="value" value="per_butir"
-                               class="text-primary border-gray-300"
-                               {{ $reasonValue === 'per_butir' ? 'checked' : '' }} required>
-                        Per Butir — Alasan untuk setiap butir penilaian
-                    </label>
-                </div>
-                <x-metronic.form-input name="reason" placeholder="Alasan perubahan..." required="true" />
-                <button type="submit" class="btn btn-primary px-4 py-2 fs-6 fw-bold">
-                    Simpan
-                </button>
-            </form>
-        </div>
+<x-metronic.card title="Pengaturan Nilai Visitasi (NV)">
+    <x-slot:header>
+        <span class="badge badge-light-success">{{ count($settingCards) }} parameter</span>
+    </x-slot:header>
+
+    <div class="rounded bg-light-success p-5 mb-6">
+        <div class="fw-bold text-success mb-1">Kontrol Nilai Visitasi</div>
+        <div class="fs-7 text-muted">Atur fleksibilitas override nilai visitasi dan kualitas alasan perubahan nilai.</div>
+    </div>
+
+    <div class="d-grid gap-5">
+        @foreach($settingCards as $setting)
+            @include('superadmin.settings._setting-card', ['setting' => $setting, 'settings' => $settings])
+        @endforeach
     </div>
 </x-metronic.card>
 @endsection
