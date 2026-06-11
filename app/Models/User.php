@@ -27,6 +27,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'sso_groups' => 'array',
+            'last_sso_login_at' => 'datetime',
         ];
     }
 
