@@ -5,55 +5,12 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\SuperAdminSetting;
 use App\Services\AuditTrailService;
+use App\Support\SuperAdminSettings;
 use Exception;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
-    private const SETTING_CATEGORIES = [
-        'deadline' => [
-            'review_awal_deadline', 'assessment_deadline', 'review_tahap1_deadline',
-            'correction_tahap1_deadline', 'review_tahap2_deadline', 'correction_tahap2_deadline',
-            'scoring_deadline', 'banding_deadline',
-        ],
-        'correction' => [
-            'max_siklus_tahap1', 'max_siklus_tahap2', 'action_on_limit',
-        ],
-        'document' => [
-            'kartu_kendali_wajib_before', 'laporan_wajib_before',
-        ],
-        'nv' => [
-            'nv_override_allowed', 'nv_reason_mode',
-        ],
-        'notification' => [
-            'superadmin_receives_admin_notif', 'reminder_days',
-        ],
-        'banding' => [
-            'banding_eligibility',
-        ],
-    ];
-
-    private const SETTING_DEFAULTS = [
-        'review_awal_deadline' => 5,
-        'assessment_deadline' => 14,
-        'review_tahap1_deadline' => 5,
-        'correction_tahap1_deadline' => 7,
-        'max_siklus_tahap1' => 2,
-        'review_tahap2_deadline' => 5,
-        'correction_tahap2_deadline' => 7,
-        'max_siklus_tahap2' => 2,
-        'scoring_deadline' => 7,
-        'banding_deadline' => 7,
-        'kartu_kendali_wajib_before' => 'before_admin_validation',
-        'laporan_wajib_before' => 'before_submit',
-        'nv_override_allowed' => true,
-        'nv_reason_mode' => 'collective',
-        'superadmin_receives_admin_notif' => true,
-        'reminder_days' => 7,
-        'action_on_limit' => 'reject',
-        'banding_eligibility' => 'all',
-    ];
-
     public function __construct(
         private AuditTrailService $auditTrail,
     ) {}
@@ -63,10 +20,10 @@ class SettingsController extends Controller
         $settings = SuperAdminSetting::all()->keyBy('key')->map->value;
         $categories = [];
 
-        foreach (self::SETTING_CATEGORIES as $category => $keys) {
+        foreach (SuperAdminSettings::CATEGORIES as $category => $keys) {
             $categories[$category] = [];
             foreach ($keys as $key) {
-                $categories[$category][$key] = $settings->get($key, self::SETTING_DEFAULTS[$key] ?? null);
+                $categories[$category][$key] = $settings->get($key, SuperAdminSettings::default($key));
             }
         }
 
@@ -78,7 +35,7 @@ class SettingsController extends Controller
         $request->merge(array_map('trim', $request->all()));
 
         $validated = $request->validate([
-            'key' => 'required|string|in:' . implode(',', $this->allSettingKeys()),
+            'key' => 'required|string|in:'.implode(',', $this->allSettingKeys()),
             'value' => 'required',
             'reason' => 'required|string|min:3',
         ]);
@@ -94,12 +51,14 @@ class SettingsController extends Controller
                 ['key' => $key],
                 [
                     'value' => $newValue,
-                    'description' => self::SETTING_DEFAULTS[$key] ?? null,
+                    'description' => SuperAdminSettings::default($key),
                     'updated_by' => auth()->id(),
                 ]
             );
 
-            $this->auditTrail->log('setting_changed', 0, auth()->id(), [
+            SuperAdminSettings::forget($setting->key);
+
+            $this->auditTrail->log('setting_changed', null, auth()->id(), [
                 'setting_key' => $key,
                 'old_value' => $oldValue,
                 'new_value' => $newValue,
@@ -161,8 +120,8 @@ class SettingsController extends Controller
         $dbSettings = SuperAdminSetting::all()->keyBy('key')->map->value;
         $settings = [];
 
-        foreach (self::SETTING_CATEGORIES[$category] as $key) {
-            $settings[$key] = $dbSettings->get($key, self::SETTING_DEFAULTS[$key] ?? null);
+        foreach (SuperAdminSettings::keysForCategory($category) as $key) {
+            $settings[$key] = $dbSettings->get($key, SuperAdminSettings::default($key));
         }
 
         return $settings;
@@ -170,6 +129,6 @@ class SettingsController extends Controller
 
     private function allSettingKeys(): array
     {
-        return array_merge(...array_values(self::SETTING_CATEGORIES));
+        return SuperAdminSettings::allKeys();
     }
 }

@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Models\Akreditasi;
-use App\Models\SuperAdminSetting;
+use App\Support\SuperAdminSettings;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 
 class DeadlineService
 {
@@ -112,16 +111,12 @@ class DeadlineService
 
     private function getDeadlineDays(string $phase): ?int
     {
-        $setting = Cache::remember("deadline_{$phase}", 3600, function () use ($phase) {
-            $setting = SuperAdminSetting::where('key', "deadline_{$phase}")->first();
+        $settingKey = SuperAdminSettings::deadlineKeyForPhase($phase);
 
-            if ($setting && $setting->value !== null) {
-                return (int) $setting->value;
-            }
-
+        if ($settingKey === null) {
             return self::DEFAULT_DEADLINES[$phase] ?? null;
-        });
+        }
 
-        return $setting;
+        return SuperAdminSettings::int($settingKey);
     }
 }

@@ -12,8 +12,8 @@ use App\Models\Edpm;
 use App\Models\Ipm;
 use App\Models\Pesantren;
 use App\Models\SdmPesantren;
-use App\Models\SuperAdminSetting;
 use App\Models\User;
+use App\Support\SuperAdminSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -285,8 +285,7 @@ class AkreditasiWorkflowService
 
             $nextCycle = $currentCycle + 1;
 
-            $maxCyclesSetting = SuperAdminSetting::where('key', 'max_stage_1_correction_cycles')->first();
-            $maxCycles = $maxCyclesSetting ? (int) ($maxCyclesSetting->value ?? 2) : 2;
+            $maxCycles = SuperAdminSettings::int(SuperAdminSettings::MAX_SIKLUS_TAHAP1) ?? 2;
 
             if ($nextCycle > $maxCycles) {
                 throw new WorkflowException(
@@ -597,8 +596,7 @@ class AkreditasiWorkflowService
 
             $nextCycle = $currentCycle + 1;
 
-            $maxCyclesSetting = SuperAdminSetting::where('key', 'max_stage_2_correction_cycles')->first();
-            $maxCycles = $maxCyclesSetting ? (int) ($maxCyclesSetting->value ?? 2) : 2;
+            $maxCycles = SuperAdminSettings::int(SuperAdminSettings::MAX_SIKLUS_TAHAP2) ?? 2;
 
             if ($nextCycle > $maxCycles) {
                 throw new WorkflowException(
