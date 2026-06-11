@@ -31,6 +31,15 @@
             </div>
         @endif
 
+        <div class="d-grid mb-8">
+            <a href="{{ route('auth.muhammadiyah.redirect') }}" class="btn btn-light-primary border border-primary border-dashed">
+                <i class="ki-outline ki-verify fs-2"></i>Masuk dengan Muhammadiyah ID
+            </a>
+            <div class="text-center text-muted fs-8 mt-3">Gunakan akun yang sudah diundang oleh Super Admin.</div>
+        </div>
+
+        <div class="separator separator-content my-8"><span class="w-125px text-gray-500 fw-semibold fs-7">atau login lokal</span></div>
+
         <div class="fv-row mb-8">
             <label class="form-label fs-6 fw-semibold text-gray-700">Email</label>
             <input

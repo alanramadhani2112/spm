@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'muhammadiyah_id' => [
+        'client_id' => env('MUHAMMADIYAH_ID_CLIENT_ID'),
+        'client_secret' => env('MUHAMMADIYAH_ID_CLIENT_SECRET'),
+        'redirect_uri' => env('MUHAMMADIYAH_ID_REDIRECT_URI', env('APP_URL').'/auth/muhammadiyah/callback'),
+        'base_url' => rtrim(env('MUHAMMADIYAH_ID_BASE_URL', 'https://sso.muhammadiyah.id'), '/'),
+        'api_url' => rtrim(env('MUHAMMADIYAH_ID_API_URL', 'https://sso.muhammadiyah.id/api'), '/'),
+        'scope' => env('MUHAMMADIYAH_ID_SCOPE', 'user-info'),
+        'require_pre_registered' => env('MUHAMMADIYAH_ID_REQUIRE_PRE_REGISTERED', true),
+    ],
+
 ];

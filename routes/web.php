@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\MuhammadiyahIdController;
 use App\Http\Controllers\Pesantren\AkreditasiController;
 use App\Http\Controllers\Pesantren\DataController as PesantrenDataController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,13 @@ use Illuminate\Support\Facades\Route;
 Route::get('/login', function () {
     return view('auth.login');
 })->middleware('guest')->name('login');
+
+Route::get('/auth/muhammadiyah/redirect', [MuhammadiyahIdController::class, 'redirect'])
+    ->middleware('guest')
+    ->name('auth.muhammadiyah.redirect');
+Route::get('/auth/muhammadiyah/callback', [MuhammadiyahIdController::class, 'callback'])
+    ->middleware('guest')
+    ->name('auth.muhammadiyah.callback');
 
 Route::post('/login', function () {
     $credentials = request()->validate([
