@@ -7,7 +7,6 @@ use App\Models\Akreditasi;
 use App\Models\AkreditasiEdpm;
 use App\Models\AkreditasiRejection;
 use App\Models\Assessment;
-use App\Models\Document;
 use App\Models\Edpm;
 use App\Models\Ipm;
 use App\Models\Pesantren;
@@ -736,6 +735,8 @@ class AkreditasiWorkflowService
             );
         }
 
+        app(DocumentService::class)->assertDocumentRequirementsMet($akreditasiId, DocumentService::PHASE_BEFORE_VISITASI);
+
         DB::transaction(function () use ($akreditasi, $ketua, $tglMulai, $tglAkhir, $catatan) {
             $this->stateMachine->transition(
                 $akreditasi,
@@ -1117,15 +1118,7 @@ class AkreditasiWorkflowService
             );
         }
 
-        $laporanCount = Document::where('akreditasi_id', $akreditasiId)
-            ->where('type', DocumentService::TYPE_LAPORAN_ASESOR)
-            ->count();
-
-        if ($laporanCount === 0) {
-            throw new WorkflowException(
-                'Laporan visitasi belum diupload. Upload laporan sebelum submit hasil visitasi.'
-            );
-        }
+        app(DocumentService::class)->assertDocumentRequirementsMet($akreditasiId, DocumentService::PHASE_BEFORE_SUBMIT);
 
         $fromStatus = $akreditasi->status;
 
@@ -1163,6 +1156,8 @@ class AkreditasiWorkflowService
                 'Validasi akhir hanya dapat dilakukan pada status hasil visitasi diserahkan atau validasi akhir admin.'
             );
         }
+
+        app(DocumentService::class)->assertDocumentRequirementsMet($akreditasiId, DocumentService::PHASE_BEFORE_ADMIN_VALIDATION);
 
         if (! $approve && ! $reason) {
             throw new WorkflowException(

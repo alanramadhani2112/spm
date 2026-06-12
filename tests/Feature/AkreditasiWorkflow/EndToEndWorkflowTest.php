@@ -103,6 +103,12 @@ class EndToEndWorkflowTest extends TestCase
                 ->count()
         );
 
+        $workflow->pesantrenUploadKartuKendali(
+            $akreditasi->id,
+            $pesantrenUser->id,
+            UploadedFile::fake()->create('kartu-kendali.pdf', 120, 'application/pdf')
+        );
+
         $akreditasi = $workflow->ketuaSubmitHasilVisitasi($akreditasi->id, $ketuaAsesor->id);
         $this->assertSame(Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, $akreditasi->status);
 

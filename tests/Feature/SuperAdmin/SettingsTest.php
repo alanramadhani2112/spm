@@ -6,6 +6,7 @@ use App\Exceptions\WorkflowException;
 use App\Models\Akreditasi;
 use App\Models\AkreditasiEdpm;
 use App\Models\Assessment;
+use App\Models\Document;
 use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
 use App\Services\BandingService;
 use App\Services\DeadlineService;
+use App\Services\DocumentService;
 use App\Support\SuperAdminSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -219,6 +221,17 @@ class SettingsTest extends TestCase
         $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION);
         $butir = $this->createEdpmButir();
 
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_KARTU_KENDALI,
+            'file_path' => 'kartu-kendali.pdf',
+        ]);
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
+            'file_path' => 'laporan.pdf',
+        ]);
+
         AkreditasiEdpm::create([
             'akreditasi_id' => $akreditasi->id,
             'asesor_id' => $this->admin->id,
@@ -234,6 +247,86 @@ class SettingsTest extends TestCase
             ->adminValidasiAkhir($akreditasi->id, $this->admin->id, true, 'Override manual.', [
                 $butir->id => 4,
             ]);
+    }
+
+    public function test_kartu_kendali_requirement_blocks_admin_validation(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED);
+
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
+            'file_path' => 'laporan.pdf',
+        ]);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Dokumen wajib belum lengkap untuk fase ini: Kartu Kendali.');
+
+        app(AkreditasiWorkflowService::class)->adminValidasiAkhir($akreditasi->id, $this->admin->id, true);
+    }
+
+    public function test_laporan_requirement_can_be_deferred_until_admin_validation(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::LAPORAN_WAJIB_BEFORE,
+            'value' => DocumentService::PHASE_BEFORE_ADMIN_VALIDATION,
+        ]);
+
+        $ketuaAsesor = User::factory()->create(['role_id' => 2]);
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_POST_VISITASI_SCORING);
+        $akreditasi->forceFill([
+            'is_na1_final' => true,
+            'is_na2_final' => true,
+            'is_nk_final' => true,
+        ])->save();
+
+        Assessment::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $ketuaAsesor->id,
+            'tipe' => 'ketua',
+        ]);
+
+        $result = app(AkreditasiWorkflowService::class)
+            ->ketuaSubmitHasilVisitasi($akreditasi->id, $ketuaAsesor->id);
+
+        $this->assertSame(Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, $result->status);
+
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_KARTU_KENDALI,
+            'file_path' => 'kartu-kendali.pdf',
+        ]);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Dokumen wajib belum lengkap untuk fase ini: Laporan Visitasi.');
+
+        app(AkreditasiWorkflowService::class)->adminValidasiAkhir($result->id, $this->admin->id, true);
+    }
+
+    public function test_kartu_kendali_requirement_can_be_moved_before_visitasi(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::KARTU_KENDALI_WAJIB_BEFORE,
+            'value' => DocumentService::PHASE_BEFORE_VISITASI,
+        ]);
+
+        $ketuaAsesor = User::factory()->create(['role_id' => 2]);
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW);
+
+        Assessment::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $ketuaAsesor->id,
+            'tipe' => 'ketua',
+        ]);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Dokumen wajib belum lengkap untuk fase ini: Kartu Kendali.');
+
+        app(AkreditasiWorkflowService::class)
+            ->ketuaJadwalkanVisitasi($akreditasi->id, $ketuaAsesor->id, '2026-07-01', '2026-07-02');
     }
 
     public function test_updating_setting_clears_cached_setting_value(): void

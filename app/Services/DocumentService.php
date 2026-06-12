@@ -2,12 +2,20 @@
 
 namespace App\Services;
 
+use App\Exceptions\WorkflowException;
 use App\Models\Document;
 use App\Models\DocumentCategory;
+use App\Support\SuperAdminSettings;
 use Illuminate\Support\Collection;
 
 class DocumentService
 {
+    public const PHASE_BEFORE_VISITASI = 'before_visitasi';
+
+    public const PHASE_BEFORE_SUBMIT = 'before_submit';
+
+    public const PHASE_BEFORE_ADMIN_VALIDATION = 'before_admin_validation';
+
     const TYPE_KARTU_KENDALI = 'kartu_kendali';
 
     const TYPE_LAPORAN_ASESOR = 'laporan_asesor';
@@ -109,6 +117,8 @@ class DocumentService
      */
     public function validateDocumentRequirement(int $akreditasiId, string $phase): array
     {
+        $missing = $this->missingGlobalWorkflowDocuments($akreditasiId, $phase);
+
         $requiredCategories = DocumentCategory::where('is_active', true)
             ->where(function ($query) use ($phase) {
                 $query->whereNull('required_for_phase')
@@ -122,8 +132,6 @@ class DocumentService
             ->unique()
             ->toArray();
 
-        $missing = [];
-
         foreach ($requiredCategories as $categoryId => $categoryName) {
             if (! in_array($categoryId, $uploadedCategoryIds)) {
                 $missing[] = [
@@ -134,5 +142,69 @@ class DocumentService
         }
 
         return $missing;
+    }
+
+    public function assertDocumentRequirementsMet(int $akreditasiId, string $phase): void
+    {
+        $missing = $this->validateDocumentRequirement($akreditasiId, $phase);
+
+        if ($missing === []) {
+            return;
+        }
+
+        $names = collect($missing)->pluck('category_name')->implode(', ');
+
+        throw new WorkflowException(
+            "Dokumen wajib belum lengkap untuk fase ini: {$names}."
+        );
+    }
+
+    private function missingGlobalWorkflowDocuments(int $akreditasiId, string $phase): array
+    {
+        $missing = [];
+
+        if (
+            $this->isRequirementDue(SuperAdminSettings::get(SuperAdminSettings::KARTU_KENDALI_WAJIB_BEFORE), $phase)
+            && ! $this->hasDocumentType($akreditasiId, self::TYPE_KARTU_KENDALI)
+        ) {
+            $missing[] = [
+                'category_id' => null,
+                'category_name' => 'Kartu Kendali',
+            ];
+        }
+
+        if (
+            $this->isRequirementDue(SuperAdminSettings::get(SuperAdminSettings::LAPORAN_WAJIB_BEFORE), $phase)
+            && ! $this->hasDocumentType($akreditasiId, self::TYPE_LAPORAN_ASESOR)
+        ) {
+            $missing[] = [
+                'category_id' => null,
+                'category_name' => 'Laporan Visitasi',
+            ];
+        }
+
+        return $missing;
+    }
+
+    private function hasDocumentType(int $akreditasiId, string $type): bool
+    {
+        return Document::where('akreditasi_id', $akreditasiId)
+            ->where('type', $type)
+            ->exists();
+    }
+
+    private function isRequirementDue(mixed $requiredBefore, string $phase): bool
+    {
+        $order = [
+            self::PHASE_BEFORE_VISITASI => 1,
+            self::PHASE_BEFORE_SUBMIT => 2,
+            self::PHASE_BEFORE_ADMIN_VALIDATION => 3,
+        ];
+
+        if (! isset($order[$requiredBefore], $order[$phase])) {
+            return false;
+        }
+
+        return $order[$requiredBefore] <= $order[$phase];
     }
 }

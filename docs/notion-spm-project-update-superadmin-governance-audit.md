@@ -77,6 +77,23 @@ Perubahan:
 - `nv_override_allowed=0` memblokir override NV manual.
 - UI settings banding menyediakan opsi aktif/nonaktif.
 
+### Document Requirement Enforcement
+
+File utama:
+
+- `app/Services/DocumentService.php`
+- `app/Services/AkreditasiWorkflowService.php`
+- `tests/Feature/SuperAdmin/SettingsTest.php`
+- `tests/Feature/AkreditasiWorkflow/EndToEndWorkflowTest.php`
+
+Perubahan:
+
+- Menambahkan gate dokumen workflow untuk fase `before_visitasi`, `before_submit`, dan `before_admin_validation`.
+- `kartu_kendali_wajib_before` sekarang memblokir workflow pada fase yang dipilih bila Kartu Kendali belum tersedia.
+- `laporan_wajib_before` sekarang memblokir workflow pada fase yang dipilih bila Laporan Visitasi belum tersedia.
+- `DocumentCategory::required_for_phase` ikut diperiksa bersama requirement global dari Super Admin Settings.
+- End-to-end workflow menambahkan upload Kartu Kendali agar sesuai default `before_admin_validation`.
+
 ### Audit Trail Super Admin
 
 File utama:
@@ -146,6 +163,9 @@ Hasil:
 - `SuperAdmin\\SettingsTest`: passed, 15 tests, 21 assertions setelah settings enforcement lanjutan.
 - `SuperAdmin`: passed, 41 tests, 132 assertions setelah settings enforcement lanjutan.
 - Full test suite terbaru: passed, 112 tests, 316 assertions.
+- `SuperAdmin\\SettingsTest`: passed, 18 tests, 28 assertions setelah document requirement enforcement.
+- `SuperAdmin`: passed, 44 tests, 139 assertions setelah document requirement enforcement.
+- Full test suite terbaru: passed, 115 tests, 323 assertions.
 
 ## Status Working Tree
 
@@ -191,8 +211,9 @@ Settings key alignment dan sebagian enforcement sudah dirapikan melalui `SuperAd
 - `AkreditasiWorkflowService` memakai `ACTION_ON_LIMIT` untuk default limit decision.
 - `BandingService` memakai `BANDING_ELIGIBILITY` dan `BANDING_DEADLINE`.
 - `AkreditasiWorkflowService` memakai `NV_OVERRIDE_ALLOWED` untuk blokir override NV.
+- `DocumentService` dan `AkreditasiWorkflowService` memakai `KARTU_KENDALI_WAJIB_BEFORE` dan `LAPORAN_WAJIB_BEFORE` sebagai gate workflow.
 
-Gap tersisa adalah memperluas test enforcement untuk document requirement dan `nv_reason_mode`.
+Gap tersisa adalah memperluas enforcement untuk `nv_reason_mode`.
 
 ### Permission Enforcement
 
@@ -223,7 +244,7 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ### P0 - Stabilization / Governance
 
-1. Tambahkan enforcement tests untuk document requirement dan `nv_reason_mode`.
+1. Tambahkan enforcement tests untuk `nv_reason_mode`.
 2. Tambahkan audit coverage tambahan untuk SSO failure/unlink/reset bila fitur tersedia.
 3. Perluas permission enforcement ke aksi workflow/destructive berikutnya.
 
@@ -241,13 +262,13 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ## Next Best Task
 
-Task berikut yang paling masuk akal adalah memperluas document requirement enforcement.
+Task berikut yang paling masuk akal adalah memperluas `nv_reason_mode` enforcement.
 
 Target implementasi:
 
-- Tambahkan tests untuk document requirement.
-- Pastikan `kartu_kendali_wajib_before` dan `laporan_wajib_before` benar-benar memblokir workflow sesuai fase.
-- Tambahkan tests untuk `nv_reason_mode`.
+- Tambahkan kontrak untuk `nv_reason_mode=collective`.
+- Tambahkan kontrak untuk `nv_reason_mode=per_butir`.
+- Pastikan audit reason override NV sesuai mode.
 
 ## Notion Import Notes
 
