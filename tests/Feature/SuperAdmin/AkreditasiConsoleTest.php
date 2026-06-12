@@ -245,6 +245,78 @@ class AkreditasiConsoleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_without_review_awal_permission_cannot_accept_pengajuan(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.review_awal');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_INITIAL_SUBMITTED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.terima-pengajuan', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_stage1_permission_cannot_approve_tahap1(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.stage1_review');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.approve-tahap1', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_assign_asesor_permission_cannot_open_assign_asesor(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.assign_asesor');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.assign-asesor', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_banding_process_permission_cannot_accept_banding(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.proses_banding');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_APPEAL_SUBMITTED,
+        ]);
+        $banding = Banding::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $pesantrenUser->id,
+            'reason' => 'Mohon peninjauan ulang.',
+            'status' => 'pending',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.banding.terima', $banding->id), [
+                'response' => 'Banding diterima oleh superadmin.',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_super_admin_without_sk_publish_permission_cannot_publish_sk(): void
     {
         $this->revokeSuperAdminPermission('sk.publish');

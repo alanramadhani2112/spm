@@ -24,6 +24,7 @@ class PermissionSeeder extends Seeder
             'akreditasi.upload_kartu_kendali',
             'akreditasi.view_hasil',
             'akreditasi.submit_banding',
+            'akreditasi.proses_banding',
             'asesor.review_tahap2',
             'asesor.na1',
             'asesor.na2',

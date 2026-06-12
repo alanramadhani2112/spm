@@ -7,15 +7,15 @@ Remote: `origin/main`
 
 ## Ringkasan
 
-Project SPM sedang masuk fase stabilisasi dan governance untuk area Super Admin. Update terakhir di remote adalah commit `23c26ec` dengan judul `Add Super Admin permission enforcement`, dibuat pada 2026-06-12. Setelah commit tersebut, working tree lokal menambahkan settings enforcement lanjutan.
+Project SPM sedang masuk fase stabilisasi dan governance untuk area Super Admin. Batch terbaru dalam dokumen ini memperluas permission enforcement Super Admin dari aksi sensitif awal ke aksi workflow akreditasi berikutnya.
 
-Commit remote terakhir mengeksekusi rekomendasi P0 dari audit coverage Super Admin: document requirement enforcement untuk Kartu Kendali dan Laporan Visitasi. Update lokal terbaru memperkuat `nv_reason_mode` untuk alasan override NV kolektif dan per butir.
+Enforcement yang sudah selesai meliputi permission foundation, settings contract, document requirement, `nv_reason_mode`, dan workflow permission untuk review awal, review tahap 1, assignment asesor, serta proses banding.
 
 ## Commit Terbaru
 
-- Commit: `23c26ec`
-- Judul: `Add Super Admin permission enforcement`
-- Link: https://github.com/alanramadhani2112/spm/commit/23c26ec
+- Commit referensi sebelum batch terbaru: `8cb03f5`
+- Judul: `Enforce NV override reason modes`
+- Link: https://github.com/alanramadhani2112/spm/commit/8cb03f5
 - Author: Alan Ramadhani
 - Co-author: Claude
 
@@ -112,6 +112,25 @@ Perubahan:
 - Field `nv_override_reason` menandai bahwa alasan per butir tersimpan di audit log.
 - Form validasi akhir menampilkan textarea alasan per butir saat mode `per_butir` aktif.
 
+### Workflow Permission Expansion
+
+File utama:
+
+- `routes/web.php`
+- `database/migrations/2026_06_12_000009_add_superadmin_workflow_permissions.php`
+- `database/seeders/PermissionSeeder.php`
+- `tests/Feature/SuperAdmin/AkreditasiConsoleTest.php`
+
+Perubahan:
+
+- Menambahkan permission workflow: `akreditasi.review_awal`, `akreditasi.stage1_review`, `akreditasi.assign_asesor`, dan `akreditasi.proses_banding`.
+- Menambahkan migrasi agar permission workflow tersedia di database existing dan diberikan ke role Admin/Super Admin.
+- Memasang middleware `permission:akreditasi.review_awal` pada terima/tolak pengajuan dan buka assessment.
+- Memasang middleware `permission:akreditasi.stage1_review` pada minta perbaikan tahap 1, approve tahap 1, dan handle limit review.
+- Memasang middleware `permission:akreditasi.assign_asesor` pada assign dan reassign asesor.
+- Memasang middleware `permission:akreditasi.proses_banding` pada terima/tolak banding.
+- Menambahkan forbidden-path tests saat permission workflow dicabut dari role Super Admin.
+
 ### Audit Trail Super Admin
 
 File utama:
@@ -187,6 +206,9 @@ Hasil:
 - `SuperAdmin\\SettingsTest`: passed, 20 tests, 35 assertions setelah `nv_reason_mode` enforcement.
 - `SuperAdmin`: passed, 46 tests, 146 assertions setelah `nv_reason_mode` enforcement.
 - Full test suite terbaru: passed, 117 tests, 330 assertions.
+- `SuperAdmin\\AkreditasiConsoleTest`: passed, 16 tests, 44 assertions setelah workflow permission expansion.
+- `SuperAdmin`: passed, 50 tests, 150 assertions setelah workflow permission expansion.
+- Full test suite terbaru: passed, 121 tests, 334 assertions.
 
 ## Status Working Tree
 
@@ -208,6 +230,7 @@ Catatan: folder `.agents/` adalah konteks lokal, belum termasuk commit remote.
 
 Beberapa commit terakhir:
 
+- `8cb03f5` - Enforce NV override reason modes.
 - `c175545` - Enforce Super Admin document requirements.
 - `7951e61` - Enforce Super Admin settings contracts.
 - `23c26ec` - Add Super Admin permission enforcement.
@@ -237,7 +260,7 @@ Settings key alignment dan sebagian enforcement sudah dirapikan melalui `SuperAd
 - `DocumentService` dan `AkreditasiWorkflowService` memakai `KARTU_KENDALI_WAJIB_BEFORE` dan `LAPORAN_WAJIB_BEFORE` sebagai gate workflow.
 - `AkreditasiWorkflowService` memakai `NV_REASON_MODE` untuk menentukan alasan override kolektif atau per butir.
 
-Gap tersisa adalah ekspansi permission enforcement dan audit SSO/export.
+Gap tersisa adalah audit SSO/export, permission destructive master data yang lebih granular, dan operational control lanjutan.
 
 ### Permission Enforcement
 
@@ -250,11 +273,15 @@ Sudah ada enforcement permission granular untuk:
 - `permission:user.access.update`
 - `permission:akreditasi.final.approve`
 - `permission:sk.publish`
+- `permission:akreditasi.review_awal`
+- `permission:akreditasi.stage1_review`
+- `permission:akreditasi.assign_asesor`
+- `permission:akreditasi.proses_banding`
 
 Gap tersisa:
 
-- Perlu ekspansi bertahap ke aksi workflow sensitif lain.
-- Perlu kebijakan permission untuk export activity, destructive master data, dan SSO management ketika fitur reset/unlink tersedia.
+- Perlu ekspansi bertahap ke aksi destructive master data dan export activity.
+- Perlu kebijakan permission untuk SSO management ketika fitur reset/unlink tersedia.
 
 ### Operational Board
 
@@ -268,7 +295,7 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ### P0 - Stabilization / Governance
 
-1. Perluas permission enforcement ke aksi workflow/destructive berikutnya.
+1. Perluas permission enforcement ke aksi destructive master data dan export berikutnya.
 2. Tambahkan audit coverage tambahan untuk SSO failure/unlink/reset bila fitur tersedia.
 3. Tambahkan audit/export coverage untuk aktivitas ekspor penting.
 
@@ -286,13 +313,14 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ## Next Best Task
 
-Task berikut yang paling masuk akal adalah memperluas permission enforcement ke aksi workflow/destructive berikutnya.
+Task berikut yang paling masuk akal adalah menutup governance untuk export activity atau destructive master data actions.
 
 Target implementasi:
 
-- Identifikasi action Super Admin paling sensitif berikutnya.
+- Identifikasi export/destructive Super Admin paling sensitif berikutnya.
 - Tambahkan permission key dan migration bila diperlukan.
 - Pasang middleware permission dan forbidden-path tests.
+- Tambahkan audit trail bila action menghasilkan data keluar atau mengubah master data penting.
 
 ## Notion Import Notes
 
