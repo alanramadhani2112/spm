@@ -402,7 +402,7 @@ class AkreditasiWorkflowService
         return $akreditasi;
     }
 
-    public function adminHandleStage1Limit(int $akreditasiId, int $adminUserId, string $action, ?string $reason = null): Akreditasi
+    public function adminHandleStage1Limit(int $akreditasiId, int $adminUserId, string $action = 'default', ?string $reason = null): Akreditasi
     {
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
         $admin = User::findOrFail($adminUserId);
@@ -418,10 +418,20 @@ class AkreditasiWorkflowService
             );
         }
 
+        if ($action === 'default') {
+            $action = $this->defaultLimitAction();
+        }
+
+        if ($action === 'freeze') {
+            throw new WorkflowException(
+                'Pengajuan dibekukan karena batas siklus koreksi tercapai.'
+            );
+        }
+
         $validActions = ['approve_by_exception', 'reject_administrative'];
         if (! in_array($action, $validActions, true)) {
             throw new WorkflowException(
-                "Aksi tidak valid: {$action}. Gunakan 'approve_by_exception' atau 'reject_administrative'."
+                "Aksi tidak valid: {$action}. Gunakan 'approve_by_exception', 'reject_administrative', atau 'default'."
             );
         }
 
@@ -1189,7 +1199,15 @@ class AkreditasiWorkflowService
 
             if ($nvValues && isset($nvValues[$nkEntry->butir_id])) {
                 $nvValue = (float) $nvValues[$nkEntry->butir_id];
-                $hasOverride = true;
+                $isOverride = ((float) $nkEntry->value) !== $nvValue;
+
+                if ($isOverride && ! SuperAdminSettings::bool(SuperAdminSettings::NV_OVERRIDE_ALLOWED)) {
+                    throw new WorkflowException(
+                        'Override nilai NV tidak diizinkan oleh pengaturan Super Admin.'
+                    );
+                }
+
+                $hasOverride = $hasOverride || $isOverride;
             }
 
             AkreditasiEdpm::updateOrCreate(
@@ -1376,5 +1394,14 @@ class AkreditasiWorkflowService
     private function peringkatFromFinalScore(float $score): string
     {
         return $this->scoringService->calculatePeringkat($score);
+    }
+
+    private function defaultLimitAction(): string
+    {
+        return match (SuperAdminSettings::get(SuperAdminSettings::ACTION_ON_LIMIT)) {
+            'auto_approve' => 'approve_by_exception',
+            'freeze' => 'freeze',
+            default => 'reject_administrative',
+        };
     }
 }

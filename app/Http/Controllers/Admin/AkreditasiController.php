@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
 use App\Models\AkreditasiEdpm;
 use App\Models\Assessment;
-use App\Models\Banding;
 use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
 use App\Services\BandingService;
 use App\Services\ScoringService;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class AkreditasiController extends Controller
 {
@@ -94,9 +94,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Pengajuan akreditasi diterima. Assessment siap dibuka.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -116,9 +118,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Pengajuan akreditasi ditolak.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -143,9 +147,11 @@ class AkreditasiController extends Controller
             }
 
             session()->flash('success', 'Assessment berhasil dibuka.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -178,9 +184,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Permintaan perbaikan tahap 1 telah dikirim.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -197,9 +205,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Tahap 1 disetujui. Lanjutkan ke penugasan asesor.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -232,9 +242,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Asesor berhasil ditugaskan.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -270,9 +282,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Asesor berhasil ditugaskan ulang.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -280,7 +294,7 @@ class AkreditasiController extends Controller
     public function handleLimitReview(Request $request, $akreditasiId)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:approve_by_exception,reject_administrative',
+            'action' => 'nullable|string|in:approve_by_exception,reject_administrative,default',
             'reason' => 'required_if:action,reject_administrative|nullable|string',
         ]);
 
@@ -288,14 +302,16 @@ class AkreditasiController extends Controller
             $this->workflowService->adminHandleStage1Limit(
                 $akreditasiId,
                 auth()->id(),
-                $validated['action'],
+                $validated['action'] ?? 'default',
                 $validated['reason'] ?? $request->input('catatan')
             );
 
             session()->flash('success', 'Keputusan batas koreksi berhasil diproses.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -333,9 +349,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Validasi akhir disetujui. Akreditasi telah final.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -356,9 +374,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Validasi akhir ditolak. Pesantren dapat mengajukan banding.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -379,9 +399,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'SK berhasil diterbitkan.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -410,9 +432,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Banding diterima. Kembali ke validasi akhir.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -432,9 +456,11 @@ class AkreditasiController extends Controller
             );
 
             session()->flash('success', 'Banding ditolak.');
+
             return redirect()->route('admin.akreditasi.index');
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
+
             return redirect()->back()->withInput();
         }
     }
@@ -456,7 +482,7 @@ class AkreditasiController extends Controller
             ->orderByDesc('created_at')
             ->pluck('created_at')
             ->filter()
-            ->map(fn ($date) => \Illuminate\Support\Carbon::parse($date)->format('Y'))
+            ->map(fn ($date) => Carbon::parse($date)->format('Y'))
             ->unique()
             ->mapWithKeys(fn ($year) => [(string) $year => (string) $year])
             ->all();
@@ -464,4 +490,3 @@ class AkreditasiController extends Controller
         return ['all' => 'Semua Periode'] + $years;
     }
 }
-

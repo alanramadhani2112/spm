@@ -139,6 +139,11 @@ class SuperAdminSettings
         return $value === null ? null : (int) $value;
     }
 
+    public static function bool(string $key): bool
+    {
+        return filter_var(self::get($key), FILTER_VALIDATE_BOOL);
+    }
+
     public static function deadlineKeyForPhase(string $phase): ?string
     {
         return self::DEADLINE_PHASE_KEYS[$phase] ?? null;

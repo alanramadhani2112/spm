@@ -4,12 +4,16 @@ namespace Tests\Feature\SuperAdmin;
 
 use App\Exceptions\WorkflowException;
 use App\Models\Akreditasi;
+use App\Models\AkreditasiEdpm;
 use App\Models\Assessment;
+use App\Models\MasterEdpmButir;
+use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\SuperAdminSetting;
 use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
+use App\Services\BandingService;
 use App\Services\DeadlineService;
 use App\Support\SuperAdminSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -155,6 +159,83 @@ class SettingsTest extends TestCase
         $workflow->ketuaAsesorStage2Review($akreditasi->id, $ketuaAsesor->id, 'correction', ['sdm'], 'Perbaiki SDM.');
     }
 
+    public function test_action_on_limit_auto_approve_controls_default_limit_decision(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::ACTION_ON_LIMIT,
+            'value' => 'auto_approve',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW);
+
+        $result = app(AkreditasiWorkflowService::class)
+            ->adminHandleStage1Limit($akreditasi->id, $this->admin->id);
+
+        $this->assertSame(Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, $result->status);
+    }
+
+    public function test_action_on_limit_freeze_blocks_default_limit_decision(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::ACTION_ON_LIMIT,
+            'value' => 'freeze',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Pengajuan dibekukan karena batas siklus koreksi tercapai.');
+
+        app(AkreditasiWorkflowService::class)->adminHandleStage1Limit($akreditasi->id, $this->admin->id);
+    }
+
+    public function test_banding_eligibility_disabled_blocks_banding_submission(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::BANDING_ELIGIBILITY,
+            'value' => 'disabled',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_FINAL_REJECTED);
+        $akreditasi->forceFill(['status_changed_at' => now()])->save();
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Pengajuan banding sedang dinonaktifkan oleh pengaturan Super Admin.');
+
+        app(BandingService::class)->createBanding($akreditasi->id, $pesantren->id, 'Mohon banding.');
+    }
+
+    public function test_nv_override_allowed_setting_blocks_manual_nv_override(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::NV_OVERRIDE_ALLOWED,
+            'value' => '0',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION);
+        $butir = $this->createEdpmButir();
+
+        AkreditasiEdpm::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $this->admin->id,
+            'butir_id' => $butir->id,
+            'value' => 3,
+            'type' => 'nk',
+        ]);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Override nilai NV tidak diizinkan oleh pengaturan Super Admin.');
+
+        app(AkreditasiWorkflowService::class)
+            ->adminValidasiAkhir($akreditasi->id, $this->admin->id, true, 'Override manual.', [
+                $butir->id => 4,
+            ]);
+    }
+
     public function test_updating_setting_clears_cached_setting_value(): void
     {
         SuperAdminSetting::create([
@@ -180,6 +261,20 @@ class SettingsTest extends TestCase
             'user_id' => $user->id,
             'uuid' => (string) Str::uuid(),
             'status' => $status,
+        ]);
+    }
+
+    private function createEdpmButir(): MasterEdpmButir
+    {
+        $komponen = MasterEdpmKomponen::create([
+            'kode' => 'KOMP-NV',
+            'nama' => 'Komponen NV',
+        ]);
+
+        return MasterEdpmButir::create([
+            'komponen_id' => $komponen->id,
+            'kode' => 'NV.1',
+            'nama' => 'Butir NV',
         ]);
     }
 

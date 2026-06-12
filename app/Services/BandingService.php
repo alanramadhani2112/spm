@@ -6,9 +6,8 @@ use App\Exceptions\DeadlineExceededException;
 use App\Exceptions\WorkflowException;
 use App\Models\Akreditasi;
 use App\Models\Banding;
-use App\Models\SuperAdminSetting;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
+use App\Support\SuperAdminSettings;
 
 class BandingService
 {
@@ -24,6 +23,12 @@ class BandingService
         if ($akreditasi->status !== Akreditasi::STATUS_FINAL_REJECTED) {
             throw new WorkflowException(
                 'Banding hanya dapat diajukan untuk akreditasi dengan status final ditolak.'
+            );
+        }
+
+        if (SuperAdminSettings::get(SuperAdminSettings::BANDING_ELIGIBILITY) === 'disabled') {
+            throw new WorkflowException(
+                'Pengajuan banding sedang dinonaktifkan oleh pengaturan Super Admin.'
             );
         }
 
@@ -132,14 +137,6 @@ class BandingService
 
     private function getBandingDeadlineDays(): int
     {
-        return Cache::remember('deadline_banding', 3600, function () {
-            $setting = SuperAdminSetting::where('key', 'banding_deadline')->first();
-
-            if ($setting && $setting->value !== null) {
-                return (int) $setting->value;
-            }
-
-            return 7;
-        });
+        return SuperAdminSettings::int(SuperAdminSettings::BANDING_DEADLINE) ?? 7;
     }
 }

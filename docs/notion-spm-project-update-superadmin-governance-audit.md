@@ -7,15 +7,15 @@ Remote: `origin/main`
 
 ## Ringkasan
 
-Project SPM sedang masuk fase stabilisasi dan governance untuk area Super Admin. Update terakhir di remote adalah commit `f1bfa4e` dengan judul `Add Super Admin operational board`, dibuat pada 2026-06-12 03:23 WIB. Setelah commit tersebut, working tree lokal menambahkan permission enforcement foundation untuk aksi sensitif Super Admin.
+Project SPM sedang masuk fase stabilisasi dan governance untuk area Super Admin. Update terakhir di remote adalah commit `23c26ec` dengan judul `Add Super Admin permission enforcement`, dibuat pada 2026-06-12. Setelah commit tersebut, working tree lokal menambahkan settings enforcement lanjutan.
 
-Commit remote terakhir mengeksekusi rekomendasi P1 dari audit coverage Super Admin: menambahkan operational board untuk bottleneck lintas status, SLA breach, workload asesor, dan antrian paling mendesak. Update lokal terbaru mengeksekusi rekomendasi P0 berikutnya: middleware permission granular untuk beberapa aksi sensitif.
+Commit remote terakhir mengeksekusi rekomendasi P0 dari audit coverage Super Admin: middleware permission granular untuk beberapa aksi sensitif. Update lokal terbaru memperkuat enforcement settings untuk limit action, banding eligibility, dan NV override.
 
 ## Commit Terbaru
 
-- Commit: `f1bfa4e31bdcb4bc161ab732a99067fef904424f`
-- Judul: `Add Super Admin operational board`
-- Link: https://github.com/alanramadhani2112/spm/commit/f1bfa4e31bdcb4bc161ab732a99067fef904424f
+- Commit: `23c26ec`
+- Judul: `Add Super Admin permission enforcement`
+- Link: https://github.com/alanramadhani2112/spm/commit/23c26ec
 - Author: Alan Ramadhani
 - Co-author: Claude
 
@@ -56,6 +56,26 @@ Perubahan:
 - Menambahkan migrasi agar database existing ikut mendapat permission baru dan role Admin/Super Admin tetap memiliki akses awal.
 - Memasang middleware permission pada settings update, role permission update, user role/status update, final approval, dan publish SK.
 - Menambahkan forbidden-path tests saat permission spesifik dicabut dari role Super Admin.
+
+### Settings Enforcement Lanjutan
+
+File utama:
+
+- `app/Services/AkreditasiWorkflowService.php`
+- `app/Services/BandingService.php`
+- `app/Support/SuperAdminSettings.php`
+- `resources/views/superadmin/settings/banding.blade.php`
+- `tests/Feature/SuperAdmin/SettingsTest.php`
+
+Perubahan:
+
+- `action_on_limit` menjadi default keputusan limit review bila action eksplisit tidak dikirim.
+- `action_on_limit=auto_approve` dipetakan ke `approve_by_exception`.
+- `action_on_limit=freeze` menghentikan default decision dengan error eksplisit.
+- `banding_eligibility=disabled` memblokir pengajuan banding.
+- `banding_deadline` dibaca melalui `SuperAdminSettings` tanpa cache ganda.
+- `nv_override_allowed=0` memblokir override NV manual.
+- UI settings banding menyediakan opsi aktif/nonaktif.
 
 ### Audit Trail Super Admin
 
@@ -123,6 +143,9 @@ Hasil:
 - `SuperAdmin`: passed, 32 tests, 120 assertions.
 - `SuperAdmin`: passed, 37 tests, 125 assertions setelah permission enforcement.
 - Full test suite terbaru: passed, 108 tests, 309 assertions.
+- `SuperAdmin\\SettingsTest`: passed, 15 tests, 21 assertions setelah settings enforcement lanjutan.
+- `SuperAdmin`: passed, 41 tests, 132 assertions setelah settings enforcement lanjutan.
+- Full test suite terbaru: passed, 112 tests, 316 assertions.
 
 ## Status Working Tree
 
@@ -144,6 +167,7 @@ Catatan: folder `.agents/` adalah konteks lokal, belum termasuk commit remote.
 
 Beberapa commit terakhir:
 
+- `23c26ec` - Add Super Admin permission enforcement.
 - `f1bfa4e` - Add Super Admin operational board.
 - `55ffdb6` - Align Super Admin settings enforcement.
 - `4a2b1be` - Audit Super Admin governance actions.
@@ -159,13 +183,16 @@ Dokumen audit utama:
 
 ### Settings Enforcement Coverage
 
-Settings key alignment sudah dirapikan melalui `SuperAdminSettings`:
+Settings key alignment dan sebagian enforcement sudah dirapikan melalui `SuperAdminSettings`:
 
 - `AkreditasiWorkflowService` memakai `MAX_SIKLUS_TAHAP1` dan `MAX_SIKLUS_TAHAP2`.
 - `DeadlineService` memakai `deadlineKeyForPhase()` untuk mapping phase ke key UI.
 - Operational board memakai mapping deadline yang sama untuk SLA breach.
+- `AkreditasiWorkflowService` memakai `ACTION_ON_LIMIT` untuk default limit decision.
+- `BandingService` memakai `BANDING_ELIGIBILITY` dan `BANDING_DEADLINE`.
+- `AkreditasiWorkflowService` memakai `NV_OVERRIDE_ALLOWED` untuk blokir override NV.
 
-Gap tersisa adalah memperluas test enforcement untuk document requirement, NV override/reason mode, banding eligibility, dan action on correction limit.
+Gap tersisa adalah memperluas test enforcement untuk document requirement dan `nv_reason_mode`.
 
 ### Permission Enforcement
 
@@ -196,7 +223,7 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ### P0 - Stabilization / Governance
 
-1. Tambahkan enforcement tests untuk setting yang belum terbukti penuh.
+1. Tambahkan enforcement tests untuk document requirement dan `nv_reason_mode`.
 2. Tambahkan audit coverage tambahan untuk SSO failure/unlink/reset bila fitur tersedia.
 3. Perluas permission enforcement ke aksi workflow/destructive berikutnya.
 
@@ -214,14 +241,13 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ## Next Best Task
 
-Task berikut yang paling masuk akal adalah memperluas settings enforcement tests.
+Task berikut yang paling masuk akal adalah memperluas document requirement enforcement.
 
 Target implementasi:
 
 - Tambahkan tests untuk document requirement.
-- Tambahkan tests untuk NV override dan reason mode.
-- Tambahkan tests untuk banding eligibility.
-- Tambahkan tests untuk action on correction limit.
+- Pastikan `kartu_kendali_wajib_before` dan `laporan_wajib_before` benar-benar memblokir workflow sesuai fase.
+- Tambahkan tests untuk `nv_reason_mode`.
 
 ## Notion Import Notes
 

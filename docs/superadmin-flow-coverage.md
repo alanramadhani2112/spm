@@ -11,7 +11,7 @@ Super Admin saat ini sudah memiliki coverage besar atas workflow akreditasi end-
 Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 
 1. Permission matrix sudah punya enforcement foundation pada aksi sensitif awal, tetapi akses area besar masih dominan berbasis role.
-2. Settings sudah punya UI dan key alignment terpusat, tetapi belum semua setting terbukti enforce penuh di flow.
+2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, serta NV override; document requirement dan `nv_reason_mode` masih perlu diperdalam.
 3. Audit log non-akreditasi sudah diperluas, tetapi SSO failure/unlink/reset dan export activity belum lengkap.
 4. Operational board sudah tersedia di dashboard, tetapi assignment intelligence, notification center, dan export operasional masih perlu dikembangkan.
 5. User lifecycle SSO sudah disiapkan, tetapi live integration menunggu credential dan belum ada reset/unlink/detail SSO.
@@ -37,7 +37,7 @@ Legend:
 | Assessment | Buka assessment + deadline | `buka-assessment` | `bukaAssessment` | `admin.akreditasi.buka-assessment` | Partial coverage | Partial | Method mengisi `assessment_deadline`, tetapi tidak memakai default setting `assessment_deadline` otomatis. |
 | Assessment | Upload kartu kendali | `upload-kk` | `uploadKartuKendali` | N/A action endpoint | Indirect via workflow tests | Partial | Perlu form/CTA eksplisit di detail jika Super Admin acting as Pesantren; validasi file perlu test khusus. |
 | Review Tahap 1 | Review, minta perbaikan, approve | `review-tahap1`, `minta-perbaikan-tahap1`, `approve-tahap1` | `reviewTahap1`, `mintaPerbaikanTahap1`, `approveTahap1` | `admin.akreditasi.review-tahap1` | Partial coverage | Done | Perlu audit UX untuk sections dan reason required/optional. |
-| Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | Indirect | Partial | Setting key sudah memakai `SuperAdminSettings::MAX_SIKLUS_TAHAP1`; perlu test enforcement tambahan. |
+| Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | `SettingsTest` | Done | `action_on_limit` sudah mengontrol default decision untuk reject, auto approve, dan freeze. |
 | Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | Workflow route tests | Done | Dashboard sudah menampilkan workload; perlu warning overload saat assign. |
 | Asesor Assignment | Reassign asesor | `reassign-asesor` | `reassignAsesor` | `admin.akreditasi.reassign-asesor` | Partial coverage | Done | Perlu audit reason tersimpan dan riwayat reassignment terlihat. |
 | Review Tahap 2 | Ketua Asesor review | `review-tahap2`, `layak-visitasi`, `minta-perbaikan-tahap2` | `reviewTahap2`, `nyatakanLayakVisitasi`, `mintaPerbaikanTahap2` | `asesor.ketua.review-tahap2` | `AkreditasiConsoleTest` | Done | Shared asesor view; perlu wording Super Admin/acting as. |
@@ -48,9 +48,9 @@ Legend:
 | Scoring | Input NK | `input-nk` | `inputNK` | `asesor.ketua.input-nk` | Route-aware tests | Done | Perlu validation completeness test. |
 | Laporan Visitasi | Upload laporan individu/kelompok | `upload-laporan` | `uploadLaporan` | `asesor.ketua.upload-laporan` | Route-aware tests | Done | Perlu document-category rule integration. |
 | Laporan Visitasi | Submit hasil visitasi | `submit-hasil-visitasi` | `submitHasilVisitasi` | Action endpoint | Indirect | Done | Perlu CTA state visibility di detail. |
-| Validasi Akhir | Validasi akhir | `validasi-akhir`, `approve-final`, `tolak-final` | `validasiAkhir`, `approveFinal`, `tolakFinal` | `admin.akreditasi.validasi-akhir` | Partial | Done | `approve-final` sudah dilindungi `permission:akreditasi.final.approve`; setting `nv_override_allowed` belum jelas enforce. |
+| Validasi Akhir | Validasi akhir | `validasi-akhir`, `approve-final`, `tolak-final` | `validasiAkhir`, `approveFinal`, `tolakFinal` | `admin.akreditasi.validasi-akhir` | Partial | Done | `approve-final` sudah dilindungi `permission:akreditasi.final.approve`; `nv_override_allowed` sudah enforce, `nv_reason_mode` belum lengkap. |
 | SK | Terbitkan SK | `terbitkan-sk` | `terbitkanSK` | shared admin flow/action | Indirect | Done | Sudah dilindungi `permission:sk.publish`; perlu template/nomor SK management dan export/download SK. |
-| Banding | Lihat, terima, tolak banding | `banding`, `superadmin.banding.terima`, `superadmin.banding.tolak` | `banding`, `terimaBanding`, `tolakBanding` | `admin.akreditasi.banding` | `AkreditasiConsoleTest` | Done | Setting `banding_eligibility` perlu enforcement eksplisit. |
+| Banding | Lihat, terima, tolak banding | `banding`, `superadmin.banding.terima`, `superadmin.banding.tolak` | `banding`, `terimaBanding`, `tolakBanding` | `admin.akreditasi.banding` | `AkreditasiConsoleTest`, `SettingsTest` | Done | `banding_eligibility=disabled` sudah memblokir pengajuan banding. |
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
@@ -60,7 +60,7 @@ Legend:
 | User Management | Edit role/status | `master-data.users.update` | `updateUser` | Modal users page | `MasterDataTest` | Partial | Sudah dilindungi `permission:user.access.update` dan reason perubahan; perlu protection lebih eksplisit untuk role Super Admin. |
 | SSO | Muhammadiyah ID env + skeleton | `/auth/muhammadiyah/*` | `Auth\MuhammadiyahIdController` | Login button | `MuhammadiyahIdSsoTest` | Partial | Live credential belum ada; unlink/reset SSO belum ada. |
 | Settings | Settings dashboard | `superadmin.settings.index` | `SettingsController@index` | `superadmin.settings.index` | `SettingsTest` | Done | Good UI, but enforcement coverage perlu audit. |
-| Settings | Deadline, correction, dokumen, NV, notifikasi, banding | `superadmin.settings.*` | `deadline/correction/dokumen/nv/notifikasi/banding/update` | settings pages | `SettingsTest` | Partial | `settings.update` sudah dilindungi permission; sebagian settings belum enforce penuh. |
+| Settings | Deadline, correction, dokumen, NV, notifikasi, banding | `superadmin.settings.*` | `deadline/correction/dokumen/nv/notifikasi/banding/update` | settings pages | `SettingsTest` | Partial | `settings.update` sudah dilindungi permission; limit action, banding eligibility, dan NV override sudah enforce; document requirement dan `nv_reason_mode` masih perlu diperkuat. |
 | Audit Log | List/detail audit trail | `superadmin.audit.index/show` | `AuditController@index/show` | `superadmin.audit.*` | `SettingsTest` smoke | Partial | Audit non-akreditasi sudah diperluas; perlu SSO failure/unlink/reset dan export activity. |
 | Notification Center | Inbox/pusat notifikasi | N/A | N/A | N/A | N/A | Missing | Setting notifikasi ada, tapi UI pusat notifikasi Super Admin belum ada. |
 | Operational Board | Bottleneck/SLA/workload board | `superadmin.dashboard` | `DashboardController@index` | `superadmin.dashboard.index` | `DashboardExportTest` | Done | Sudah ada board status, SLA breach, urgent queue, workload asesor; perlu export dan assignment warning lanjutan. |
@@ -111,7 +111,7 @@ Gap test:
 1. Belum ada test granular untuk semua action Super Admin end-to-end per status.
 2. Audit log user/role/master/settings sudah mulai tercakup; masih perlu SSO failure/unlink/reset dan export activity.
 3. Permission enforcement sudah punya forbidden-path tests untuk settings, role permission, user access, final approval, dan SK publish; perlu diperluas ke aksi lain.
-4. Belum ada test settings enforcement untuk deadline/koreksi/dokumen/NV/banding.
+4. Settings enforcement tests sudah mencakup deadline, max correction cycles, action on limit, banding disabled, dan NV override disabled; document requirement dan `nv_reason_mode` belum lengkap.
 5. Belum ada test SSO live contract; wajar karena credential belum approved.
 
 ## Audit Logging Coverage
@@ -145,11 +145,13 @@ Temuan penting:
 
 - `AkreditasiWorkflowService` sudah memakai `SuperAdminSettings::MAX_SIKLUS_TAHAP1` dan `MAX_SIKLUS_TAHAP2`.
 - `DeadlineService` dan operational board sudah memakai `SuperAdminSettings::deadlineKeyForPhase()` agar phase deadline memakai key UI yang sama.
-- `BandingService` memakai `banding_deadline`, ini sesuai kategori settings.
-- `nv_override_allowed` dan `nv_reason_mode` belum terlihat jelas sebagai gate di validasi akhir.
+- `AkreditasiWorkflowService` memakai `action_on_limit` untuk default limit decision.
+- `BandingService` memakai `banding_deadline` dan memblokir banding saat `banding_eligibility=disabled`.
+- `nv_override_allowed` sudah menjadi gate di validasi akhir.
+- `nv_reason_mode` belum terlihat jelas sebagai gate di validasi akhir.
 - Document settings dan document-category rules perlu dipastikan benar-benar dipakai di upload/visibility workflow.
 
-Rekomendasi: tambah enforcement tests untuk document requirement, NV override/reason mode, banding eligibility, dan action on correction limit.
+Rekomendasi: tambah enforcement tests untuk document requirement dan `nv_reason_mode`.
 
 ## Permission Enforcement Audit
 
@@ -206,14 +208,20 @@ Missing:
 
 ### P0 — Stabilization / Governance
 
-1. **Settings enforcement tests lanjutan**
-   - Tambah tests untuk max correction cycles, banding deadline, NV override, document requirements, dan action on correction limit.
+1. **Document requirement enforcement**
+   - Tambah tests untuk `kartu_kendali_wajib_before` dan `laporan_wajib_before`.
+   - Pastikan workflow memblokir fase yang sesuai ketika dokumen wajib belum ada.
+   - Selaraskan dengan `DocumentCategory::required_for_phase`.
 
-2. **Permission enforcement expansion**
+2. **NV reason mode enforcement**
+   - Tambah kontrak untuk `nv_reason_mode=collective` dan `nv_reason_mode=per_butir`.
+   - Pastikan audit reason override NV sesuai mode.
+
+3. **Permission enforcement expansion**
    - Terapkan permission granular ke action workflow/destructive berikutnya.
    - Tambah tests permission denied per route.
 
-3. **Audit log SSO/export**
+4. **Audit log SSO/export**
    - Log SSO failure/unlink/reset bila fitur tersedia.
    - Log CSV exports penting.
 
@@ -267,7 +275,7 @@ Super Admin bisa dianggap lengkap bila setiap flow penting memenuhi checklist in
 
 ## Keputusan Teknis yang Direkomendasikan
 
-1. Jangan menambah fitur besar sebelum settings enforcement tests lanjutan beres.
+1. Jangan menambah fitur besar sebelum document requirement enforcement beres.
 2. Pertahankan `main` sebagai baseline tunggal; buat branch baru per topik.
 3. Untuk task berikutnya, gunakan branch baru: `feature/superadmin-governance-audit`.
-4. Implementasi berikutnya yang paling bernilai: settings enforcement tests untuk document requirement, NV override, banding eligibility, dan correction limit action.
+4. Implementasi berikutnya yang paling bernilai: document requirement enforcement untuk kartu kendali dan laporan visitasi.

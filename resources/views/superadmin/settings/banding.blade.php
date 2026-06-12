@@ -8,7 +8,7 @@
 
 @php
     $settingCards = [
-        ['key' => 'banding_eligibility', 'label' => 'Kriteria Kelayakan Banding', 'description' => 'Menentukan siapa yang dapat mengajukan banding atas hasil akreditasi.', 'type' => 'radio', 'options' => ['all' => 'Semua — Semua pesantren dapat mengajukan banding'], 'icon' => 'ki-message-question', 'color' => 'secondary', 'help' => 'Saat ini opsi yang tersedia mengizinkan semua pesantren mengajukan banding.'],
+        ['key' => 'banding_eligibility', 'label' => 'Kriteria Kelayakan Banding', 'description' => 'Menentukan siapa yang dapat mengajukan banding atas hasil akreditasi.', 'type' => 'radio', 'options' => ['all' => 'Semua — Semua pesantren dengan hasil final ditolak dapat mengajukan banding', 'disabled' => 'Nonaktif — Pengajuan banding ditutup'], 'icon' => 'ki-message-question', 'color' => 'secondary', 'help' => 'Gunakan nonaktif bila periode banding ditutup sementara.'],
     ];
 @endphp
 

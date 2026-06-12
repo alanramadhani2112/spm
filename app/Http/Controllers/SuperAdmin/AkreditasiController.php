@@ -387,12 +387,12 @@ class AkreditasiController extends Controller
     public function handleLimitReview(Request $request, $akreditasiId)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:approve_by_exception,reject_administrative',
+            'action' => 'nullable|string|in:approve_by_exception,reject_administrative,default',
             'reason' => 'required_if:action,reject_administrative|nullable|string',
         ]);
 
         try {
-            $this->workflowService->adminHandleStage1Limit($akreditasiId, auth()->id(), $validated['action'], $validated['reason'] ?? $request->input('catatan'));
+            $this->workflowService->adminHandleStage1Limit($akreditasiId, auth()->id(), $validated['action'] ?? 'default', $validated['reason'] ?? $request->input('catatan'));
             session()->flash('success', 'Keputusan batas koreksi diproses.');
 
             return redirect()->route('superadmin.akreditasi.index');
