@@ -7,8 +7,10 @@ use App\Models\AkreditasiAuditLog;
 use App\Models\Banding;
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\Permission;
 use App\Models\Pesantren;
 use App\Models\PesantrenUnit;
+use App\Models\Role;
 use App\Models\SdmPesantren;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -225,6 +227,43 @@ class AkreditasiConsoleTest extends TestCase
             ->assertDontSee(route('asesor.ketua.nyatakan-layak-visitasi', $akreditasi->id), false);
     }
 
+    public function test_super_admin_without_final_approval_permission_cannot_approve_final(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.final.approve');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.approve-final', $akreditasi->id), [
+                'reason' => 'Final approval test.',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_sk_publish_permission_cannot_publish_sk(): void
+    {
+        $this->revokeSuperAdminPermission('sk.publish');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_FINAL_APPROVED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.terbitkan-sk', $akreditasi->id), [
+                'nomor_sk' => 'SK-TEST-001',
+                'masa_berlaku' => '2026-2030',
+            ])
+            ->assertForbidden();
+    }
+
     private function createCompletePesantrenData(User $user): void
     {
         $pesantren = Pesantren::create([
@@ -246,5 +285,11 @@ class AkreditasiConsoleTest extends TestCase
         Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100]]);
         SdmPesantren::create(['user_id' => $user->id, 'data' => ['ustaz_tetap' => 12]]);
         Edpm::create(['user_id' => $user->id, 'data' => ['self_assessment' => 'lengkap']]);
+    }
+
+    private function revokeSuperAdminPermission(string $key): void
+    {
+        $permission = Permission::where('key', $key)->firstOrFail();
+        Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }

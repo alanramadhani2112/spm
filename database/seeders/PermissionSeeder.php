@@ -32,6 +32,11 @@ class PermissionSeeder extends Seeder
             'asesor.upload_laporan',
             'asesor.submit_hasil_visitasi',
             'superadmin.access',
+            'settings.update',
+            'role.permissions.update',
+            'user.access.update',
+            'akreditasi.final.approve',
+            'sk.publish',
             'master.manage',
             'account.view',
         ];

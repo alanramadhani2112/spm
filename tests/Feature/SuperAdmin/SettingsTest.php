@@ -5,6 +5,8 @@ namespace Tests\Feature\SuperAdmin;
 use App\Exceptions\WorkflowException;
 use App\Models\Akreditasi;
 use App\Models\Assessment;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\SuperAdminSetting;
 use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
@@ -69,6 +71,19 @@ class SettingsTest extends TestCase
                 'reason' => 'testing update',
             ])
             ->assertStatus(302);
+    }
+
+    public function test_super_admin_without_settings_update_permission_cannot_update_settings(): void
+    {
+        $this->revokeSuperAdminPermission('settings.update');
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.settings.update'), [
+                'key' => 'review_awal_deadline',
+                'value' => '7',
+                'reason' => 'testing update',
+            ])
+            ->assertForbidden();
     }
 
     public function test_settings_index_loads_with_nav_tabs(): void
@@ -166,5 +181,11 @@ class SettingsTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'status' => $status,
         ]);
+    }
+
+    private function revokeSuperAdminPermission(string $key): void
+    {
+        $permission = Permission::where('key', $key)->firstOrFail();
+        Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }

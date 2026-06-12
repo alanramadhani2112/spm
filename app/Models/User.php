@@ -42,6 +42,15 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
+    public function hasPermission(string $permissionKey): bool
+    {
+        $role = $this->relationLoaded('role')
+            ? $this->role
+            : $this->role()->with('permissions')->first();
+
+        return $role?->permissions->contains('key', $permissionKey) ?? false;
+    }
+
     public function asesor()
     {
         return $this->hasOne(Asesor::class);

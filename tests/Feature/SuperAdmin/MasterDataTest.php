@@ -211,6 +211,21 @@ class MasterDataTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_without_role_permission_update_permission_cannot_update_role_permissions(): void
+    {
+        $this->revokeSuperAdminPermission('role.permissions.update');
+
+        $role = Role::where('parameter', 'pesantren')->firstOrFail();
+        $permission = Permission::firstOrCreate(['key' => 'master.test'], ['name' => 'Master Test']);
+
+        $this->actingAs($this->superAdmin)
+            ->put(route('superadmin.master-data.roles.permissions.update', $role), [
+                'permissions' => [$permission->id],
+                'reason' => 'Menyesuaikan akses role pesantren.',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_super_admin_can_update_user_role_and_status(): void
     {
         $user = User::factory()->create(['role_id' => 3]);
@@ -233,5 +248,27 @@ class MasterDataTest extends TestCase
             'akreditasi_id' => null,
             'reason' => 'Akun dipindahkan ke role admin untuk pengujian.',
         ]);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_update_user_role_and_status(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $user = User::factory()->create(['role_id' => 3]);
+        $adminRole = Role::where('parameter', 'admin')->firstOrFail();
+
+        $this->actingAs($this->superAdmin)
+            ->put(route('superadmin.master-data.users.update', $user), [
+                'role_id' => $adminRole->id,
+                'status' => 'inactive',
+                'reason' => 'Akun dipindahkan ke role admin untuk pengujian.',
+            ])
+            ->assertForbidden();
+    }
+
+    private function revokeSuperAdminPermission(string $key): void
+    {
+        $permission = Permission::where('key', $key)->firstOrFail();
+        Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }

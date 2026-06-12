@@ -145,9 +145,13 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/akreditasi/{id}/submit-hasil-visitasi', [SuperAdminAkreditasiController::class, 'submitHasilVisitasi'])->name('akreditasi.submit-hasil-visitasi');
     Route::post('/akreditasi/{id}/kartu-kendali', [SuperAdminAkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
     Route::get('/akreditasi/{id}/validasi-akhir', [SuperAdminAkreditasiController::class, 'validasiAkhir'])->name('akreditasi.validasi-akhir');
-    Route::post('/akreditasi/{id}/approve-final', [SuperAdminAkreditasiController::class, 'approveFinal'])->name('akreditasi.approve-final');
+    Route::post('/akreditasi/{id}/approve-final', [SuperAdminAkreditasiController::class, 'approveFinal'])
+        ->middleware('permission:akreditasi.final.approve')
+        ->name('akreditasi.approve-final');
     Route::post('/akreditasi/{id}/tolak-final', [SuperAdminAkreditasiController::class, 'tolakFinal'])->name('akreditasi.tolak-final');
-    Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])->name('akreditasi.terbitkan-sk');
+    Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])
+        ->middleware('permission:sk.publish')
+        ->name('akreditasi.terbitkan-sk');
     Route::get('/akreditasi/{id}/banding', [SuperAdminAkreditasiController::class, 'banding'])->name('akreditasi.banding');
     Route::post('/banding/{id}/terima', [SuperAdminAkreditasiController::class, 'terimaBanding'])->name('banding.terima');
     Route::post('/banding/{id}/tolak', [SuperAdminAkreditasiController::class, 'tolakBanding'])->name('banding.tolak');
@@ -167,14 +171,20 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::patch('/document-categories/{category}/toggle', [MasterDataController::class, 'toggleDocumentCategory'])->name('document-categories.toggle');
         Route::delete('/document-categories/{category}', [MasterDataController::class, 'destroyDocumentCategory'])->name('document-categories.destroy');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
-        Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])->name('roles.permissions.update');
+        Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
+            ->middleware('permission:role.permissions.update')
+            ->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
         Route::post('/users', [MasterDataController::class, 'storeUser'])->name('users.store');
-        Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])->name('users.update');
+        Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])
+            ->middleware('permission:user.access.update')
+            ->name('users.update');
     });
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    Route::post('/settings', [SettingsController::class, 'update'])
+        ->middleware('permission:settings.update')
+        ->name('settings.update');
     Route::get('/settings/deadline', [SettingsController::class, 'deadline'])->name('settings.deadline');
     Route::get('/settings/correction', [SettingsController::class, 'correction'])->name('settings.correction');
     Route::get('/settings/dokumen', [SettingsController::class, 'dokumen'])->name('settings.dokumen');
