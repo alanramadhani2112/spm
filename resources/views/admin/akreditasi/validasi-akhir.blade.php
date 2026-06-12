@@ -7,7 +7,9 @@
 @php
     use App\Models\Akreditasi;
     use App\Models\AkreditasiEdpm;
+    use App\Support\SuperAdminSettings;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
+    $nvReasonMode = SuperAdminSettings::get(SuperAdminSettings::NV_REASON_MODE) ?: 'collective';
 @endphp
     @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
@@ -134,13 +136,20 @@
                         @if($nkEntries->isNotEmpty())
                             <div class="row gap-3">
                                 @foreach($nkEntries as $butirId => $entry)
-                                    <div class="d-flex align-items-center gap-3">
-                                        <span class="fs-8 text-gray-600 w-16">{{ $butirId }}</span>
-                                        <input type="number" name="nv_values[{{ $butirId }}]"
-                                               min="0" max="4" step="0.01"
-                                               value="{{ old("nv_values.{$butirId}", $entry->nilai ?? '') }}"
-                                               class="block w-100 rounded border border-yellow-300 bg-white px-2 py-1.5 fs-7 text-gray-900 focus:border-yellow-500 focus:" />
-                                        <span class="fs-8 text-gray-500">NK: {{ number_format($entry->nilai ?? 0, 2) }}</span>
+                                    <div class="d-grid gap-2">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="fs-8 text-gray-600 w-16">{{ $butirId }}</span>
+                                            <input type="number" name="nv_values[{{ $butirId }}]"
+                                                   min="0" max="4" step="0.01"
+                                                   value="{{ old("nv_values.{$butirId}", $entry->value ?? $entry->nilai ?? '') }}"
+                                                   class="block w-100 rounded border border-yellow-300 bg-white px-2 py-1.5 fs-7 text-gray-900 focus:border-yellow-500 focus:" />
+                                            <span class="fs-8 text-gray-500">NK: {{ number_format($entry->value ?? $entry->nilai ?? 0, 2) }}</span>
+                                        </div>
+                                        @if($nvReasonMode === 'per_butir')
+                                            <textarea name="nv_reasons[{{ $butirId }}]" rows="2"
+                                                      class="block w-100 rounded border border-yellow-300 bg-white px-2 py-1.5 fs-8 text-gray-900 placeholder:text-gray-500"
+                                                      placeholder="Alasan override butir {{ $butirId }}">{{ old("nv_reasons.{$butirId}") }}</textarea>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
@@ -150,7 +159,7 @@
                     {{-- Reason for override --}}
                     <div>
                         <label for="reason" class="block fs-7 fw-medium text-gray-700">
-                            Alasan (wajib jika ada override)
+                            Alasan {{ $nvReasonMode === 'per_butir' ? '(opsional, alasan utama per butir)' : '(wajib jika ada override)' }}
                         </label>
                         <textarea id="reason" name="reason" rows="3"
                                   class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900 placeholder:text-gray-500 focus:border-yellow-500 focus:"

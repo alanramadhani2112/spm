@@ -9,7 +9,7 @@ Remote: `origin/main`
 
 Project SPM sedang masuk fase stabilisasi dan governance untuk area Super Admin. Update terakhir di remote adalah commit `23c26ec` dengan judul `Add Super Admin permission enforcement`, dibuat pada 2026-06-12. Setelah commit tersebut, working tree lokal menambahkan settings enforcement lanjutan.
 
-Commit remote terakhir mengeksekusi rekomendasi P0 dari audit coverage Super Admin: middleware permission granular untuk beberapa aksi sensitif. Update lokal terbaru memperkuat enforcement settings untuk limit action, banding eligibility, dan NV override.
+Commit remote terakhir mengeksekusi rekomendasi P0 dari audit coverage Super Admin: document requirement enforcement untuk Kartu Kendali dan Laporan Visitasi. Update lokal terbaru memperkuat `nv_reason_mode` untuk alasan override NV kolektif dan per butir.
 
 ## Commit Terbaru
 
@@ -94,6 +94,24 @@ Perubahan:
 - `DocumentCategory::required_for_phase` ikut diperiksa bersama requirement global dari Super Admin Settings.
 - End-to-end workflow menambahkan upload Kartu Kendali agar sesuai default `before_admin_validation`.
 
+### NV Reason Mode Enforcement
+
+File utama:
+
+- `app/Services/AkreditasiWorkflowService.php`
+- `app/Http/Controllers/Admin/AkreditasiController.php`
+- `app/Http/Controllers/SuperAdmin/AkreditasiController.php`
+- `resources/views/admin/akreditasi/validasi-akhir.blade.php`
+- `tests/Feature/SuperAdmin/SettingsTest.php`
+
+Perubahan:
+
+- `nv_reason_mode=collective` tetap mewajibkan satu alasan umum saat ada override NV.
+- `nv_reason_mode=per_butir` mewajibkan alasan untuk setiap butir yang di-override.
+- Alasan per butir disimpan di audit log `nv_changed` melalui metadata.
+- Field `nv_override_reason` menandai bahwa alasan per butir tersimpan di audit log.
+- Form validasi akhir menampilkan textarea alasan per butir saat mode `per_butir` aktif.
+
 ### Audit Trail Super Admin
 
 File utama:
@@ -166,6 +184,9 @@ Hasil:
 - `SuperAdmin\\SettingsTest`: passed, 18 tests, 28 assertions setelah document requirement enforcement.
 - `SuperAdmin`: passed, 44 tests, 139 assertions setelah document requirement enforcement.
 - Full test suite terbaru: passed, 115 tests, 323 assertions.
+- `SuperAdmin\\SettingsTest`: passed, 20 tests, 35 assertions setelah `nv_reason_mode` enforcement.
+- `SuperAdmin`: passed, 46 tests, 146 assertions setelah `nv_reason_mode` enforcement.
+- Full test suite terbaru: passed, 117 tests, 330 assertions.
 
 ## Status Working Tree
 
@@ -187,6 +208,8 @@ Catatan: folder `.agents/` adalah konteks lokal, belum termasuk commit remote.
 
 Beberapa commit terakhir:
 
+- `c175545` - Enforce Super Admin document requirements.
+- `7951e61` - Enforce Super Admin settings contracts.
 - `23c26ec` - Add Super Admin permission enforcement.
 - `f1bfa4e` - Add Super Admin operational board.
 - `55ffdb6` - Align Super Admin settings enforcement.
@@ -212,8 +235,9 @@ Settings key alignment dan sebagian enforcement sudah dirapikan melalui `SuperAd
 - `BandingService` memakai `BANDING_ELIGIBILITY` dan `BANDING_DEADLINE`.
 - `AkreditasiWorkflowService` memakai `NV_OVERRIDE_ALLOWED` untuk blokir override NV.
 - `DocumentService` dan `AkreditasiWorkflowService` memakai `KARTU_KENDALI_WAJIB_BEFORE` dan `LAPORAN_WAJIB_BEFORE` sebagai gate workflow.
+- `AkreditasiWorkflowService` memakai `NV_REASON_MODE` untuk menentukan alasan override kolektif atau per butir.
 
-Gap tersisa adalah memperluas enforcement untuk `nv_reason_mode`.
+Gap tersisa adalah ekspansi permission enforcement dan audit SSO/export.
 
 ### Permission Enforcement
 
@@ -244,9 +268,9 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ### P0 - Stabilization / Governance
 
-1. Tambahkan enforcement tests untuk `nv_reason_mode`.
+1. Perluas permission enforcement ke aksi workflow/destructive berikutnya.
 2. Tambahkan audit coverage tambahan untuk SSO failure/unlink/reset bila fitur tersedia.
-3. Perluas permission enforcement ke aksi workflow/destructive berikutnya.
+3. Tambahkan audit/export coverage untuk aktivitas ekspor penting.
 
 ### P1 - Operational Control
 
@@ -262,13 +286,13 @@ Operational board sudah tersedia di dashboard Super Admin. Gap lanjutan:
 
 ## Next Best Task
 
-Task berikut yang paling masuk akal adalah memperluas `nv_reason_mode` enforcement.
+Task berikut yang paling masuk akal adalah memperluas permission enforcement ke aksi workflow/destructive berikutnya.
 
 Target implementasi:
 
-- Tambahkan kontrak untuk `nv_reason_mode=collective`.
-- Tambahkan kontrak untuk `nv_reason_mode=per_butir`.
-- Pastikan audit reason override NV sesuai mode.
+- Identifikasi action Super Admin paling sensitif berikutnya.
+- Tambahkan permission key dan migration bila diperlukan.
+- Pasang middleware permission dan forbidden-path tests.
 
 ## Notion Import Notes
 

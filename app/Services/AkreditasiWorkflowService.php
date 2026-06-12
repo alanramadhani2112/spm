@@ -1141,7 +1141,7 @@ class AkreditasiWorkflowService
         return $akreditasi;
     }
 
-    public function adminValidasiAkhir(int $akreditasiId, int $adminUserId, bool $approve, ?string $reason = null, ?array $nvValues = null): Akreditasi
+    public function adminValidasiAkhir(int $akreditasiId, int $adminUserId, bool $approve, ?string $reason = null, ?array $nvValues = null, ?array $nvReasons = null): Akreditasi
     {
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
         $admin = User::findOrFail($adminUserId);
@@ -1187,10 +1187,13 @@ class AkreditasiWorkflowService
             ->where('type', 'nk')
             ->get();
 
+        $reasonMode = SuperAdminSettings::get(SuperAdminSettings::NV_REASON_MODE) ?: 'collective';
         $hasOverride = false;
+        $nvRows = [];
+        $overrideDetails = [];
 
         foreach ($nkEntries as $nkEntry) {
-            $nvValue = $nkEntry->value;
+            $nvValue = (float) $nkEntry->value;
 
             if ($nvValues && isset($nvValues[$nkEntry->butir_id])) {
                 $nvValue = (float) $nvValues[$nkEntry->butir_id];
@@ -1202,25 +1205,52 @@ class AkreditasiWorkflowService
                     );
                 }
 
-                $hasOverride = $hasOverride || $isOverride;
+                if ($isOverride) {
+                    $hasOverride = true;
+                    $overrideReason = null;
+
+                    if ($reasonMode === 'per_butir') {
+                        $overrideReason = trim((string) ($nvReasons[$nkEntry->butir_id] ?? ''));
+
+                        if ($overrideReason === '') {
+                            throw new WorkflowException(
+                                'Alasan per butir wajib diisi ketika mode alasan override NV adalah per butir.'
+                            );
+                        }
+                    }
+
+                    $overrideDetails[] = [
+                        'butir_id' => $nkEntry->butir_id,
+                        'old_value' => (float) $nkEntry->value,
+                        'new_value' => $nvValue,
+                        'reason' => $overrideReason,
+                    ];
+                }
             }
 
+            $nvRows[] = [
+                'butir_id' => $nkEntry->butir_id,
+                'value' => $nvValue,
+            ];
+        }
+
+        if ($hasOverride && $reasonMode !== 'per_butir' && ! $reason) {
+            throw new WorkflowException(
+                'Alasan wajib diisi ketika nilai NV diubah (override).'
+            );
+        }
+
+        foreach ($nvRows as $nvRow) {
             AkreditasiEdpm::updateOrCreate(
                 [
                     'akreditasi_id' => $akreditasi->id,
                     'asesor_id' => $admin->id,
-                    'butir_id' => $nkEntry->butir_id,
+                    'butir_id' => $nvRow['butir_id'],
                 ],
                 [
-                    'value' => $nvValue,
+                    'value' => $nvRow['value'],
                     'type' => 'nv',
                 ]
-            );
-        }
-
-        if ($hasOverride && ! $reason) {
-            throw new WorkflowException(
-                'Alasan wajib diisi ketika nilai NV diubah (override).'
             );
         }
 
@@ -1236,8 +1266,17 @@ class AkreditasiWorkflowService
             'peringkat' => $this->peringkatFromFinalScore($this->finalScoreFromAverage((float) $computedNv)),
             'is_nv_final' => true,
             'nv_override' => $hasOverride,
-            'nv_override_reason' => $hasOverride ? $reason : null,
+            'nv_override_reason' => $hasOverride
+                ? ($reasonMode === 'per_butir' ? 'Alasan per butir tersimpan di audit log.' : $reason)
+                : null,
         ])->save();
+
+        if ($hasOverride) {
+            $this->auditTrailService->log('nv_changed', $akreditasi->id, $adminUserId, [
+                'reason_mode' => $reasonMode,
+                'overrides' => $overrideDetails,
+            ], $reasonMode === 'per_butir' ? null : $reason);
+        }
 
         if ($approve) {
             $fromStatus = $akreditasi->status;

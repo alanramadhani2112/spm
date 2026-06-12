@@ -336,6 +336,8 @@ class AkreditasiController extends Controller
         $validated = $request->validate([
             'nv_values' => 'nullable|array',
             'nv_values.*' => 'numeric|min:0|max:4',
+            'nv_reasons' => 'nullable|array',
+            'nv_reasons.*' => 'nullable|string',
             'reason' => 'nullable|string',
         ]);
 
@@ -345,7 +347,8 @@ class AkreditasiController extends Controller
                 auth()->id(),
                 true,
                 $validated['reason'] ?? null,
-                $validated['nv_values'] ?? null
+                $validated['nv_values'] ?? null,
+                $validated['nv_reasons'] ?? null
             );
 
             session()->flash('success', 'Validasi akhir disetujui. Akreditasi telah final.');

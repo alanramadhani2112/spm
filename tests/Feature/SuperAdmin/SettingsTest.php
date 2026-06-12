@@ -4,6 +4,7 @@ namespace Tests\Feature\SuperAdmin;
 
 use App\Exceptions\WorkflowException;
 use App\Models\Akreditasi;
+use App\Models\AkreditasiAuditLog;
 use App\Models\AkreditasiEdpm;
 use App\Models\Assessment;
 use App\Models\Document;
@@ -249,6 +250,74 @@ class SettingsTest extends TestCase
             ]);
     }
 
+    public function test_nv_reason_mode_per_butir_requires_reason_for_each_overridden_butir(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::NV_REASON_MODE,
+            'value' => 'per_butir',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION);
+        $this->attachRequiredFinalDocuments($akreditasi);
+        $butir = $this->createEdpmButir();
+
+        AkreditasiEdpm::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $this->admin->id,
+            'butir_id' => $butir->id,
+            'value' => 3,
+            'type' => 'nk',
+        ]);
+
+        $this->expectException(WorkflowException::class);
+        $this->expectExceptionMessage('Alasan per butir wajib diisi ketika mode alasan override NV adalah per butir.');
+
+        app(AkreditasiWorkflowService::class)
+            ->adminValidasiAkhir($akreditasi->id, $this->admin->id, true, null, [
+                $butir->id => 4,
+            ]);
+    }
+
+    public function test_nv_reason_mode_per_butir_stores_override_reasons_in_audit_log(): void
+    {
+        SuperAdminSetting::create([
+            'key' => SuperAdminSettings::NV_REASON_MODE,
+            'value' => 'per_butir',
+        ]);
+
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION);
+        $this->attachRequiredFinalDocuments($akreditasi);
+        $butir = $this->createEdpmButir();
+
+        AkreditasiEdpm::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $this->admin->id,
+            'butir_id' => $butir->id,
+            'value' => 3,
+            'type' => 'nk',
+        ]);
+
+        $result = app(AkreditasiWorkflowService::class)
+            ->adminValidasiAkhir($akreditasi->id, $this->admin->id, true, null, [
+                $butir->id => 4,
+            ], [
+                $butir->id => 'Koreksi nilai berdasarkan verifikasi dokumen.',
+            ]);
+
+        $this->assertSame(Akreditasi::STATUS_FINAL_APPROVED, $result->status);
+        $this->assertSame('Alasan per butir tersimpan di audit log.', $result->nv_override_reason);
+
+        $auditLog = AkreditasiAuditLog::where('akreditasi_id', $akreditasi->id)
+            ->where('action_type', 'nv_changed')
+            ->firstOrFail();
+
+        $this->assertSame('per_butir', $auditLog->metadata['reason_mode']);
+        $this->assertSame($butir->id, $auditLog->metadata['overrides'][0]['butir_id']);
+        $this->assertSame('Koreksi nilai berdasarkan verifikasi dokumen.', $auditLog->metadata['overrides'][0]['reason']);
+    }
+
     public function test_kartu_kendali_requirement_blocks_admin_validation(): void
     {
         $pesantren = User::factory()->create(['role_id' => 3]);
@@ -368,6 +437,20 @@ class SettingsTest extends TestCase
             'komponen_id' => $komponen->id,
             'kode' => 'NV.1',
             'nama' => 'Butir NV',
+        ]);
+    }
+
+    private function attachRequiredFinalDocuments(Akreditasi $akreditasi): void
+    {
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_KARTU_KENDALI,
+            'file_path' => 'kartu-kendali.pdf',
+        ]);
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_LAPORAN_ASESOR,
+            'file_path' => 'laporan.pdf',
         ]);
     }
 
