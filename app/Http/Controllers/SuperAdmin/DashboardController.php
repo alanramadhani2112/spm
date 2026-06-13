@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
 use App\Models\Assessment;
+use App\Services\AuditTrailService;
 use App\Support\SuperAdminSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        private AuditTrailService $auditTrail,
+    ) {}
+
     public function index(Request $request)
     {
         $period = $request->query('period', 'all');
@@ -73,6 +78,16 @@ class DashboardController extends Controller
             ->groupBy('status')
             ->orderBy('status')
             ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'dashboard_summary',
+            'format' => 'csv',
+            'filters' => [
+                'period' => $period,
+            ],
+            'rows_exported' => (int) $rows->sum('total'),
+            'grouped_rows' => $rows->count(),
+        ]);
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');

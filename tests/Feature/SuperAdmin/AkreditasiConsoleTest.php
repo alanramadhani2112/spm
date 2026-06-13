@@ -133,6 +133,25 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.export', ['status' => Akreditasi::STATUS_INITIAL_SUBMITTED, 'q' => 'Export']))
             ->assertOk()
             ->assertDownload('akreditasi-superadmin.csv');
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'superadmin_exported')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertNull($auditLog->akreditasi_id);
+        $this->assertSame('akreditasi_console', $auditLog->metadata['export_type']);
+        $this->assertSame('csv', $auditLog->metadata['format']);
+        $this->assertSame('all', $auditLog->metadata['filters']['period']);
+        $this->assertSame(Akreditasi::STATUS_INITIAL_SUBMITTED, $auditLog->metadata['filters']['status']);
+        $this->assertSame('Export', $auditLog->metadata['filters']['q']);
+        $this->assertSame(1, $auditLog->metadata['rows_exported']);
+    }
+
+    public function test_super_admin_without_export_permission_cannot_export_akreditasi_console(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export'))
+            ->assertForbidden();
     }
 
     public function test_super_admin_can_view_banding_page_with_superadmin_actions(): void

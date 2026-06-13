@@ -115,11 +115,15 @@ use App\Http\Controllers\SuperAdmin\SettingsController;
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/export', [DashboardController::class, 'export'])->name('dashboard.export');
+    Route::get('/export', [DashboardController::class, 'export'])
+        ->middleware('permission:superadmin.export')
+        ->name('dashboard.export');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
-    Route::get('/akreditasi/export', [SuperAdminAkreditasiController::class, 'export'])->name('akreditasi.export');
+    Route::get('/akreditasi/export', [SuperAdminAkreditasiController::class, 'export'])
+        ->middleware('permission:superadmin.export')
+        ->name('akreditasi.export');
     Route::get('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
     Route::get('/akreditasi/{id}', [SuperAdminAkreditasiController::class, 'show'])->name('akreditasi.show');

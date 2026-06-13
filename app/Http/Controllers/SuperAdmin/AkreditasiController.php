@@ -15,6 +15,7 @@ use App\Models\Pesantren;
 use App\Models\SdmPesantren;
 use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
+use App\Services\AuditTrailService;
 use App\Services\BandingService;
 use App\Services\ScoringService;
 use Exception;
@@ -36,6 +37,7 @@ class AkreditasiController extends Controller
         private AkreditasiWorkflowService $workflowService,
         private BandingService $bandingService,
         private ScoringService $scoringService,
+        private AuditTrailService $auditTrail,
     ) {}
 
     // ============================================================
@@ -84,6 +86,17 @@ class AkreditasiController extends Controller
             ->with(['user.pesantren', 'assessments.asesor'])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'akreditasi_console',
+            'format' => 'csv',
+            'filters' => [
+                'period' => $period,
+                'status' => $status,
+                'q' => $search,
+            ],
+            'rows_exported' => $akreditasis->count(),
+        ]);
 
         return response()->streamDownload(function () use ($akreditasis) {
             $out = fopen('php://output', 'w');

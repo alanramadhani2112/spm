@@ -3,7 +3,10 @@
 namespace Tests\Feature\SuperAdmin;
 
 use App\Models\Akreditasi;
+use App\Models\AkreditasiAuditLog;
 use App\Models\Assessment;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -35,6 +38,25 @@ class DashboardExportTest extends TestCase
             ->get(route('superadmin.dashboard.export'))
             ->assertOk()
             ->assertDownload('dashboard-superadmin.csv');
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'superadmin_exported')->firstOrFail();
+        $this->assertSame($superAdmin->id, $auditLog->user_id);
+        $this->assertNull($auditLog->akreditasi_id);
+        $this->assertSame('dashboard_summary', $auditLog->metadata['export_type']);
+        $this->assertSame('csv', $auditLog->metadata['format']);
+        $this->assertSame('all', $auditLog->metadata['filters']['period']);
+        $this->assertSame(1, $auditLog->metadata['rows_exported']);
+        $this->assertSame(1, $auditLog->metadata['grouped_rows']);
+    }
+
+    public function test_super_admin_without_export_permission_cannot_export_dashboard(): void
+    {
+        $superAdmin = User::factory()->create(['role_id' => 4]);
+        $this->revokeSuperAdminPermission('superadmin.export');
+
+        $this->actingAs($superAdmin)
+            ->get(route('superadmin.dashboard.export'))
+            ->assertForbidden();
     }
 
     public function test_super_admin_dashboard_shows_operational_board(): void
@@ -74,5 +96,11 @@ class DashboardExportTest extends TestCase
             ->assertSee('Review Awal')
             ->assertSee('Asesor Workload')
             ->assertSee($reviewAwal->uuid);
+    }
+
+    private function revokeSuperAdminPermission(string $key): void
+    {
+        $permission = Permission::where('key', $key)->firstOrFail();
+        Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }

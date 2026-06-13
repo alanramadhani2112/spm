@@ -54,6 +54,7 @@ class AkreditasiAuditLog extends Model
             'role_permissions_updated' => 'Permission Role Diperbarui',
             'user_invited' => 'Pengguna Diundang',
             'user_access_updated' => 'Akses Pengguna Diperbarui',
+            'superadmin_exported' => 'Export Super Admin',
             'sso_user_linked' => 'User SSO Ditautkan',
             'sso_login_failed' => 'Login SSO Gagal',
             default => $actionType,
