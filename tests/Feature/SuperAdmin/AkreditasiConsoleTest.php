@@ -4,6 +4,7 @@ namespace Tests\Feature\SuperAdmin;
 
 use App\Models\Akreditasi;
 use App\Models\AkreditasiAuditLog;
+use App\Models\Assessment;
 use App\Models\Banding;
 use App\Models\Edpm;
 use App\Models\Ipm;
@@ -244,6 +245,46 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee(route('superadmin.akreditasi.layak-visitasi', $akreditasi->id), false)
             ->assertSee(route('superadmin.akreditasi.minta-perbaikan-tahap2', $akreditasi->id), false)
             ->assertDontSee(route('asesor.ketua.nyatakan-layak-visitasi', $akreditasi->id), false);
+    }
+
+    public function test_super_admin_assign_asesor_page_shows_active_workload(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $asesor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Sibuk', 'email' => 'sibuk@test.com']);
+        $activeAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+        ]);
+        $completedAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+        ]);
+        $targetAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+
+        Assessment::create([
+            'akreditasi_id' => $activeAkreditasi->id,
+            'asesor_id' => $asesor->id,
+            'tipe' => 'ketua',
+        ]);
+        Assessment::create([
+            'akreditasi_id' => $completedAkreditasi->id,
+            'asesor_id' => $asesor->id,
+            'tipe' => 'anggota',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.assign-asesor', $targetAkreditasi->id))
+            ->assertOk()
+            ->assertSee('Workload Asesor Aktif')
+            ->assertSee('Asesor Sibuk')
+            ->assertSee('Aktif 1')
+            ->assertSee('K: 1 / A: 0');
     }
 
     public function test_super_admin_without_final_approval_permission_cannot_approve_final(): void

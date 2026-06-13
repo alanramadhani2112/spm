@@ -111,6 +111,7 @@ use App\Http\Controllers\SuperAdmin\AkreditasiController as SuperAdminAkreditasi
 use App\Http\Controllers\SuperAdmin\AuditController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\MasterDataController;
+use App\Http\Controllers\SuperAdmin\NotificationCenterController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
 
 Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
@@ -215,6 +216,16 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/settings/nv', [SettingsController::class, 'nv'])->name('settings.nv');
     Route::get('/settings/notifikasi', [SettingsController::class, 'notifikasi'])->name('settings.notifikasi');
     Route::get('/settings/banding', [SettingsController::class, 'banding'])->name('settings.banding');
+
+    Route::get('/notifications', [NotificationCenterController::class, 'index'])
+        ->middleware('permission:superadmin.notifications')
+        ->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationCenterController::class, 'markAllRead'])
+        ->middleware('permission:superadmin.notifications')
+        ->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/read', [NotificationCenterController::class, 'markRead'])
+        ->middleware('permission:superadmin.notifications')
+        ->name('notifications.mark-read');
 
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     Route::get('/audit/{id}', [AuditController::class, 'show'])->name('audit.show');

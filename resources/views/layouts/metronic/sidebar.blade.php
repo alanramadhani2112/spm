@@ -83,6 +83,14 @@
                             <span class="menu-title">Dashboard</span>
                         </a>
                     </div>
+                    @if(auth()->user()?->hasPermission('superadmin.notifications'))
+                        <div class="menu-item">
+                            <a href="{{ route('superadmin.notifications.index') }}" class="{{ $linkClass('superadmin.notifications.*') }}">
+                                <span class="menu-icon"><i class="ki-outline ki-notification-on fs-2"></i></span>
+                                <span class="menu-title">Notification Center</span>
+                            </a>
+                        </div>
+                    @endif
 
                     <div class="menu-item pt-5"><div class="menu-content"><span class="menu-heading fw-bold text-uppercase fs-7">Akreditasi</span></div></div>
 

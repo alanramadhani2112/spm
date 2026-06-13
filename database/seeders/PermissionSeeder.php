@@ -37,6 +37,7 @@ class PermissionSeeder extends Seeder
             'role.permissions.update',
             'user.access.update',
             'superadmin.export',
+            'superadmin.notifications',
             'akreditasi.final.approve',
             'sk.publish',
             'master.manage',

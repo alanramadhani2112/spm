@@ -7,6 +7,7 @@
 @php
     use App\Models\Akreditasi;
     $akreditasiRoutePrefix = $akreditasiRoutePrefix ?? 'admin.akreditasi';
+    $assessorWorkloads = $assessorWorkloads ?? collect();
 @endphp
     @includeWhen($isSuperAdminView ?? false, 'superadmin._mode-banner')
 
@@ -83,6 +84,37 @@
         </div>
     @endif
 
+    @if($assessorWorkloads->isNotEmpty())
+        <div class="rounded-3 bg-white shadow-sm mb-6">
+            <div class="px-6 py-5">
+                <h2 class="fs-6 fw-semibold text-gray-900">Workload Asesor Aktif</h2>
+                <p class="mt-1 fs-7 text-muted">Gunakan beban aktif sebagai sinyal sebelum mengganti tim asesor.</p>
+            </div>
+            <div class="px-6 pb-5">
+                <div class="row g-3">
+                    @foreach($asesors as $asesor)
+                        @php
+                            $workload = $assessorWorkloads->get($asesor->id, ['total' => 0, 'ketua' => 0, 'anggota' => 0, 'level' => 'normal']);
+                            $loadColor = $workload['level'] === 'high' ? 'danger' : ($workload['level'] === 'medium' ? 'warning' : 'success');
+                        @endphp
+                        <div class="col-md-4">
+                            <div class="border border-gray-300 border-dashed rounded p-4 h-100">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div class="min-w-0">
+                                        <div class="fw-semibold text-gray-900 text-truncate">{{ $asesor->name }}</div>
+                                        <div class="fs-8 text-muted text-truncate">{{ $asesor->email }}</div>
+                                    </div>
+                                    <span class="badge badge-light-{{ $loadColor }}">{{ $workload['total'] }}</span>
+                                </div>
+                                <div class="fs-8 text-muted mt-2">Ketua: {{ $workload['ketua'] }} / Anggota: {{ $workload['anggota'] }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Reassign Form --}}
     <div class="rounded-3 bg-white shadow-sm">
         <div class="px-6 py-5">
@@ -103,8 +135,9 @@
                                 class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900 focus:border-red-500 focus:">
                             <option value="">— Pilih Ketua Asesor —</option>
                             @foreach($asesors as $asesor)
+                                @php $workload = $assessorWorkloads->get($asesor->id, ['total' => 0, 'ketua' => 0, 'anggota' => 0]); @endphp
                                 <option value="{{ $asesor->id }}" {{ old('ketua_id') == $asesor->id ? 'selected' : '' }}>
-                                    {{ $asesor->name }} ({{ $asesor->email }})
+                                    {{ $asesor->name }} ({{ $asesor->email }}) - aktif {{ $workload['total'] }} [K:{{ $workload['ketua'] }}/A:{{ $workload['anggota'] }}]
                                 </option>
                             @endforeach
                         </select>
@@ -118,13 +151,20 @@
                         <p class="mt-1 fs-8 text-gray-500">Pilih satu atau lebih anggota asesor (opsional).</p>
                         <div class="mt-3 max-h-60 overflow-y-auto rounded border border-gray-200 bg-light p-3 d-grid gap-2">
                             @foreach($asesors as $asesor)
+                                @php
+                                    $workload = $assessorWorkloads->get($asesor->id, ['total' => 0, 'ketua' => 0, 'anggota' => 0, 'level' => 'normal']);
+                                    $loadColor = $workload['level'] === 'high' ? 'danger' : ($workload['level'] === 'medium' ? 'warning' : 'success');
+                                @endphp
                                 <label class="d-flex align-items-center gap-3 rounded px-3 py-2 cursor-pointer">
                                     <input type="checkbox" name="anggota_ids[]" value="{{ $asesor->id }}"
                                            class="w-15px h-15px rounded border-gray-300 text-danger"
                                            {{ in_array($asesor->id, old('anggota_ids', [])) ? 'checked' : '' }}>
-                                    <div>
-                                        <p class="fs-7">{{ $asesor->name }}</p>
-                                        <p class="fs-8 text-gray-500">{{ $asesor->email }}</p>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <p class="fs-7 mb-0">{{ $asesor->name }}</p>
+                                            <span class="badge badge-light-{{ $loadColor }}">Aktif {{ $workload['total'] }}</span>
+                                        </div>
+                                        <p class="fs-8 text-gray-500 mb-0">{{ $asesor->email }} - K: {{ $workload['ketua'] }} / A: {{ $workload['anggota'] }}</p>
                                     </div>
                                 </label>
                             @endforeach

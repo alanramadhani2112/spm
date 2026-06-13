@@ -343,8 +343,9 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
+            $assessorWorkloads = $this->assessorWorkloads($asesors);
 
-            return view('admin.akreditasi.assign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing')));
+            return view('admin.akreditasi.assign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing', 'assessorWorkloads')));
         }
 
         $validated = $request->validate([
@@ -373,8 +374,9 @@ class AkreditasiController extends Controller
         if ($request->isMethod('get')) {
             $asesors = User::where('role_id', 2)->get();
             $existing = Assessment::with('asesor')->where('akreditasi_id', $akreditasiId)->get();
+            $assessorWorkloads = $this->assessorWorkloads($asesors);
 
-            return view('admin.akreditasi.reassign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing')));
+            return view('admin.akreditasi.reassign-asesor', $this->superadminViewData(compact('akreditasi', 'asesors', 'existing', 'assessorWorkloads')));
         }
 
         $validated = $request->validate([
@@ -919,5 +921,35 @@ class AkreditasiController extends Controller
         }
 
         return $actions;
+    }
+
+    private function assessorWorkloads($asesors)
+    {
+        $workloads = Assessment::query()
+            ->whereIn('asesor_id', $asesors->pluck('id'))
+            ->whereHas('akreditasi', fn ($query) => $query->whereNotIn('status', Akreditasi::TERMINAL_STATUSES))
+            ->select('asesor_id')
+            ->selectRaw('count(*) as total')
+            ->selectRaw("sum(case when tipe = 'ketua' then 1 else 0 end) as ketua_total")
+            ->selectRaw("sum(case when tipe = 'anggota' then 1 else 0 end) as anggota_total")
+            ->groupBy('asesor_id')
+            ->get()
+            ->keyBy('asesor_id');
+
+        return $asesors->mapWithKeys(function (User $asesor) use ($workloads) {
+            $workload = $workloads->get($asesor->id);
+            $total = (int) ($workload?->total ?? 0);
+
+            return [$asesor->id => [
+                'total' => $total,
+                'ketua' => (int) ($workload?->ketua_total ?? 0),
+                'anggota' => (int) ($workload?->anggota_total ?? 0),
+                'level' => match (true) {
+                    $total >= 5 => 'high',
+                    $total >= 3 => 'medium',
+                    default => 'normal',
+                },
+            ]];
+        });
     }
 }
