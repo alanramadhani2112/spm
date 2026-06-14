@@ -241,6 +241,135 @@ class MasterDataTest extends TestCase
         $this->assertFalse($pesantren->fresh()->is_locked);
     }
 
+    public function test_pesantren_detail_page_displays_override_form(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'User Detail Pesantren']);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Detail',
+            'ns_pesantren' => 'NSP-DETAIL',
+            'alamat' => 'Jl. Detail',
+            'provinsi_kode' => '32',
+            'tahun_pendirian' => '2002',
+            'layanan_satuan_pendidikan' => ['MTs'],
+            'is_locked' => true,
+        ]);
+        PesantrenUnit::create([
+            'pesantren_id' => $pesantren->id,
+            'layanan_satuan_pendidikan' => 'MTs',
+            'jumlah_rombel' => 3,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.pesantren.show', $pesantren))
+            ->assertOk()
+            ->assertSeeText('Detail Pesantren')
+            ->assertSeeText('Pesantren Detail')
+            ->assertSeeText('Override Profil Pesantren')
+            ->assertSeeText('Wajib alasan audit');
+    }
+
+    public function test_super_admin_can_override_locked_pesantren_profile_with_audit_log(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Lama',
+            'ns_pesantren' => 'NSP-LAMA',
+            'alamat' => 'Jl. Lama',
+            'provinsi_kode' => '32',
+            'tahun_pendirian' => '2001',
+            'layanan_satuan_pendidikan' => ['MTs'],
+            'is_locked' => true,
+        ]);
+        PesantrenUnit::create([
+            'pesantren_id' => $pesantren->id,
+            'layanan_satuan_pendidikan' => 'MTs',
+            'jumlah_rombel' => 2,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->put(route('superadmin.master-data.pesantren.update', $pesantren), [
+                'nama_pesantren' => 'Pesantren Baru',
+                'ns_pesantren' => 'NSP-BARU',
+                'alamat' => 'Jl. Baru',
+                'provinsi_kode' => '33',
+                'tahun_pendirian' => '2005',
+                'kota_kabupaten' => 'Kota Baru',
+                'kecamatan' => 'Kecamatan Baru',
+                'kelurahan' => 'Kelurahan Baru',
+                'nama_mudir' => 'Mudir Baru',
+                'jenjang_pendidikan_mudir' => 'S2',
+                'telp_pesantren' => '021123',
+                'hp_wa' => '0812345',
+                'email_pesantren' => 'pesantren.baru@example.com',
+                'luas_tanah' => '2000 m2',
+                'luas_bangunan' => '1500 m2',
+                'visi' => 'Visi baru',
+                'misi' => 'Misi baru',
+                'layanan_satuan_pendidikan' => ['MTs', 'MA'],
+                'units' => [
+                    ['layanan_satuan_pendidikan' => 'MTs', 'jumlah_rombel' => 4],
+                    ['layanan_satuan_pendidikan' => 'MA', 'jumlah_rombel' => 5],
+                ],
+                'reason' => 'Koreksi data berdasarkan validasi dokumen resmi.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
+
+        $pesantren->refresh();
+        $this->assertSame('Pesantren Baru', $pesantren->nama_pesantren);
+        $this->assertSame('33', $pesantren->provinsi_kode);
+        $this->assertTrue($pesantren->is_locked);
+        $this->assertSame(2, $pesantren->units()->count());
+        $this->assertDatabaseHas('pesantren_units', [
+            'pesantren_id' => $pesantren->id,
+            'layanan_satuan_pendidikan' => 'MA',
+            'jumlah_rombel' => 5,
+        ]);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'pesantren_profile_overridden')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Koreksi data berdasarkan validasi dokumen resmi.', $auditLog->reason);
+        $this->assertSame($pesantren->id, $auditLog->metadata['pesantren_id']);
+        $this->assertTrue($auditLog->metadata['was_locked']);
+        $this->assertSame('Pesantren Lama', $auditLog->metadata['old']['profile']['nama_pesantren']);
+        $this->assertSame('Pesantren Baru', $auditLog->metadata['new']['profile']['nama_pesantren']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_override_pesantren_profile(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Guard Override',
+            'ns_pesantren' => 'NSP-GUARD',
+            'alamat' => 'Jl. Guard',
+            'provinsi_kode' => '32',
+            'tahun_pendirian' => '2001',
+            'layanan_satuan_pendidikan' => ['MTs'],
+            'is_locked' => true,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->put(route('superadmin.master-data.pesantren.update', $pesantren), [
+                'nama_pesantren' => 'Pesantren Tidak Boleh Berubah',
+                'ns_pesantren' => 'NSP-GUARD',
+                'alamat' => 'Jl. Guard',
+                'provinsi_kode' => '32',
+                'tahun_pendirian' => '2001',
+                'layanan_satuan_pendidikan' => ['MTs'],
+                'units' => [
+                    ['layanan_satuan_pendidikan' => 'MTs', 'jumlah_rombel' => 1],
+                ],
+                'reason' => 'Menguji permission override.',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Pesantren Guard Override', $pesantren->fresh()->nama_pesantren);
+    }
+
     public function test_super_admin_can_pre_register_user_for_muhammadiyah_sso(): void
     {
         $role = Role::where('parameter', 'asesor')->firstOrFail();

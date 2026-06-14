@@ -55,6 +55,7 @@ class AkreditasiAuditLog extends Model
             'user_invited' => 'Pengguna Diundang',
             'user_access_updated' => 'Akses Pengguna Diperbarui',
             'pesantren_profile_lock_toggled' => 'Lock Data Pesantren Diubah',
+            'pesantren_profile_overridden' => 'Profil Pesantren Dioverride',
             'superadmin_exported' => 'Export Super Admin',
             'sso_user_linked' => 'User SSO Ditautkan',
             'sso_login_failed' => 'Login SSO Gagal',

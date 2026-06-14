@@ -141,6 +141,13 @@
                             <td class="text-end pe-4">
                                 <x-superadmin.action-menu label="Buka aksi data pesantren {{ $pesantren->nama_pesantren }}">
                                     <div class="menu-item px-3">
+                                        <a href="{{ route('superadmin.master-data.pesantren.show', $pesantren) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                            <i class="ki-outline ki-eye fs-4"></i>
+                                            <span>Lihat Detail</span>
+                                        </a>
+                                    </div>
+                                    <div class="separator my-2"></div>
+                                    <div class="menu-item px-3">
                                         <button type="button" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#toggle-lock-{{ $pesantren->id }}">
                                             <i class="ki-outline {{ $pesantren->is_locked ? 'ki-unlock' : 'ki-lock' }} fs-4"></i>
                                             <span>{{ $pesantren->is_locked ? 'Buka Lock' : 'Kunci Data' }}</span>

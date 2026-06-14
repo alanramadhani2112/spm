@@ -9,17 +9,40 @@ use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
 use App\Models\Pesantren;
+use App\Models\PesantrenUnit;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditTrailService;
 use App\Services\PesantrenService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class MasterDataController extends Controller
 {
+    private const PESANTREN_PROFILE_FIELDS = [
+        'nama_pesantren',
+        'ns_pesantren',
+        'alamat',
+        'provinsi_kode',
+        'tahun_pendirian',
+        'kota_kabupaten',
+        'kecamatan',
+        'kelurahan',
+        'nama_mudir',
+        'jenjang_pendidikan_mudir',
+        'telp_pesantren',
+        'hp_wa',
+        'email_pesantren',
+        'luas_tanah',
+        'luas_bangunan',
+        'visi',
+        'misi',
+        'layanan_satuan_pendidikan',
+    ];
+
     public function __construct(
         private AuditTrailService $auditTrail,
         private PesantrenService $pesantrenService,
@@ -286,6 +309,71 @@ class MasterDataController extends Controller
         return redirect()
             ->route('superadmin.master-data.pesantren.index')
             ->with('success', $pesantren->fresh()->is_locked ? 'Data pesantren berhasil dikunci.' : 'Data pesantren berhasil dibuka.');
+    }
+
+    public function showPesantren(Pesantren $pesantren)
+    {
+        $pesantren->load(['user', 'units']);
+        $completeness = $this->pesantrenService->checkDataCompleteness($pesantren->user_id);
+        $activeAkreditasis = Akreditasi::query()
+            ->where('user_id', $pesantren->user_id)
+            ->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
+            ->latest()
+            ->get();
+
+        return view('superadmin.master-data.pesantren.show', compact('pesantren', 'completeness', 'activeAkreditasis'));
+    }
+
+    public function updatePesantren(Request $request, Pesantren $pesantren)
+    {
+        $validated = $this->validatePesantrenOverride($request);
+        $reason = $validated['reason'];
+        $units = collect($validated['units'] ?? [])
+            ->filter(fn (array $unit) => filled($unit['layanan_satuan_pendidikan'] ?? null))
+            ->map(fn (array $unit) => [
+                'layanan_satuan_pendidikan' => $unit['layanan_satuan_pendidikan'],
+                'jumlah_rombel' => (int) ($unit['jumlah_rombel'] ?? 0),
+            ])
+            ->values();
+
+        unset($validated['reason'], $validated['units']);
+
+        $pesantren->load('units');
+        $beforeProfile = $pesantren->only(self::PESANTREN_PROFILE_FIELDS);
+        $beforeUnits = $this->serializePesantrenUnits($pesantren);
+
+        DB::transaction(function () use ($pesantren, $validated, $units, $beforeProfile, $beforeUnits, $reason) {
+            $pesantren->fill($validated)->save();
+
+            PesantrenUnit::where('pesantren_id', $pesantren->id)->delete();
+            foreach ($units as $unit) {
+                PesantrenUnit::create([
+                    'pesantren_id' => $pesantren->id,
+                    'layanan_satuan_pendidikan' => $unit['layanan_satuan_pendidikan'],
+                    'jumlah_rombel' => $unit['jumlah_rombel'],
+                ]);
+            }
+
+            $pesantren->refresh()->load('units');
+
+            $this->auditTrail->log('pesantren_profile_overridden', null, auth()->id(), [
+                'pesantren_id' => $pesantren->id,
+                'user_id' => $pesantren->user_id,
+                'was_locked' => (bool) $pesantren->is_locked,
+                'old' => [
+                    'profile' => $beforeProfile,
+                    'units' => $beforeUnits,
+                ],
+                'new' => [
+                    'profile' => $pesantren->only(self::PESANTREN_PROFILE_FIELDS),
+                    'units' => $this->serializePesantrenUnits($pesantren),
+                ],
+            ], $reason);
+        });
+
+        return redirect()
+            ->route('superadmin.master-data.pesantren.show', $pesantren)
+            ->with('success', 'Data profil pesantren berhasil dioverride.');
     }
 
     public function storeDocumentCategory(Request $request)
@@ -586,5 +674,45 @@ class MasterDataController extends Controller
         ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Akun pengguna berhasil diperbarui.');
+    }
+
+    private function validatePesantrenOverride(Request $request): array
+    {
+        return $request->validate([
+            'nama_pesantren' => ['required', 'string', 'max:255'],
+            'ns_pesantren' => ['required', 'string', 'max:100'],
+            'alamat' => ['required', 'string'],
+            'provinsi_kode' => ['required', 'string', 'max:20'],
+            'tahun_pendirian' => ['required', 'string', 'max:10'],
+            'kota_kabupaten' => ['nullable', 'string', 'max:255'],
+            'kecamatan' => ['nullable', 'string', 'max:255'],
+            'kelurahan' => ['nullable', 'string', 'max:255'],
+            'nama_mudir' => ['nullable', 'string', 'max:255'],
+            'jenjang_pendidikan_mudir' => ['nullable', 'string', 'max:255'],
+            'telp_pesantren' => ['nullable', 'string', 'max:50'],
+            'hp_wa' => ['nullable', 'string', 'max:50'],
+            'email_pesantren' => ['nullable', 'email', 'max:255'],
+            'luas_tanah' => ['nullable', 'string', 'max:100'],
+            'luas_bangunan' => ['nullable', 'string', 'max:100'],
+            'visi' => ['nullable', 'string'],
+            'misi' => ['nullable', 'string'],
+            'layanan_satuan_pendidikan' => ['required', 'array', 'min:1'],
+            'layanan_satuan_pendidikan.*' => ['string', 'max:100'],
+            'units' => ['required', 'array', 'min:1'],
+            'units.*.layanan_satuan_pendidikan' => ['nullable', 'string', 'max:100'],
+            'units.*.jumlah_rombel' => ['nullable', 'integer', 'min:0'],
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+    }
+
+    private function serializePesantrenUnits(Pesantren $pesantren): array
+    {
+        return $pesantren->units
+            ->map(fn (PesantrenUnit $unit) => [
+                'layanan_satuan_pendidikan' => $unit->layanan_satuan_pendidikan,
+                'jumlah_rombel' => (int) $unit->jumlah_rombel,
+            ])
+            ->values()
+            ->all();
     }
 }

@@ -54,7 +54,7 @@ Legend:
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
-| Data Pesantren Control | List readiness + lock/unlock profil pesantren | `master-data.pesantren.*` | `pesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.index` | `MasterDataTest` | Done | Sudah ada readiness filter dan audit reason lock/unlock; edit/override detail data pesantren masih gap lanjutan. |
+| Data Pesantren Control | List/detail readiness, lock/unlock, dan override profil/unit pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen/IPM/SDM/EDPM masih gap lanjutan. |
 | Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
 | User Management | List/filter user | `master-data.users.index` | `users` | `superadmin.master-data.users.index` | `MasterDataTest` | Done | Perlu detail user page. |
 | User Management | Invite/pre-register SSO user | `master-data.users.store` | `storeUser` | Modal users page | `MasterDataTest` | Done | Perlu email invite, resend invite, bulk import. |
@@ -83,7 +83,7 @@ Total area route:
 5. Audit: index, show, export.
 6. Notification Center: index, mark read, mark all read.
 
-Total route Super Admin saat audit ini: 69.
+Total route Super Admin saat audit ini: 71.
 
 Kesimpulan route: coverage route end-to-end sudah luas, tetapi completeness masih perlu dinilai dari action coverage, permission granular, audit, dan test - bukan dari jumlah route saja.
 
@@ -107,7 +107,7 @@ Coverage yang kuat:
 - Banding route/action Super Admin.
 - Route-aware shared views agar form submit ke route Super Admin.
 - Master data CRUD dasar.
-- Data Pesantren readiness list/filter dan lock/unlock dengan audit reason.
+- Data Pesantren readiness list/filter, detail, lock/unlock, dan override profil/unit dengan audit reason.
 - User/role management UI dan update dasar.
 - Settings smoke/update.
 - Notification Center render/filter/mark read.
@@ -216,7 +216,7 @@ Missing:
 
 - User detail/SSO detail page.
 - Asesor workload page dan assignment overload warning.
-- Edit/override detail data pesantren.
+- Override dokumen/IPM/SDM/EDPM dari Super Admin.
 
 ## Recommended Next Implementation Order
 
@@ -247,8 +247,7 @@ Missing:
    - Bulk import pre-registration.
 
 5. **Data Pesantren Control lanjutan**
-   - Detail pesantren.
-   - Edit/override data with audit.
+   - Override dokumen/IPM/SDM/EDPM with audit.
 
 6. **Reporting/export suite**
    - Export users/roles.

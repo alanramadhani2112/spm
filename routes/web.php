@@ -199,6 +199,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::patch('/pesantren/{pesantren}/toggle-lock', [MasterDataController::class, 'togglePesantrenLock'])
             ->middleware('permission:user.access.update')
             ->name('pesantren.toggle-lock');
+        Route::get('/pesantren/{pesantren}', [MasterDataController::class, 'showPesantren'])->name('pesantren.show');
+        Route::put('/pesantren/{pesantren}', [MasterDataController::class, 'updatePesantren'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.update');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
             ->middleware('permission:role.permissions.update')
