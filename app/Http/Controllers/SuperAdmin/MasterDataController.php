@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
+use App\Models\AkreditasiAuditLog;
 use App\Models\DocumentCategory;
 use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
@@ -674,6 +675,83 @@ class MasterDataController extends Controller
         ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Akun pengguna berhasil diperbarui.');
+    }
+
+    public function showUser(User $user)
+    {
+        $user->load(['role', 'pesantren', 'asesor']);
+        $roles = Role::orderBy('id')->get();
+        $statusOptions = [
+            'active' => 'Aktif',
+            'inactive' => 'Nonaktif',
+        ];
+        $akreditasiStats = [
+            'total' => Akreditasi::where('user_id', $user->id)->count(),
+            'active' => Akreditasi::where('user_id', $user->id)->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)->count(),
+            'completed' => Akreditasi::where('user_id', $user->id)->whereIn('status', Akreditasi::TERMINAL_STATUSES)->count(),
+        ];
+        $auditLogs = AkreditasiAuditLog::query()
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('actor_user_id', $user->id)
+                    ->orWhere('metadata->user_id', $user->id);
+            })
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        return view('superadmin.master-data.users.show', compact('user', 'roles', 'statusOptions', 'akreditasiStats', 'auditLogs'));
+    }
+
+    public function updateUserSsoIdentity(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'm_id' => ['nullable', 'string', 'max:100'],
+            'nbm' => ['nullable', 'string', 'max:100'],
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        $before = $user->only(['m_id', 'nbm']);
+
+        $user->forceFill([
+            'm_id' => $validated['m_id'] ?? null,
+            'nbm' => $validated['nbm'] ?? null,
+        ])->save();
+
+        $this->auditTrail->log('user_sso_identity_updated', null, auth()->id(), [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'old' => $before,
+            'new' => $user->fresh()->only(['m_id', 'nbm']),
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Identitas SSO pengguna berhasil diperbarui.');
+    }
+
+    public function unlinkUserSso(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        $before = $user->only(['sso_id', 'sso_level', 'sso_role', 'sso_groups', 'last_sso_login_at']);
+
+        $user->forceFill([
+            'sso_id' => null,
+            'sso_level' => null,
+            'sso_role' => null,
+            'sso_groups' => null,
+            'last_sso_login_at' => null,
+        ])->save();
+
+        $this->auditTrail->log('sso_user_unlinked', null, auth()->id(), [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'old' => $before,
+            'new' => $user->fresh()->only(['sso_id', 'sso_level', 'sso_role', 'sso_groups', 'last_sso_login_at']),
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Tautan SSO pengguna berhasil direset.');
     }
 
     private function validatePesantrenOverride(Request $request): array

@@ -233,6 +233,13 @@
                             <td class="text-end pe-4">
                                 <x-superadmin.action-menu label="Buka aksi pengguna {{ $user->name }}">
                                     <div class="menu-item px-3">
+                                        <a href="{{ route('superadmin.master-data.users.show', $user) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                            <i class="ki-outline ki-eye fs-4"></i>
+                                            <span>Lihat Detail</span>
+                                        </a>
+                                    </div>
+                                    <div class="separator my-2"></div>
+                                    <div class="menu-item px-3">
                                         <button type="button" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start" data-bs-toggle="modal" data-bs-target="#edit-user-{{ $user->id }}">
                                             <i class="ki-outline ki-profile-user fs-4"></i>
                                             <span>Edit Role/Status</span>

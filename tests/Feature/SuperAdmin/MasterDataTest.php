@@ -477,6 +477,108 @@ class MasterDataTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_user_detail_page_displays_sso_management(): void
+    {
+        $user = User::factory()->create(['role_id' => 3]);
+        $user->forceFill([
+            'sso_id' => 'sso-user-001',
+            'm_id' => '0000 0000 0000 0002',
+            'nbm' => '987654',
+            'sso_level' => 'pusat',
+            'sso_role' => 'member',
+            'sso_groups' => ['lp2m'],
+            'last_sso_login_at' => now(),
+        ])->save();
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.show', $user))
+            ->assertOk()
+            ->assertSeeText('Detail Akun Pengguna')
+            ->assertSeeText('Profil SSO Muhammadiyah ID')
+            ->assertSeeText('Identitas Pre-registration SSO')
+            ->assertSeeText('Reset Tautan SSO')
+            ->assertSeeText('sso-user-001');
+    }
+
+    public function test_super_admin_can_update_user_sso_identity_with_audit_log(): void
+    {
+        $user = User::factory()->create([
+            'role_id' => 3,
+            'm_id' => 'old-mid',
+            'nbm' => 'old-nbm',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.users.sso-identity.update', $user), [
+                'm_id' => 'new-mid',
+                'nbm' => 'new-nbm',
+                'reason' => 'Memperbaiki identitas pre-registration SSO.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.show', $user));
+
+        $user->refresh();
+        $this->assertSame('new-mid', $user->m_id);
+        $this->assertSame('new-nbm', $user->nbm);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'user_sso_identity_updated')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Memperbaiki identitas pre-registration SSO.', $auditLog->reason);
+        $this->assertSame($user->id, $auditLog->metadata['user_id']);
+        $this->assertSame('old-mid', $auditLog->metadata['old']['m_id']);
+        $this->assertSame('new-mid', $auditLog->metadata['new']['m_id']);
+    }
+
+    public function test_super_admin_can_unlink_user_sso_with_audit_log(): void
+    {
+        $user = User::factory()->create(['role_id' => 3]);
+        $user->forceFill([
+            'sso_id' => 'sso-user-002',
+            'm_id' => '0000 0000 0000 0003',
+            'nbm' => '112233',
+            'sso_level' => 'wilayah',
+            'sso_role' => 'member',
+            'sso_groups' => ['asesor'],
+            'last_sso_login_at' => now(),
+        ])->save();
+
+        $this->actingAs($this->superAdmin)
+            ->delete(route('superadmin.master-data.users.sso-link.destroy', $user), [
+                'reason' => 'Reset tautan karena akun SSO salah.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.show', $user));
+
+        $user->refresh();
+        $this->assertNull($user->sso_id);
+        $this->assertNull($user->sso_level);
+        $this->assertNull($user->sso_role);
+        $this->assertNull($user->sso_groups);
+        $this->assertNull($user->last_sso_login_at);
+        $this->assertSame('0000 0000 0000 0003', $user->m_id);
+        $this->assertSame('112233', $user->nbm);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'sso_user_unlinked')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Reset tautan karena akun SSO salah.', $auditLog->reason);
+        $this->assertSame('sso-user-002', $auditLog->metadata['old']['sso_id']);
+        $this->assertNull($auditLog->metadata['new']['sso_id']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_unlink_user_sso(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $user = User::factory()->create(['role_id' => 3]);
+        $user->forceFill(['sso_id' => 'sso-guard'])->save();
+
+        $this->actingAs($this->superAdmin)
+            ->delete(route('superadmin.master-data.users.sso-link.destroy', $user), [
+                'reason' => 'Menguji permission reset SSO.',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('sso-guard', $user->fresh()->sso_id);
+    }
+
     private function revokeSuperAdminPermission(string $key): void
     {
         $permission = Permission::where('key', $key)->firstOrFail();

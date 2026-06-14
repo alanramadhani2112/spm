@@ -12,9 +12,9 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 
 1. Permission matrix sudah punya enforcement pada aksi sensitif awal dan sebagian workflow utama; akses area besar tetap berbasis role.
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
-3. Audit log non-akreditasi sudah diperluas, dan audit export CSV sudah tersedia; SSO failure/unlink/reset masih belum lengkap.
+3. Audit log non-akreditasi sudah diperluas, audit export CSV tersedia, dan reset/unlink SSO user sudah tercatat; live SSO credential/contract masih perlu verifikasi eksternal.
 4. Operational board dan Notification Center sudah tersedia; assignment warning lanjutan dan export operasional lintas domain masih perlu dikembangkan.
-5. User lifecycle SSO sudah disiapkan, tetapi live integration menunggu credential dan belum ada reset/unlink/detail SSO.
+5. User lifecycle SSO sudah punya pre-registration, detail user, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
 ## Coverage Matrix Utama
@@ -56,10 +56,10 @@ Legend:
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
 | Data Pesantren Control | List/detail readiness, lock/unlock, dan override profil/unit pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen/IPM/SDM/EDPM masih gap lanjutan. |
 | Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
-| User Management | List/filter user | `master-data.users.index` | `users` | `superadmin.master-data.users.index` | `MasterDataTest` | Done | Perlu detail user page. |
+| User Management | List/filter/detail user | `master-data.users.index/show` | `users`, `showUser` | `superadmin.master-data.users.*` | `MasterDataTest` | Done | Detail user sudah menampilkan role/status, profil SSO, statistik akreditasi, dan audit terbaru. |
 | User Management | Invite/pre-register SSO user | `master-data.users.store` | `storeUser` | Modal users page | `MasterDataTest` | Done | Perlu email invite, resend invite, bulk import. |
-| User Management | Edit role/status | `master-data.users.update` | `updateUser` | Modal users page | `MasterDataTest` | Partial | Sudah dilindungi `permission:user.access.update` dan reason perubahan; perlu protection lebih eksplisit untuk role Super Admin. |
-| SSO | Muhammadiyah ID env + skeleton | `/auth/muhammadiyah/*` | `Auth\MuhammadiyahIdController` | Login button | `MuhammadiyahIdSsoTest` | Partial | Live credential belum ada; unlink/reset SSO belum ada. |
+| User Management | Edit role/status | `master-data.users.update` | `updateUser` | Modal users page + detail page | `MasterDataTest` | Partial | Sudah dilindungi `permission:user.access.update` dan reason perubahan; perlu protection lebih eksplisit untuk role Super Admin. |
+| SSO | Muhammadiyah ID env + detail/reset management | `/auth/muhammadiyah/*`, `master-data.users.sso-*` | `Auth\MuhammadiyahIdController`, `MasterDataController` | Login button, user detail | `MuhammadiyahIdSsoTest`, `MasterDataTest` | Partial | Live credential belum ada; update M-ID/NBM dan reset/unlink SSO sudah tersedia dengan audit. |
 | Settings | Settings dashboard | `superadmin.settings.index` | `SettingsController@index` | `superadmin.settings.index` | `SettingsTest` | Done | Good UI, but enforcement coverage perlu audit. |
 | Settings | Deadline, correction, dokumen, NV, notifikasi, banding | `superadmin.settings.*` | `deadline/correction/dokumen/nv/notifikasi/banding/update` | settings pages | `SettingsTest` | Done | `settings.update` sudah dilindungi permission; limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode` sudah enforce. |
 | Audit Log | List/detail/export audit trail | `superadmin.audit.index/show/export` | `AuditController@index/show/export` | `superadmin.audit.*` | `AuditExportTest`, `SettingsTest` smoke | Done | Export CSV sudah tersedia; perlu SSO failure/unlink/reset bila fitur itu ditambahkan. |
@@ -83,7 +83,7 @@ Total area route:
 5. Audit: index, show, export.
 6. Notification Center: index, mark read, mark all read.
 
-Total route Super Admin saat audit ini: 71.
+Total route Super Admin saat audit ini: 74.
 
 Kesimpulan route: coverage route end-to-end sudah luas, tetapi completeness masih perlu dinilai dari action coverage, permission granular, audit, dan test - bukan dari jumlah route saja.
 
@@ -109,6 +109,7 @@ Coverage yang kuat:
 - Master data CRUD dasar.
 - Data Pesantren readiness list/filter, detail, lock/unlock, dan override profil/unit dengan audit reason.
 - User/role management UI dan update dasar.
+- User detail, SSO pre-registration identity update, dan reset/unlink SSO dengan audit reason.
 - Settings smoke/update.
 - Notification Center render/filter/mark read.
 - Audit export CSV.
@@ -117,7 +118,7 @@ Coverage yang kuat:
 Gap test:
 
 1. Belum ada test granular untuk semua action Super Admin end-to-end per status.
-2. Audit log user/role/master/settings/export sudah mulai tercakup; masih perlu SSO failure/unlink/reset bila fitur tersedia.
+2. Audit log user/role/master/settings/export/SSO reset sudah mulai tercakup; masih perlu live SSO failure contract bila credential tersedia.
 3. Permission enforcement sudah punya forbidden-path tests untuk settings, role permission, user access, final approval, SK publish, review awal, tahap 1, assign asesor, dan proses banding; perlu diperluas ke destructive master data/export.
 4. Settings enforcement tests sudah mencakup deadline, max correction cycles, action on limit, banding disabled, NV override disabled, document requirement, dan `nv_reason_mode`.
 5. Belum ada test SSO live contract; wajar karena credential belum approved.
@@ -132,11 +133,11 @@ Sudah tercatat:
 
 Belum/kurang tercatat:
 
-- SSO login failure, unlink, reset, dan administrasi SSO detail bila fitur tersedia.
-- SSO export/reset/unlink activity bila fitur itu tersedia.
+- Live SSO failure contract bila credential tersedia.
+- Resend invite/bulk import activity bila fitur itu ditambahkan.
 - Reason policy yang konsisten untuk seluruh aksi destructive/sensitif.
 
-Rekomendasi: lanjutkan audit layer untuk SSO/export dan permission destructive master data/export.
+Rekomendasi: lanjutkan audit layer untuk export, bulk import/resend invite, dan permission destructive master data/export.
 
 ## Settings Enforcement Audit
 
@@ -187,7 +188,7 @@ Gap:
 
 - Belum semua action workflow sensitif memakai permission granular.
 - Belum semua destructive master-data action punya permission granular yang spesifik.
-- Belum ada permission untuk export activity dan SSO management lanjutan.
+- Belum ada permission untuk export activity dan bulk SSO/user management lanjutan.
 
 Rekomendasi: lanjutkan enforcement bertahap ke destructive master data dan export activity, sambil menambahkan forbidden-path tests per route.
 
@@ -205,6 +206,7 @@ Sudah dipolish:
 - Data Pesantren control page.
 - Role & Permission safe edit modal.
 - User management + SSO pre-registration.
+- User detail + SSO reset/unlink management.
 - Notification Center.
 
 Partial:
@@ -214,7 +216,7 @@ Partial:
 
 Missing:
 
-- User detail/SSO detail page.
+- Resend invite/bulk import user.
 - Asesor workload page dan assignment overload warning.
 - Override dokumen/IPM/SDM/EDPM dari Super Admin.
 
@@ -226,8 +228,8 @@ Missing:
    - Terapkan permission granular ke action destructive master data dan export berikutnya.
    - Tambah tests permission denied per route.
 
-2. **Audit log SSO/export**
-   - Log SSO failure/unlink/reset bila fitur tersedia.
+2. **Audit log export dan bulk user**
+   - Log export lanjutan, resend invite, dan bulk import bila fitur tersedia.
    - Log CSV exports penting.
 
 ### P1 — Operational Control
@@ -240,9 +242,7 @@ Missing:
 
 ### P2 — Data & Reporting
 
-4. **User detail + SSO management**
-   - Detail user, SSO profile, last login.
-   - Reset/unlink SSO.
+4. **User lifecycle lanjutan**
    - Resend invite.
    - Bulk import pre-registration.
 

@@ -209,9 +209,16 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
             ->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
         Route::post('/users', [MasterDataController::class, 'storeUser'])->name('users.store');
+        Route::get('/users/{user}', [MasterDataController::class, 'showUser'])->name('users.show');
         Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])
             ->middleware('permission:user.access.update')
             ->name('users.update');
+        Route::patch('/users/{user}/sso-identity', [MasterDataController::class, 'updateUserSsoIdentity'])
+            ->middleware('permission:user.access.update')
+            ->name('users.sso-identity.update');
+        Route::delete('/users/{user}/sso-link', [MasterDataController::class, 'unlinkUserSso'])
+            ->middleware('permission:user.access.update')
+            ->name('users.sso-link.destroy');
     });
 
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');

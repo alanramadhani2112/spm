@@ -56,8 +56,10 @@ class AkreditasiAuditLog extends Model
             'user_access_updated' => 'Akses Pengguna Diperbarui',
             'pesantren_profile_lock_toggled' => 'Lock Data Pesantren Diubah',
             'pesantren_profile_overridden' => 'Profil Pesantren Dioverride',
+            'user_sso_identity_updated' => 'Identitas SSO Pengguna Diperbarui',
             'superadmin_exported' => 'Export Super Admin',
             'sso_user_linked' => 'User SSO Ditautkan',
+            'sso_user_unlinked' => 'User SSO Dilepas',
             'sso_login_failed' => 'Login SSO Gagal',
             default => $actionType,
         };
