@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Akreditasi;
 use App\Models\DocumentCategory;
 use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
+use App\Models\Pesantren;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditTrailService;
+use App\Services\PesantrenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -19,6 +22,7 @@ class MasterDataController extends Controller
 {
     public function __construct(
         private AuditTrailService $auditTrail,
+        private PesantrenService $pesantrenService,
     ) {}
 
     public function index()
@@ -29,6 +33,7 @@ class MasterDataController extends Controller
             'dokumen' => DocumentCategory::count(),
             'roles' => Role::count(),
             'users' => User::count(),
+            'pesantren' => Pesantren::count(),
         ];
 
         return view('superadmin.master-data.index', compact('stats'));
@@ -188,6 +193,99 @@ class MasterDataController extends Controller
             'presets',
             'stats',
         ));
+    }
+
+    public function pesantren(Request $request)
+    {
+        $filters = [
+            'q' => trim((string) $request->query('q', '')),
+            'lock' => $request->query('lock'),
+            'readiness' => $request->query('readiness'),
+        ];
+
+        if (! in_array($filters['lock'], ['locked', 'unlocked'], true)) {
+            $filters['lock'] = null;
+        }
+
+        if (! in_array($filters['readiness'], ['ready', 'incomplete'], true)) {
+            $filters['readiness'] = null;
+        }
+
+        $query = Pesantren::query()
+            ->with(['user', 'units'])
+            ->when($filters['q'] !== '', function ($query) use ($filters) {
+                $keyword = '%'.$filters['q'].'%';
+
+                $query->where(function ($query) use ($keyword) {
+                    $query->where('nama_pesantren', 'like', $keyword)
+                        ->orWhere('ns_pesantren', 'like', $keyword)
+                        ->orWhereHas('user', function ($userQuery) use ($keyword) {
+                            $userQuery->where('name', 'like', $keyword)
+                                ->orWhere('email', 'like', $keyword);
+                        });
+                });
+            })
+            ->when($filters['lock'] === 'locked', fn ($query) => $query->where('is_locked', true))
+            ->when($filters['lock'] === 'unlocked', fn ($query) => $query->where('is_locked', false))
+            ->orderBy('nama_pesantren');
+
+        $pesantrens = $query->get();
+        $userIds = $pesantrens->pluck('user_id')->filter()->values();
+        $activeAkreditasiCounts = Akreditasi::query()
+            ->whereIn('user_id', $userIds)
+            ->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
+            ->select('user_id')
+            ->selectRaw('count(*) as total')
+            ->groupBy('user_id')
+            ->pluck('total', 'user_id');
+
+        $allRows = $pesantrens
+            ->map(function (Pesantren $pesantren) use ($activeAkreditasiCounts) {
+                $completeness = $this->pesantrenService->checkDataCompleteness($pesantren->user_id);
+
+                return [
+                    'pesantren' => $pesantren,
+                    'completeness' => $completeness,
+                    'active_akreditasi_count' => (int) ($activeAkreditasiCounts[$pesantren->user_id] ?? 0),
+                ];
+            });
+
+        $rows = $allRows
+            ->when($filters['readiness'] === 'ready', fn ($rows) => $rows->filter(fn ($row) => $row['completeness']['assessmentReady']))
+            ->when($filters['readiness'] === 'incomplete', fn ($rows) => $rows->filter(fn ($row) => ! $row['completeness']['assessmentReady']))
+            ->values();
+
+        $stats = [
+            'total' => Pesantren::count(),
+            'locked' => Pesantren::where('is_locked', true)->count(),
+            'unlocked' => Pesantren::where('is_locked', false)->count(),
+            'ready' => $allRows->where('completeness.assessmentReady', true)->count(),
+            'incomplete' => $allRows->where('completeness.assessmentReady', false)->count(),
+        ];
+        $hasFilters = collect($filters)->contains(fn ($value) => filled($value));
+
+        return view('superadmin.master-data.pesantren.index', compact('rows', 'filters', 'stats', 'hasFilters'));
+    }
+
+    public function togglePesantrenLock(Request $request, Pesantren $pesantren)
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        $oldStatus = (bool) $pesantren->is_locked;
+        $pesantren->forceFill(['is_locked' => ! $oldStatus])->save();
+
+        $this->auditTrail->log('pesantren_profile_lock_toggled', null, auth()->id(), [
+            'pesantren_id' => $pesantren->id,
+            'user_id' => $pesantren->user_id,
+            'old' => ['is_locked' => $oldStatus],
+            'new' => ['is_locked' => (bool) $pesantren->fresh()->is_locked],
+        ], $validated['reason']);
+
+        return redirect()
+            ->route('superadmin.master-data.pesantren.index')
+            ->with('success', $pesantren->fresh()->is_locked ? 'Data pesantren berhasil dikunci.' : 'Data pesantren berhasil dibuka.');
     }
 
     public function storeDocumentCategory(Request $request)

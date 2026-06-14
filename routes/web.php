@@ -195,6 +195,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::put('/document-categories/{category}', [MasterDataController::class, 'updateDocumentCategory'])->name('document-categories.update');
         Route::patch('/document-categories/{category}/toggle', [MasterDataController::class, 'toggleDocumentCategory'])->name('document-categories.toggle');
         Route::delete('/document-categories/{category}', [MasterDataController::class, 'destroyDocumentCategory'])->name('document-categories.destroy');
+        Route::get('/pesantren', [MasterDataController::class, 'pesantren'])->name('pesantren.index');
+        Route::patch('/pesantren/{pesantren}/toggle-lock', [MasterDataController::class, 'togglePesantrenLock'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.toggle-lock');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
             ->middleware('permission:role.permissions.update')

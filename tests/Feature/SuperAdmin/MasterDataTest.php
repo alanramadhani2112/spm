@@ -2,11 +2,17 @@
 
 namespace Tests\Feature\SuperAdmin;
 
+use App\Models\AkreditasiAuditLog;
 use App\Models\DocumentCategory;
+use App\Models\Edpm;
+use App\Models\Ipm;
 use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
+use App\Models\Pesantren;
+use App\Models\PesantrenUnit;
 use App\Models\Role;
+use App\Models\SdmPesantren;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -157,6 +163,82 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Menunggu SSO')
             ->assertSee($user->email)
             ->assertSeeText('Role & Permission');
+    }
+
+    public function test_pesantren_data_control_page_displays_readiness_and_lock_state(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'User Pesantren Ready']);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Ready',
+            'ns_pesantren' => 'NSP-READY',
+            'alamat' => 'Jl. Siap',
+            'layanan_satuan_pendidikan' => ['MTs'],
+            'provinsi_kode' => '32',
+            'tahun_pendirian' => '2001',
+            'is_locked' => true,
+        ]);
+        PesantrenUnit::create([
+            'pesantren_id' => $pesantren->id,
+            'layanan_satuan_pendidikan' => 'MTs',
+            'jumlah_rombel' => 6,
+        ]);
+        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100]]);
+        SdmPesantren::create(['user_id' => $pesantrenUser->id, 'data' => ['ustaz_tetap' => 12]]);
+        Edpm::create(['user_id' => $pesantrenUser->id, 'data' => ['status' => 'lengkap']]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.pesantren.index'))
+            ->assertOk()
+            ->assertSeeText('Control Center Data Pesantren')
+            ->assertSeeText('Pesantren Ready')
+            ->assertSeeText('Assessment Ready')
+            ->assertSeeText('Terkunci');
+    }
+
+    public function test_super_admin_can_toggle_pesantren_profile_lock_with_audit_log(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Lock',
+            'is_locked' => false,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.toggle-lock', $pesantren), [
+                'reason' => 'Mengunci data setelah pengajuan diproses.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.index'));
+
+        $this->assertTrue($pesantren->fresh()->is_locked);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'pesantren_profile_lock_toggled')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Mengunci data setelah pengajuan diproses.', $auditLog->reason);
+        $this->assertSame($pesantren->id, $auditLog->metadata['pesantren_id']);
+        $this->assertFalse($auditLog->metadata['old']['is_locked']);
+        $this->assertTrue($auditLog->metadata['new']['is_locked']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_toggle_pesantren_lock(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Guard',
+            'is_locked' => false,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.toggle-lock', $pesantren), [
+                'reason' => 'Menguji permission.',
+            ])
+            ->assertForbidden();
+
+        $this->assertFalse($pesantren->fresh()->is_locked);
     }
 
     public function test_super_admin_can_pre_register_user_for_muhammadiyah_sso(): void

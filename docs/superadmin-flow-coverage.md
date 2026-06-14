@@ -1,6 +1,6 @@
 # Super Admin Flow Coverage Audit
 
-Tanggal audit: 2026-06-11  
+Tanggal audit: 2026-06-14
 Baseline branch: `main`  
 Tujuan: memastikan Super Admin menjadi pusat kendali seluruh proses bisnis akreditasi sebelum pengembangan fitur lanjutan.
 
@@ -12,8 +12,8 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 
 1. Permission matrix sudah punya enforcement pada aksi sensitif awal dan sebagian workflow utama; akses area besar tetap berbasis role.
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
-3. Audit log non-akreditasi sudah diperluas, tetapi SSO failure/unlink/reset dan export activity belum lengkap.
-4. Operational board sudah tersedia di dashboard, tetapi assignment intelligence, notification center, dan export operasional masih perlu dikembangkan.
+3. Audit log non-akreditasi sudah diperluas, dan audit export CSV sudah tersedia; SSO failure/unlink/reset masih belum lengkap.
+4. Operational board dan Notification Center sudah tersedia; assignment warning lanjutan dan export operasional lintas domain masih perlu dikembangkan.
 5. User lifecycle SSO sudah disiapkan, tetapi live integration menunggu credential dan belum ada reset/unlink/detail SSO.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
@@ -54,6 +54,7 @@ Legend:
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
+| Data Pesantren Control | List readiness + lock/unlock profil pesantren | `master-data.pesantren.*` | `pesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.index` | `MasterDataTest` | Done | Sudah ada readiness filter dan audit reason lock/unlock; edit/override detail data pesantren masih gap lanjutan. |
 | Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
 | User Management | List/filter user | `master-data.users.index` | `users` | `superadmin.master-data.users.index` | `MasterDataTest` | Done | Perlu detail user page. |
 | User Management | Invite/pre-register SSO user | `master-data.users.store` | `storeUser` | Modal users page | `MasterDataTest` | Done | Perlu email invite, resend invite, bulk import. |
@@ -61,10 +62,9 @@ Legend:
 | SSO | Muhammadiyah ID env + skeleton | `/auth/muhammadiyah/*` | `Auth\MuhammadiyahIdController` | Login button | `MuhammadiyahIdSsoTest` | Partial | Live credential belum ada; unlink/reset SSO belum ada. |
 | Settings | Settings dashboard | `superadmin.settings.index` | `SettingsController@index` | `superadmin.settings.index` | `SettingsTest` | Done | Good UI, but enforcement coverage perlu audit. |
 | Settings | Deadline, correction, dokumen, NV, notifikasi, banding | `superadmin.settings.*` | `deadline/correction/dokumen/nv/notifikasi/banding/update` | settings pages | `SettingsTest` | Done | `settings.update` sudah dilindungi permission; limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode` sudah enforce. |
-| Audit Log | List/detail audit trail | `superadmin.audit.index/show` | `AuditController@index/show` | `superadmin.audit.*` | `SettingsTest` smoke | Partial | Audit non-akreditasi sudah diperluas; perlu SSO failure/unlink/reset dan export activity. |
-| Notification Center | Inbox/pusat notifikasi | N/A | N/A | N/A | N/A | Missing | Setting notifikasi ada, tapi UI pusat notifikasi Super Admin belum ada. |
+| Audit Log | List/detail/export audit trail | `superadmin.audit.index/show/export` | `AuditController@index/show/export` | `superadmin.audit.*` | `AuditExportTest`, `SettingsTest` smoke | Done | Export CSV sudah tersedia; perlu SSO failure/unlink/reset bila fitur itu ditambahkan. |
+| Notification Center | Inbox/pusat notifikasi | `superadmin.notifications.*` | `NotificationCenterController` | `superadmin.notifications.index` | `NotificationCenterTest` | Done | Inbox, filter, mark read, dan mark all read sudah tersedia; perlu integrasi notifikasi operasional lanjutan bila event baru ditambah. |
 | Operational Board | Bottleneck/SLA/workload board | `superadmin.dashboard` | `DashboardController@index` | `superadmin.dashboard.index` | `DashboardExportTest` | Done | Sudah ada board status, SLA breach, urgent queue, workload asesor; perlu export dan assignment warning lanjutan. |
-| Data Pesantren Control | Super Admin manage profil/data pesantren | Partial via detail akreditasi | `AkreditasiController@show` | detail tab | Partial | Partial | Belum ada dedicated Super Admin page untuk edit/lock/unlock data pesantren. |
 
 ## Route Coverage Super Admin
 
@@ -78,11 +78,14 @@ Total area route:
 
 1. Dashboard: `superadmin.dashboard`, `superadmin.dashboard.export`.
 2. Akreditasi workflow: index, export, pengajuan, detail, review awal, assessment, review tahap 1, assign/reassign asesor, review tahap 2, visitasi, scoring, laporan, validasi akhir, SK, banding.
-3. Master data: EDPM, document categories, roles, users.
+3. Master data: EDPM, document categories, data pesantren, roles, users.
 4. Settings: index, update, deadline, correction, dokumen, NV, notifikasi, banding.
-5. Audit: index, show.
+5. Audit: index, show, export.
+6. Notification Center: index, mark read, mark all read.
 
-Kesimpulan route: coverage route end-to-end sudah luas dan cukup lengkap.
+Total route Super Admin saat audit ini: 69.
+
+Kesimpulan route: coverage route end-to-end sudah luas, tetapi completeness masih perlu dinilai dari action coverage, permission granular, audit, dan test - bukan dari jumlah route saja.
 
 ## Test Coverage Super Admin
 
@@ -92,6 +95,8 @@ Test yang ada:
 - `tests/Feature/SuperAdmin/AkreditasiConsoleTest.php`
 - `tests/Feature/SuperAdmin/MasterDataTest.php`
 - `tests/Feature/SuperAdmin/SettingsTest.php`
+- `tests/Feature/SuperAdmin/NotificationCenterTest.php`
+- `tests/Feature/SuperAdmin/AuditExportTest.php`
 - `tests/Feature/MuhammadiyahIdSsoTest.php`
 
 Coverage yang kuat:
@@ -102,14 +107,17 @@ Coverage yang kuat:
 - Banding route/action Super Admin.
 - Route-aware shared views agar form submit ke route Super Admin.
 - Master data CRUD dasar.
+- Data Pesantren readiness list/filter dan lock/unlock dengan audit reason.
 - User/role management UI dan update dasar.
 - Settings smoke/update.
+- Notification Center render/filter/mark read.
+- Audit export CSV.
 - SSO mocked redirect/callback.
 
 Gap test:
 
 1. Belum ada test granular untuk semua action Super Admin end-to-end per status.
-2. Audit log user/role/master/settings sudah mulai tercakup; masih perlu SSO failure/unlink/reset dan export activity.
+2. Audit log user/role/master/settings/export sudah mulai tercakup; masih perlu SSO failure/unlink/reset bila fitur tersedia.
 3. Permission enforcement sudah punya forbidden-path tests untuk settings, role permission, user access, final approval, SK publish, review awal, tahap 1, assign asesor, dan proses banding; perlu diperluas ke destructive master data/export.
 4. Settings enforcement tests sudah mencakup deadline, max correction cycles, action on limit, banding disabled, NV override disabled, document requirement, dan `nv_reason_mode`.
 5. Belum ada test SSO live contract; wajar karena credential belum approved.
@@ -125,7 +133,7 @@ Sudah tercatat:
 Belum/kurang tercatat:
 
 - SSO login failure, unlink, reset, dan administrasi SSO detail bila fitur tersedia.
-- CSV exports.
+- SSO export/reset/unlink activity bila fitur itu tersedia.
 - Reason policy yang konsisten untuk seluruh aksi destructive/sensitif.
 
 Rekomendasi: lanjutkan audit layer untuk SSO/export dan permission destructive master data/export.
@@ -194,8 +202,10 @@ Sudah dipolish:
 - Settings forms.
 - Master data center.
 - Document categories.
+- Data Pesantren control page.
 - Role & Permission safe edit modal.
 - User management + SSO pre-registration.
+- Notification Center.
 
 Partial:
 
@@ -204,10 +214,9 @@ Partial:
 
 Missing:
 
-- Notification center.
 - User detail/SSO detail page.
 - Asesor workload page dan assignment overload warning.
-- Data Pesantren control page.
+- Edit/override detail data pesantren.
 
 ## Recommended Next Implementation Order
 
@@ -223,33 +232,25 @@ Missing:
 
 ### P1 — Operational Control
 
-4. **Asesor Workload & Assignment Intelligence**
+3. **Asesor Workload & Assignment Intelligence**
    - Lihat beban asesor aktif.
    - Jumlah assignment ketua/anggota.
    - Assignment overdue.
    - Warning saat assign asesor overload.
 
-5. **Notification Center**
-   - Inbox Super Admin.
-   - Notifikasi deadline, overdue, banding, SK pending, failed notifications.
-   - Mark as read dan filter.
-
 ### P2 — Data & Reporting
 
-6. **User detail + SSO management**
+4. **User detail + SSO management**
    - Detail user, SSO profile, last login.
    - Reset/unlink SSO.
    - Resend invite.
    - Bulk import pre-registration.
 
-7. **Data Pesantren Control**
-   - Dedicated list/detail pesantren.
-   - Kelengkapan profil/data/dokumen.
-   - Lock/unlock data.
+5. **Data Pesantren Control lanjutan**
+   - Detail pesantren.
    - Edit/override data with audit.
 
-8. **Reporting/export suite**
-   - Export audit log.
+6. **Reporting/export suite**
    - Export users/roles.
    - Export nilai/peringkat.
    - Export asesor workload.

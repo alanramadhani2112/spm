@@ -44,6 +44,7 @@
         ['label' => 'Komponen EDPM', 'value' => $stats['komponen'], 'icon' => 'ki-category', 'color' => 'primary'],
         ['label' => 'Butir EDPM', 'value' => $stats['butir'], 'icon' => 'ki-notepad-edit', 'color' => 'info'],
         ['label' => 'Kategori Dokumen', 'value' => $stats['dokumen'], 'icon' => 'ki-document', 'color' => 'warning'],
+        ['label' => 'Pesantren', 'value' => $stats['pesantren'], 'icon' => 'ki-home', 'color' => 'info'],
         ['label' => 'Role', 'value' => $stats['roles'], 'icon' => 'ki-security-user', 'color' => 'success'],
         ['label' => 'Akun', 'value' => $stats['users'], 'icon' => 'ki-profile-user', 'color' => 'danger'],
     ] as $stat)
@@ -78,6 +79,7 @@
     @foreach([
         ['route' => 'superadmin.master-data.edpm.index', 'title' => 'Master EDPM', 'desc' => 'Kelola komponen dan butir instrumen EDPM/IPR.', 'icon' => 'ki-notepad-edit', 'color' => 'primary'],
         ['route' => 'superadmin.master-data.document-categories.index', 'title' => 'Kategori Dokumen', 'desc' => 'Kelola kategori dokumen dan kewajiban per fase.', 'icon' => 'ki-document', 'color' => 'warning'],
+        ['route' => 'superadmin.master-data.pesantren.index', 'title' => 'Data Pesantren', 'desc' => 'Pantau kelengkapan data dan lock profil pesantren.', 'icon' => 'ki-home', 'color' => 'info'],
         ['route' => 'superadmin.master-data.roles.index', 'title' => 'Role & Permission', 'desc' => 'Atur permission yang diturunkan ke setiap role.', 'icon' => 'ki-security-user', 'color' => 'success'],
         ['route' => 'superadmin.master-data.users.index', 'title' => 'Akun Pengguna', 'desc' => 'Kelola role dan status akun pengguna.', 'icon' => 'ki-profile-user', 'color' => 'danger'],
     ] as $item)

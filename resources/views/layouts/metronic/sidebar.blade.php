@@ -135,6 +135,12 @@
                                 </a>
                             </div>
                             <div class="menu-item">
+                                <a href="{{ route('superadmin.master-data.pesantren.index') }}" class="{{ $linkClass('superadmin.master-data.pesantren.*') }}">
+                                    <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
+                                    <span class="menu-title">Data Pesantren</span>
+                                </a>
+                            </div>
+                            <div class="menu-item">
                                 <a href="{{ route('superadmin.master-data.roles.index') }}" class="{{ $linkClass('superadmin.master-data.roles.*') }}">
                                     <span class="menu-bullet"><span class="bullet bullet-dot"></span></span>
                                     <span class="menu-title">Role & Permission</span>
