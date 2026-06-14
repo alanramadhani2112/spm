@@ -228,6 +228,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         ->name('notifications.mark-read');
 
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
+    Route::get('/audit/export', [AuditController::class, 'export'])
+        ->middleware('permission:superadmin.export')
+        ->name('audit.export');
     Route::get('/audit/{id}', [AuditController::class, 'show'])->name('audit.show');
 });
 

@@ -10,6 +10,9 @@
         <p class="fs-7 text-muted mb-0">Telusuri perubahan status, setting, dan aksi operasional yang tercatat pada audit trail.</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('superadmin.audit.export', request()->only(['actor', 'action', 'start_date', 'end_date'])) }}" class="btn btn-sm btn-light-success">
+            <i class="ki-outline ki-exit-down fs-3"></i>Export CSV
+        </a>
         <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">
             <i class="ki-outline ki-document fs-3"></i>Workflow Console
         </a>
