@@ -287,6 +287,92 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('K: 1 / A: 0');
     }
 
+    public function test_super_admin_assign_asesor_page_warns_when_selection_can_trigger_overload(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $asesor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Hampir Penuh', 'email' => 'hampir@test.com']);
+        $targetAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+
+        $this->createActiveAssignments($pesantrenUser, $asesor, 4);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.assign-asesor', $targetAkreditasi->id))
+            ->assertOk()
+            ->assertSee('Konfirmasi Assignment Overload')
+            ->assertSee('Asesor Hampir Penuh: 4 -> 5', false);
+    }
+
+    public function test_super_admin_must_confirm_projected_overload_when_assigning_asesor(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $asesor = User::factory()->create(['role_id' => 2]);
+        $targetAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+
+        $this->createActiveAssignments($pesantrenUser, $asesor, 4);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.assign-asesor', $targetAkreditasi->id), [
+                'ketua_id' => $asesor->id,
+            ])
+            ->assertSessionHasErrors(['overload_confirmation', 'reason']);
+
+        $this->assertDatabaseHas('akreditasis', [
+            'id' => $targetAkreditasi->id,
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+        $this->assertDatabaseMissing('assessments', [
+            'akreditasi_id' => $targetAkreditasi->id,
+            'asesor_id' => $asesor->id,
+        ]);
+    }
+
+    public function test_super_admin_can_confirm_overload_assignment_with_audit_reason(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $asesor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Override']);
+        $targetAkreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        ]);
+
+        $this->createActiveAssignments($pesantrenUser, $asesor, 4);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.assign-asesor', $targetAkreditasi->id), [
+                'ketua_id' => $asesor->id,
+                'overload_confirmation' => '1',
+                'reason' => 'Distribusi tetap dipilih karena domain keahlian sesuai.',
+            ])
+            ->assertRedirect(route('superadmin.akreditasi.index'));
+
+        $this->assertDatabaseHas('akreditasis', [
+            'id' => $targetAkreditasi->id,
+            'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+        ]);
+        $this->assertDatabaseHas('assessments', [
+            'akreditasi_id' => $targetAkreditasi->id,
+            'asesor_id' => $asesor->id,
+            'tipe' => 'ketua',
+        ]);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'asesor_assigned')->firstOrFail();
+        $this->assertSame('Distribusi tetap dipilih karena domain keahlian sesuai.', $auditLog->reason);
+        $this->assertSame('superadmin_assign', $auditLog->metadata['assignment_context']);
+        $this->assertTrue($auditLog->metadata['overload_confirmed']);
+        $this->assertSame($asesor->id, $auditLog->metadata['ketua_id']);
+        $this->assertSame(4, $auditLog->metadata['overload_warnings'][0]['current_total']);
+        $this->assertSame(5, $auditLog->metadata['overload_warnings'][0]['projected_total']);
+    }
+
     public function test_super_admin_without_final_approval_permission_cannot_approve_final(): void
     {
         $this->revokeSuperAdminPermission('akreditasi.final.approve');
@@ -417,6 +503,23 @@ class AkreditasiConsoleTest extends TestCase
         Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100]]);
         SdmPesantren::create(['user_id' => $user->id, 'data' => ['ustaz_tetap' => 12]]);
         Edpm::create(['user_id' => $user->id, 'data' => ['self_assessment' => 'lengkap']]);
+    }
+
+    private function createActiveAssignments(User $pesantrenUser, User $asesor, int $count): void
+    {
+        for ($index = 0; $index < $count; $index++) {
+            $akreditasi = Akreditasi::create([
+                'user_id' => $pesantrenUser->id,
+                'uuid' => (string) Str::uuid(),
+                'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+            ]);
+
+            Assessment::create([
+                'akreditasi_id' => $akreditasi->id,
+                'asesor_id' => $asesor->id,
+                'tipe' => $index === 0 ? 'ketua' : 'anggota',
+            ]);
+        }
     }
 
     private function revokeSuperAdminPermission(string $key): void

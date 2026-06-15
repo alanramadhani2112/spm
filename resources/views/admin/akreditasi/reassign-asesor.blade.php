@@ -171,14 +171,19 @@
                         </div>
                     </div>
 
+                    @include('admin.akreditasi._overload-confirmation')
+
                     {{-- Reason --}}
                     <div>
                         <label for="reason" class="block fs-7 fw-medium text-gray-700">
-                            Alasan Reassign
+                            Alasan Reassign / Override Overload
                         </label>
                         <textarea id="reason" name="reason" rows="3"
                                   class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900 placeholder:text-gray-500 focus:border-red-500 focus:"
                                   placeholder="Jelaskan alasan pergantian asesor...">{{ old('reason') }}</textarea>
+                        @error('reason')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
 
                     <div class="d-flex align-items-center justify-content-end gap-3 pt-2">

@@ -13,7 +13,7 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 1. Permission matrix sudah punya enforcement pada aksi sensitif awal dan sebagian workflow utama; akses area besar tetap berbasis role.
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
 3. Audit log non-akreditasi sudah diperluas, audit export CSV tersedia, dan reset/unlink SSO user sudah tercatat; live SSO credential/contract masih perlu verifikasi eksternal.
-4. Operational board, Notification Center, dan Workload Asesor Center sudah tersedia; export operasional lintas domain masih perlu dikembangkan.
+4. Operational board, Notification Center, Workload Asesor Center, dan konfirmasi assignment overload sudah tersedia; export operasional lintas domain masih perlu dikembangkan.
 5. User lifecycle SSO sudah punya pre-registration, detail user, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
@@ -38,7 +38,7 @@ Legend:
 | Assessment | Upload kartu kendali | `upload-kk` | `uploadKartuKendali` | N/A action endpoint | `SettingsTest`, workflow tests | Partial | Requirement sudah enforce sesuai `kartu_kendali_wajib_before`; perlu form/CTA eksplisit di detail jika Super Admin acting as Pesantren. |
 | Review Tahap 1 | Review, minta perbaikan, approve | `review-tahap1`, `minta-perbaikan-tahap1`, `approve-tahap1` | `reviewTahap1`, `mintaPerbaikanTahap1`, `approveTahap1` | `admin.akreditasi.review-tahap1` | `AkreditasiConsoleTest` | Done | Aksi keputusan sudah dilindungi `permission:akreditasi.stage1_review`; perlu audit UX untuk sections dan reason required/optional. |
 | Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | `action_on_limit` sudah mengontrol default decision dan action dilindungi `permission:akreditasi.stage1_review`. |
-| Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; form memakai workload aktif terpusat dari service. |
+| Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; form memakai workload aktif terpusat dan mewajibkan konfirmasi + alasan jika pilihan mencapai overload. |
 | Asesor Assignment | Reassign asesor | `reassign-asesor` | `reassignAsesor` | `admin.akreditasi.reassign-asesor` | Partial coverage | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; perlu audit reason tersimpan dan riwayat reassignment terlihat. |
 | Asesor Assignment | Workload center asesor | `superadmin.asesor-workload.index` | `AssessorWorkloadController@index` | `superadmin.asesor-workload.index` | `AssessorWorkloadTest` | Done | Menampilkan total asesor, normal/medium/overload, assignment aktif, overdue, distribusi ketua/anggota, status aktif, dan link detail assignment. |
 | Review Tahap 2 | Ketua Asesor review | `review-tahap2`, `layak-visitasi`, `minta-perbaikan-tahap2` | `reviewTahap2`, `nyatakanLayakVisitasi`, `mintaPerbaikanTahap2` | `asesor.ketua.review-tahap2` | `AkreditasiConsoleTest` | Done | Shared asesor view; perlu wording Super Admin/acting as. |
@@ -109,6 +109,7 @@ Coverage yang kuat:
 - Pengajuan oleh Super Admin.
 - Banding route/action Super Admin.
 - Route-aware shared views agar form submit ke route Super Admin.
+- Assignment overload warning, confirmation, reason requirement, dan audit metadata.
 - Master data CRUD dasar.
 - Data Pesantren readiness list/filter, detail, lock/unlock, dan override profil/unit dengan audit reason.
 - User/role management UI dan update dasar.
@@ -220,7 +221,8 @@ Partial:
 Missing:
 
 - Resend invite/bulk import user.
-- Assignment overload warning/enforcement yang lebih eksplisit saat submit assign.
+- Export asesor workload.
+- Riwayat reassignment dan alasan redistribusi.
 - Override dokumen/IPM/SDM/EDPM dari Super Admin.
 
 ## Recommended Next Implementation Order
@@ -239,8 +241,8 @@ Missing:
 
 3. **Asesor Workload & Assignment Intelligence lanjutan**
    - Export asesor workload.
-   - Audit/konfirmasi saat tetap memilih asesor overload.
    - Riwayat reassignment dan alasan redistribusi.
+   - Drill-down histori assignment per asesor.
 
 ### P2 — Data & Reporting
 

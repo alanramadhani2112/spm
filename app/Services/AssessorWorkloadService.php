@@ -76,6 +76,40 @@ class AssessorWorkloadService
             ->values();
     }
 
+    public function assignmentOverloadWarnings(array $assessorIds): Collection
+    {
+        $assessorIds = collect($assessorIds)
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($assessorIds->isEmpty()) {
+            return collect();
+        }
+
+        $asesors = User::query()
+            ->whereIn('id', $assessorIds->all())
+            ->where('role_id', 2)
+            ->orderBy('name')
+            ->get();
+
+        return $this->forAssessors($asesors)
+            ->filter(fn (array $row) => ($row['total'] + 1) >= self::HIGH_THRESHOLD)
+            ->map(fn (array $row) => [
+                'id' => $row['id'],
+                'name' => $row['name'],
+                'email' => $row['email'],
+                'current_total' => $row['total'],
+                'projected_total' => $row['total'] + 1,
+                'ketua' => $row['ketua'],
+                'anggota' => $row['anggota'],
+                'level' => $row['level'],
+                'color' => $row['total'] >= self::HIGH_THRESHOLD ? 'danger' : 'warning',
+            ])
+            ->values();
+    }
+
     public function summary(Collection $rows): array
     {
         return [
@@ -120,7 +154,7 @@ class AssessorWorkloadService
 
         return Assessment::query()
             ->with(['akreditasi.user.pesantren', 'asesor'])
-            ->whereIn('asesor_id', $assessorIds)
+            ->whereIn('asesor_id', $assessorIds->all())
             ->whereHas('akreditasi', function ($query) use ($period) {
                 $query->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
                     ->when($period !== 'all', fn ($periodQuery) => $periodQuery->whereYear('created_at', (int) $period));

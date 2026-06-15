@@ -22,6 +22,7 @@ use App\Services\ScoringService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 /**
  * SuperAdmin Akreditasi Controller
@@ -357,8 +358,18 @@ class AkreditasiController extends Controller
             'reason' => 'nullable|string',
         ]);
 
+        $anggotaIds = array_map('intval', $validated['anggota_ids'] ?? []);
+        $overloadWarnings = $this->validateOverloadAssignment($request, (int) $validated['ketua_id'], $anggotaIds);
+
         try {
-            $this->workflowService->adminAssignAsesor($akreditasiId, (int) $validated['ketua_id'], array_map('intval', $validated['anggota_ids'] ?? []), auth()->id());
+            $this->workflowService->adminAssignAsesor(
+                $akreditasiId,
+                (int) $validated['ketua_id'],
+                $anggotaIds,
+                auth()->id(),
+                $validated['reason'] ?? null,
+                $this->assignmentAuditMetadata('superadmin_assign', $overloadWarnings)
+            );
             session()->flash('success', 'Asesor berhasil ditugaskan.');
 
             return redirect()->route('superadmin.akreditasi.index');
@@ -388,9 +399,19 @@ class AkreditasiController extends Controller
             'reason' => 'nullable|string',
         ]);
 
+        $anggotaIds = array_map('intval', $validated['anggota_ids'] ?? []);
+        $overloadWarnings = $this->validateOverloadAssignment($request, (int) $validated['ketua_id'], $anggotaIds);
+
         try {
             Assessment::where('akreditasi_id', $akreditasiId)->delete();
-            $this->workflowService->adminAssignAsesor($akreditasiId, (int) $validated['ketua_id'], array_map('intval', $validated['anggota_ids'] ?? []), auth()->id());
+            $this->workflowService->adminAssignAsesor(
+                $akreditasiId,
+                (int) $validated['ketua_id'],
+                $anggotaIds,
+                auth()->id(),
+                $validated['reason'] ?? null,
+                $this->assignmentAuditMetadata('superadmin_reassign', $overloadWarnings)
+            );
             session()->flash('success', 'Asesor berhasil ditugaskan ulang.');
 
             return redirect()->route('superadmin.akreditasi.index');
@@ -928,5 +949,32 @@ class AkreditasiController extends Controller
     private function assessorWorkloads($asesors)
     {
         return $this->assessorWorkloadService->forAssessors($asesors);
+    }
+
+    private function validateOverloadAssignment(Request $request, int $ketuaId, array $anggotaIds): Collection
+    {
+        $warnings = $this->assessorWorkloadService->assignmentOverloadWarnings(array_merge([$ketuaId], $anggotaIds));
+
+        if ($warnings->isNotEmpty()) {
+            $request->validate([
+                'overload_confirmation' => ['accepted'],
+                'reason' => ['required', 'string', 'min:5'],
+            ], [
+                'overload_confirmation.accepted' => 'Konfirmasi overload wajib dicentang saat memilih asesor yang akan mencapai atau melewati 5 assignment aktif.',
+                'reason.required' => 'Alasan wajib diisi saat memilih asesor overload.',
+                'reason.min' => 'Alasan assignment overload minimal 5 karakter.',
+            ]);
+        }
+
+        return $warnings;
+    }
+
+    private function assignmentAuditMetadata(string $context, Collection $overloadWarnings): array
+    {
+        return [
+            'assignment_context' => $context,
+            'overload_confirmed' => $overloadWarnings->isNotEmpty(),
+            'overload_warnings' => $overloadWarnings->values()->all(),
+        ];
     }
 }

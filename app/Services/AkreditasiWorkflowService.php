@@ -482,7 +482,7 @@ class AkreditasiWorkflowService
         return $akreditasi;
     }
 
-    public function adminAssignAsesor(int $akreditasiId, int $ketuaId, array $anggotaIds, int $adminUserId): Akreditasi
+    public function adminAssignAsesor(int $akreditasiId, int $ketuaId, array $anggotaIds, int $adminUserId, ?string $reason = null, array $auditMetadata = []): Akreditasi
     {
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
 
@@ -544,6 +544,11 @@ class AkreditasiWorkflowService
             $akreditasi->id,
             $adminUserId
         );
+
+        $this->auditTrailService->log('asesor_assigned', $akreditasi->id, $adminUserId, [
+            'ketua_id' => $ketuaId,
+            'anggota_ids' => array_values($anggotaIds),
+        ] + $auditMetadata, $reason);
 
         $this->notificationService->notifyEvent('asesor_assigned', $akreditasi->id);
 

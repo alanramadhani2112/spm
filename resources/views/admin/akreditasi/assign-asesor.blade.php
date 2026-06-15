@@ -165,6 +165,20 @@
                         </div>
                     </div>
 
+                    @include('admin.akreditasi._overload-confirmation')
+
+                    <div>
+                        <label for="reason" class="block fs-7 fw-medium text-gray-700">
+                            Alasan Penugasan / Override Overload
+                        </label>
+                        <textarea id="reason" name="reason" rows="3"
+                                  class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:"
+                                  placeholder="Isi jika memilih asesor overload atau ada catatan penugasan...">{{ old('reason') }}</textarea>
+                        @error('reason')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <div class="d-flex align-items-center justify-content-end gap-3 pt-2">
                         <a href="{{ route($akreditasiRoutePrefix.'.index') }}"
                            class="rounded border border-gray-200 bg-white px-4 py-2 fs-7 fw-medium text-gray-600 shadow-sm">
