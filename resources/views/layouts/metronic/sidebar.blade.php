@@ -83,6 +83,12 @@
                             <span class="menu-title">Dashboard</span>
                         </a>
                     </div>
+                    <div class="menu-item">
+                        <a href="{{ route('superadmin.asesor-workload.index') }}" class="{{ $linkClass('superadmin.asesor-workload.*') }}">
+                            <span class="menu-icon"><i class="ki-outline ki-people fs-2"></i></span>
+                            <span class="menu-title">Workload Asesor</span>
+                        </a>
+                    </div>
                     @if(auth()->user()?->hasPermission('superadmin.notifications'))
                         <div class="menu-item">
                             <a href="{{ route('superadmin.notifications.index') }}" class="{{ $linkClass('superadmin.notifications.*') }}">

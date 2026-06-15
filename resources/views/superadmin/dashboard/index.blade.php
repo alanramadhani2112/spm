@@ -214,6 +214,9 @@
                     <h3 class="fw-bold text-gray-900 m-0">Workload Asesor</h3>
                     <span class="text-muted fs-7 mt-1">Assignment aktif tertinggi pada periode terpilih.</span>
                 </div>
+                <div class="card-toolbar">
+                    <a href="{{ route('superadmin.asesor-workload.index', ['period' => $period ?? 'all']) }}" class="btn btn-sm btn-light-primary">Lihat Detail</a>
+                </div>
             </div>
             <div class="card-body pt-0">
                 <div class="d-grid gap-5">

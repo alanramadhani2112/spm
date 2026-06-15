@@ -4,7 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
-use App\Models\Assessment;
+use App\Services\AssessorWorkloadService;
 use App\Services\AuditTrailService;
 use App\Support\SuperAdminSettings;
 use Illuminate\Http\Request;
@@ -15,6 +15,7 @@ class DashboardController extends Controller
 {
     public function __construct(
         private AuditTrailService $auditTrail,
+        private AssessorWorkloadService $assessorWorkloadService,
     ) {}
 
     public function index(Request $request)
@@ -294,28 +295,7 @@ class DashboardController extends Controller
 
     private function assessorWorkloads(string $period)
     {
-        return Assessment::query()
-            ->with(['asesor', 'akreditasi'])
-            ->whereHas('akreditasi', function ($query) use ($period) {
-                $query->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
-                    ->when($period !== 'all', fn ($periodQuery) => $periodQuery->whereYear('created_at', (int) $period));
-            })
-            ->get()
-            ->groupBy('asesor_id')
-            ->map(function ($assignments) {
-                $asesor = $assignments->first()?->asesor;
-
-                return [
-                    'name' => $asesor?->name ?? 'Asesor',
-                    'email' => $asesor?->email,
-                    'total' => $assignments->count(),
-                    'ketua' => $assignments->where('tipe', 'ketua')->count(),
-                    'anggota' => $assignments->where('tipe', 'anggota')->count(),
-                ];
-            })
-            ->sortByDesc('total')
-            ->take(5)
-            ->values();
+        return $this->assessorWorkloadService->dashboardRows($period);
     }
 
     private function urgentAkreditasis($baseQuery)

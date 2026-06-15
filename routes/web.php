@@ -108,6 +108,7 @@ Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/anggota')
 });
 
 use App\Http\Controllers\SuperAdmin\AkreditasiController as SuperAdminAkreditasiController;
+use App\Http\Controllers\SuperAdmin\AssessorWorkloadController;
 use App\Http\Controllers\SuperAdmin\AuditController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\MasterDataController;
@@ -119,6 +120,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/export', [DashboardController::class, 'export'])
         ->middleware('permission:superadmin.export')
         ->name('dashboard.export');
+    Route::get('/asesor-workload', [AssessorWorkloadController::class, 'index'])->name('asesor-workload.index');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
