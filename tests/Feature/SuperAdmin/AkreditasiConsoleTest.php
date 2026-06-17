@@ -80,6 +80,60 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('Pesantren Detail');
     }
 
+    public function test_super_admin_detail_displays_assessor_assignment_history(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren History']);
+        $oldAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Lama']);
+        $newKetua = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Ketua Baru']);
+        $newAnggota = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Anggota Baru']);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+        ]);
+
+        Assessment::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $newKetua->id,
+            'tipe' => 'ketua',
+        ]);
+        AkreditasiAuditLog::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $this->superAdmin->id,
+            'actor_user_id' => $this->superAdmin->id,
+            'action_type' => 'asesor_assigned',
+            'reason' => 'Redistribusi karena beban kerja.',
+            'metadata' => [
+                'assignment_context' => 'superadmin_reassign',
+                'ketua_id' => $newKetua->id,
+                'anggota_ids' => [$newAnggota->id],
+                'previous_assignments' => [
+                    [
+                        'asesor_id' => $oldAssessor->id,
+                        'name' => 'Asesor Lama',
+                        'email' => $oldAssessor->email,
+                        'tipe' => 'ketua',
+                    ],
+                ],
+                'overload_warnings' => [
+                    ['id' => $newKetua->id, 'name' => 'Asesor Ketua Baru'],
+                ],
+            ],
+            'created_at' => now(),
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.show', $akreditasi->id))
+            ->assertOk()
+            ->assertSeeText('Riwayat Assignment Asesor')
+            ->assertSeeText('Reassignment')
+            ->assertSeeText('Asesor Lama')
+            ->assertSeeText('Asesor Ketua Baru')
+            ->assertSeeText('Asesor Anggota Baru')
+            ->assertSeeText('Redistribusi karena beban kerja.')
+            ->assertSeeText('Overload dikonfirmasi');
+    }
+
     public function test_non_super_admin_cannot_view_console_detail(): void
     {
         $admin = User::factory()->create(['role_id' => 1]);

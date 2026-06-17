@@ -39,7 +39,7 @@ Legend:
 | Review Tahap 1 | Review, minta perbaikan, approve | `review-tahap1`, `minta-perbaikan-tahap1`, `approve-tahap1` | `reviewTahap1`, `mintaPerbaikanTahap1`, `approveTahap1` | `admin.akreditasi.review-tahap1` | `AkreditasiConsoleTest` | Done | Aksi keputusan sudah dilindungi `permission:akreditasi.stage1_review`; perlu audit UX untuk sections dan reason required/optional. |
 | Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | `action_on_limit` sudah mengontrol default decision dan action dilindungi `permission:akreditasi.stage1_review`. |
 | Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; form memakai workload aktif terpusat dan mewajibkan konfirmasi + alasan jika pilihan mencapai overload. |
-| Asesor Assignment | Reassign asesor | `reassign-asesor` | `reassignAsesor` | `admin.akreditasi.reassign-asesor` | Partial coverage | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; perlu audit reason tersimpan dan riwayat reassignment terlihat. |
+| Asesor Assignment | Reassign asesor | `reassign-asesor` | `reassignAsesor` | `admin.akreditasi.reassign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; reason, asesor sebelumnya, asesor baru, dan overload metadata tampil di riwayat assignment detail. |
 | Asesor Assignment | Workload center asesor | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.export` | `AssessorWorkloadController@index/export` | `superadmin.asesor-workload.index` | `AssessorWorkloadTest` | Done | Menampilkan total asesor, normal/medium/overload, assignment aktif, overdue, distribusi ketua/anggota, status aktif, link detail assignment, dan export CSV terfilter. |
 | Review Tahap 2 | Ketua Asesor review | `review-tahap2`, `layak-visitasi`, `minta-perbaikan-tahap2` | `reviewTahap2`, `nyatakanLayakVisitasi`, `mintaPerbaikanTahap2` | `asesor.ketua.review-tahap2` | `AkreditasiConsoleTest` | Done | Shared asesor view; perlu wording Super Admin/acting as. |
 | Visitasi | Jadwalkan visitasi | `jadwalkan-visitasi` | `jadwalkanVisitasi` | `asesor.ketua.jadwalkan-visitasi` | Route tests | Done | Perlu calendar/list schedule overview. |
@@ -221,7 +221,6 @@ Partial:
 Missing:
 
 - Resend invite/bulk import user.
-- Riwayat reassignment dan alasan redistribusi.
 - Override dokumen/IPM/SDM/EDPM dari Super Admin.
 
 ## Recommended Next Implementation Order
@@ -240,7 +239,7 @@ Missing:
 
 3. **Asesor Workload & Assignment Intelligence lanjutan**
    - Export asesor workload sudah selesai.
-   - Riwayat reassignment dan alasan redistribusi.
+   - Riwayat reassignment dan alasan redistribusi sudah tampil di detail akreditasi.
    - Drill-down histori assignment per asesor.
 
 ### P2 — Data & Reporting

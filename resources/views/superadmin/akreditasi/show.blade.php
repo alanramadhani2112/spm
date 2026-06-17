@@ -172,6 +172,33 @@
             @empty
                 <div class="text-center py-8 text-muted border rounded bg-light">Belum ada asesor ditugaskan.</div>
             @endforelse
+
+            @if($assignmentHistory->isNotEmpty())
+                <div class="separator separator-dashed my-5"></div>
+                <div class="fw-bold text-gray-900 mb-3">Riwayat Assignment Asesor</div>
+                <div class="d-grid gap-3">
+                    @foreach($assignmentHistory as $history)
+                        @php $log = $history['log']; @endphp
+                        <div class="rounded border border-gray-200 p-3">
+                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                <span class="badge badge-light-{{ $history['label'] === 'Reassignment' ? 'warning' : 'primary' }}">{{ $history['label'] }}</span>
+                                <span class="fs-8 text-muted">{{ $log->created_at?->format('d M Y H:i') ?? '—' }}</span>
+                            </div>
+                            @if($history['previous']->isNotEmpty())
+                                <div class="fs-8 text-muted mb-2">Sebelumnya: {{ $history['previous']->map(fn($item) => ($item['name'] ?? 'Asesor').' ('.strtoupper($item['tipe'] ?? '-').')')->implode(', ') }}</div>
+                            @endif
+                            <div class="fs-8 text-gray-700">Ketua: <span class="fw-bold">{{ $history['ketua']?->name ?? '—' }}</span></div>
+                            <div class="fs-8 text-gray-700">Anggota: {{ $history['anggota']->pluck('name')->implode(', ') ?: '—' }}</div>
+                            @if($log->reason)
+                                <div class="rounded bg-light p-2 fs-8 text-gray-700 mt-2">{{ $log->reason }}</div>
+                            @endif
+                            @if($history['overload_warnings']->isNotEmpty())
+                                <div class="fs-8 text-danger mt-2">Overload dikonfirmasi untuk {{ $history['overload_warnings']->pluck('name')->implode(', ') }}.</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </x-metronic.card>
     </div>
 

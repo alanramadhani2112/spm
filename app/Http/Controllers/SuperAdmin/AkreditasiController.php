@@ -184,6 +184,7 @@ class AkreditasiController extends Controller
         $actorUsers = User::whereIn('id', $akreditasi->auditLogs->pluck('actor_user_id')->filter()->unique())
             ->get()
             ->keyBy('id');
+        $assignmentHistory = $this->assignmentHistory($akreditasi);
         $actions = $this->availableActions($akreditasi);
         $statusColors = $this->statusColors();
         $dataCompleteness = [
@@ -216,6 +217,7 @@ class AkreditasiController extends Controller
             'documents',
             'edpmScores',
             'actorUsers',
+            'assignmentHistory',
             'actions',
             'statusColors',
             'dataCompleteness',
@@ -403,6 +405,18 @@ class AkreditasiController extends Controller
         $overloadWarnings = $this->validateOverloadAssignment($request, (int) $validated['ketua_id'], $anggotaIds);
 
         try {
+            $previousAssignments = Assessment::with('asesor')
+                ->where('akreditasi_id', $akreditasiId)
+                ->get()
+                ->map(fn (Assessment $assessment) => [
+                    'asesor_id' => $assessment->asesor_id,
+                    'name' => $assessment->asesor?->name,
+                    'email' => $assessment->asesor?->email,
+                    'tipe' => $assessment->tipe,
+                ])
+                ->values()
+                ->all();
+
             Assessment::where('akreditasi_id', $akreditasiId)->delete();
             $this->workflowService->adminAssignAsesor(
                 $akreditasiId,
@@ -410,7 +424,7 @@ class AkreditasiController extends Controller
                 $anggotaIds,
                 auth()->id(),
                 $validated['reason'] ?? null,
-                $this->assignmentAuditMetadata('superadmin_reassign', $overloadWarnings)
+                $this->assignmentAuditMetadata('superadmin_reassign', $overloadWarnings, $previousAssignments)
             );
             session()->flash('success', 'Asesor berhasil ditugaskan ulang.');
 
@@ -946,6 +960,39 @@ class AkreditasiController extends Controller
         return $actions;
     }
 
+    private function assignmentHistory(Akreditasi $akreditasi): Collection
+    {
+        $logs = $akreditasi->auditLogs
+            ->filter(fn ($log) => $log->action_type === 'asesor_assigned')
+            ->filter(fn ($log) => in_array($log->metadata['assignment_context'] ?? null, ['superadmin_assign', 'superadmin_reassign'], true))
+            ->sortByDesc('created_at')
+            ->values();
+
+        $assessorIds = $logs
+            ->flatMap(fn ($log) => array_merge(
+                [$log->metadata['ketua_id'] ?? null],
+                $log->metadata['anggota_ids'] ?? []
+            ))
+            ->filter()
+            ->unique()
+            ->values();
+        $assessors = User::whereIn('id', $assessorIds)->get()->keyBy('id');
+
+        return $logs->map(function ($log) use ($assessors) {
+            $metadata = $log->metadata ?? [];
+            $anggotaIds = collect($metadata['anggota_ids'] ?? []);
+
+            return [
+                'log' => $log,
+                'label' => ($metadata['assignment_context'] ?? null) === 'superadmin_reassign' ? 'Reassignment' : 'Assignment',
+                'ketua' => $assessors->get($metadata['ketua_id'] ?? null),
+                'anggota' => $anggotaIds->map(fn ($id) => $assessors->get($id))->filter()->values(),
+                'previous' => collect($metadata['previous_assignments'] ?? []),
+                'overload_warnings' => collect($metadata['overload_warnings'] ?? []),
+            ];
+        });
+    }
+
     private function assessorWorkloads($asesors)
     {
         return $this->assessorWorkloadService->forAssessors($asesors);
@@ -969,12 +1016,18 @@ class AkreditasiController extends Controller
         return $warnings;
     }
 
-    private function assignmentAuditMetadata(string $context, Collection $overloadWarnings): array
+    private function assignmentAuditMetadata(string $context, Collection $overloadWarnings, array $previousAssignments = []): array
     {
-        return [
+        $metadata = [
             'assignment_context' => $context,
             'overload_confirmed' => $overloadWarnings->isNotEmpty(),
             'overload_warnings' => $overloadWarnings->values()->all(),
         ];
+
+        if ($previousAssignments) {
+            $metadata['previous_assignments'] = $previousAssignments;
+        }
+
+        return $metadata;
     }
 }
