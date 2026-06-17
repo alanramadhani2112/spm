@@ -3,7 +3,10 @@
 namespace Tests\Feature\SuperAdmin;
 
 use App\Models\Akreditasi;
+use App\Models\AkreditasiAuditLog;
 use App\Models\Assessment;
+use App\Models\Permission;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -89,6 +92,42 @@ class AssessorWorkloadTest extends TestCase
             ->assertDontSee('Asesor Normal');
     }
 
+    public function test_super_admin_can_export_filtered_assessor_workload(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $busyAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Export']);
+        $normalAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Non Export']);
+
+        $this->createAssignments($busyAssessor, $pesantren, 2, 3);
+        $this->createAssignments($normalAssessor, $pesantren, 0, 1);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.index', ['load' => 'high']))
+            ->assertOk()
+            ->assertSee('Export CSV');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.export', ['load' => 'high']))
+            ->assertOk()
+            ->assertDownload('asesor-workload-superadmin.csv');
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'superadmin_exported')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('assessor_workload', $auditLog->metadata['export_type']);
+        $this->assertSame('csv', $auditLog->metadata['format']);
+        $this->assertSame('high', $auditLog->metadata['filters']['load']);
+        $this->assertSame(1, $auditLog->metadata['rows_exported']);
+    }
+
+    public function test_super_admin_without_export_permission_cannot_export_assessor_workload(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.export'))
+            ->assertForbidden();
+    }
+
     public function test_non_super_admin_cannot_view_assessor_workload_center(): void
     {
         $admin = User::factory()->create(['role_id' => 1]);
@@ -125,5 +164,11 @@ class AssessorWorkloadTest extends TestCase
             'status' => $status,
             'status_changed_at' => now()->subDay(),
         ]);
+    }
+
+    private function revokeSuperAdminPermission(string $key): void
+    {
+        $permission = Permission::where('key', $key)->firstOrFail();
+        Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }

@@ -93,6 +93,20 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseHas('master_edpm_butirs', ['kode' => 'KT.1A', 'nama' => 'Butir Test Update']);
     }
 
+    public function test_super_admin_without_edpm_manage_permission_cannot_manage_edpm(): void
+    {
+        $this->revokeSuperAdminPermission('master.edpm.manage');
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.edpm.komponen.store'), [
+                'kode' => 'KOMP_GUARD',
+                'nama' => 'Komponen Guard',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('master_edpm_komponens', ['kode' => 'KOMP_GUARD']);
+    }
+
     public function test_super_admin_can_manage_document_categories(): void
     {
         $this->actingAs($this->superAdmin)
@@ -118,6 +132,23 @@ class MasterDataTest extends TestCase
             ->assertRedirect(route('superadmin.master-data.document-categories.index'));
 
         $this->assertFalse($category->fresh()->is_active);
+    }
+
+    public function test_super_admin_without_document_category_manage_permission_cannot_toggle_category(): void
+    {
+        $this->revokeSuperAdminPermission('master.document_categories.manage');
+
+        $category = DocumentCategory::create([
+            'name' => 'Dokumen Guard',
+            'code' => 'dokumen_guard',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.document-categories.toggle', $category))
+            ->assertForbidden();
+
+        $this->assertTrue($category->fresh()->is_active);
     }
 
     public function test_document_categories_page_explains_access_rules(): void
@@ -399,6 +430,24 @@ class MasterDataTest extends TestCase
             'user_id' => $this->superAdmin->id,
             'akreditasi_id' => null,
         ]);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_pre_register_user(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.store'), [
+                'name' => 'User Guard',
+                'email' => 'user.guard@example.com',
+                'role_id' => $role->id,
+                'status' => 'active',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('users', ['email' => 'user.guard@example.com']);
     }
 
     public function test_super_admin_can_update_role_permissions(): void

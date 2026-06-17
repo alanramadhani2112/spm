@@ -121,6 +121,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         ->middleware('permission:superadmin.export')
         ->name('dashboard.export');
     Route::get('/asesor-workload', [AssessorWorkloadController::class, 'index'])->name('asesor-workload.index');
+    Route::get('/asesor-workload/export', [AssessorWorkloadController::class, 'export'])
+        ->middleware('permission:superadmin.export')
+        ->name('asesor-workload.export');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
@@ -186,17 +189,21 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::prefix('master-data')->name('master-data.')->group(function () {
         Route::get('/', [MasterDataController::class, 'index'])->name('index');
         Route::get('/edpm', [MasterDataController::class, 'edpm'])->name('edpm.index');
-        Route::post('/edpm/komponen', [MasterDataController::class, 'storeKomponen'])->name('edpm.komponen.store');
-        Route::put('/edpm/komponen/{komponen}', [MasterDataController::class, 'updateKomponen'])->name('edpm.komponen.update');
-        Route::delete('/edpm/komponen/{komponen}', [MasterDataController::class, 'destroyKomponen'])->name('edpm.komponen.destroy');
-        Route::post('/edpm/butir', [MasterDataController::class, 'storeButir'])->name('edpm.butir.store');
-        Route::put('/edpm/butir/{butir}', [MasterDataController::class, 'updateButir'])->name('edpm.butir.update');
-        Route::delete('/edpm/butir/{butir}', [MasterDataController::class, 'destroyButir'])->name('edpm.butir.destroy');
+        Route::middleware('permission:master.edpm.manage')->group(function () {
+            Route::post('/edpm/komponen', [MasterDataController::class, 'storeKomponen'])->name('edpm.komponen.store');
+            Route::put('/edpm/komponen/{komponen}', [MasterDataController::class, 'updateKomponen'])->name('edpm.komponen.update');
+            Route::delete('/edpm/komponen/{komponen}', [MasterDataController::class, 'destroyKomponen'])->name('edpm.komponen.destroy');
+            Route::post('/edpm/butir', [MasterDataController::class, 'storeButir'])->name('edpm.butir.store');
+            Route::put('/edpm/butir/{butir}', [MasterDataController::class, 'updateButir'])->name('edpm.butir.update');
+            Route::delete('/edpm/butir/{butir}', [MasterDataController::class, 'destroyButir'])->name('edpm.butir.destroy');
+        });
         Route::get('/document-categories', [MasterDataController::class, 'documentCategories'])->name('document-categories.index');
-        Route::post('/document-categories', [MasterDataController::class, 'storeDocumentCategory'])->name('document-categories.store');
-        Route::put('/document-categories/{category}', [MasterDataController::class, 'updateDocumentCategory'])->name('document-categories.update');
-        Route::patch('/document-categories/{category}/toggle', [MasterDataController::class, 'toggleDocumentCategory'])->name('document-categories.toggle');
-        Route::delete('/document-categories/{category}', [MasterDataController::class, 'destroyDocumentCategory'])->name('document-categories.destroy');
+        Route::middleware('permission:master.document_categories.manage')->group(function () {
+            Route::post('/document-categories', [MasterDataController::class, 'storeDocumentCategory'])->name('document-categories.store');
+            Route::put('/document-categories/{category}', [MasterDataController::class, 'updateDocumentCategory'])->name('document-categories.update');
+            Route::patch('/document-categories/{category}/toggle', [MasterDataController::class, 'toggleDocumentCategory'])->name('document-categories.toggle');
+            Route::delete('/document-categories/{category}', [MasterDataController::class, 'destroyDocumentCategory'])->name('document-categories.destroy');
+        });
         Route::get('/pesantren', [MasterDataController::class, 'pesantren'])->name('pesantren.index');
         Route::patch('/pesantren/{pesantren}/toggle-lock', [MasterDataController::class, 'togglePesantrenLock'])
             ->middleware('permission:user.access.update')
@@ -210,7 +217,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
             ->middleware('permission:role.permissions.update')
             ->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
-        Route::post('/users', [MasterDataController::class, 'storeUser'])->name('users.store');
+        Route::post('/users', [MasterDataController::class, 'storeUser'])
+            ->middleware('permission:user.access.update')
+            ->name('users.store');
         Route::get('/users/{user}', [MasterDataController::class, 'showUser'])->name('users.show');
         Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])
             ->middleware('permission:user.access.update')

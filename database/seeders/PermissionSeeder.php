@@ -38,6 +38,8 @@ class PermissionSeeder extends Seeder
             'user.access.update',
             'superadmin.export',
             'superadmin.notifications',
+            'master.edpm.manage',
+            'master.document_categories.manage',
             'akreditasi.final.approve',
             'sk.publish',
             'master.manage',
