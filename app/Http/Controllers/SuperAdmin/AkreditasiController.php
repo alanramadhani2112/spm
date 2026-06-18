@@ -19,6 +19,7 @@ use App\Services\AssessorWorkloadService;
 use App\Services\AuditTrailService;
 use App\Services\BandingService;
 use App\Services\ScoringService;
+use App\Support\SuperAdminSettings;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -217,6 +218,80 @@ class AkreditasiController extends Controller
         }, 'dokumen-status-superadmin.csv', ['Content-Type' => 'text/csv']);
     }
 
+    public function skIndex(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $certificate = $request->query('certificate', 'all');
+        $search = trim((string) $request->query('q', ''));
+        $skRows = $this->skManagementQuery($period, $status, $certificate, $search)
+            ->with(['user.pesantren'])
+            ->orderByRaw("CASE WHEN status = ? THEN 0 ELSE 1 END", [Akreditasi::STATUS_FINAL_APPROVED])
+            ->orderByDesc('masa_berlaku')
+            ->orderByDesc('created_at')
+            ->get();
+        $stats = [
+            'ready' => Akreditasi::where('status', Akreditasi::STATUS_FINAL_APPROVED)->count(),
+            'published' => Akreditasi::where('status', Akreditasi::STATUS_COMPLETED)->whereNotNull('nomor_sk')->count(),
+            'certificate' => Akreditasi::whereNotNull('sertifikat_path')->count(),
+            'expired' => Akreditasi::whereNotNull('masa_berlaku_akhir')->whereDate('masa_berlaku_akhir', '<', now())->count(),
+        ];
+        $periodOptions = $this->periodOptions();
+        $statusOptions = [
+            'all' => 'Semua Status SK',
+            'ready' => 'Siap Terbit',
+            'published' => 'Sudah Terbit',
+        ];
+        $certificateOptions = [
+            'all' => 'Semua Sertifikat',
+            'with' => 'Ada Sertifikat',
+            'without' => 'Belum Ada Sertifikat',
+        ];
+
+        return view('superadmin.sk.index', compact('skRows', 'stats', 'periodOptions', 'statusOptions', 'certificateOptions', 'period', 'status', 'certificate', 'search'));
+    }
+
+    public function skExport(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $certificate = $request->query('certificate', 'all');
+        $search = trim((string) $request->query('q', ''));
+        $rows = $this->skManagementQuery($period, $status, $certificate, $search)
+            ->with(['user.pesantren'])
+            ->orderByDesc('masa_berlaku')
+            ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'sk_management',
+            'format' => 'csv',
+            'filters' => compact('period', 'status', 'certificate') + ['q' => $search],
+            'rows_exported' => $rows->count(),
+        ]);
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['UUID', 'Pesantren', 'Email', 'Status', 'Nomor SK', 'Nilai', 'Peringkat', 'Masa Berlaku', 'Masa Berlaku Akhir', 'Sertifikat']);
+
+            foreach ($rows as $akreditasi) {
+                fputcsv($out, [
+                    $akreditasi->uuid,
+                    $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '-',
+                    $akreditasi->user?->email ?? '-',
+                    $akreditasi->getStatusLabel(),
+                    $akreditasi->nomor_sk ?? '-',
+                    $akreditasi->nilai ?? '-',
+                    $akreditasi->peringkat ?? '-',
+                    $akreditasi->masa_berlaku?->format('Y-m-d') ?? '-',
+                    $akreditasi->masa_berlaku_akhir?->format('Y-m-d') ?? '-',
+                    $akreditasi->sertifikat_path ? 'Ada' : 'Belum ada',
+                ]);
+            }
+
+            fclose($out);
+        }, 'sk-management-superadmin.csv', ['Content-Type' => 'text/csv']);
+    }
+
     // ============================================================
     // PENGAJUAN — superadmin ajukan untuk pesantren tertentu
     // ============================================================
@@ -377,9 +452,16 @@ class AkreditasiController extends Controller
         ]);
 
         try {
-            if ($validated['deadline'] ?? null) {
+            $deadline = $validated['deadline'] ?? null;
+
+            if (! $deadline) {
+                $days = SuperAdminSettings::int(SuperAdminSettings::ASSESSMENT_DEADLINE);
+                $deadline = $days === null ? null : now()->addDays($days);
+            }
+
+            if ($deadline) {
                 $akreditasi->forceFill([
-                    'assessment_deadline' => $validated['deadline'],
+                    'assessment_deadline' => $deadline,
                 ])->save();
             }
 
@@ -659,7 +741,7 @@ class AkreditasiController extends Controller
             ]));
         }
 
-        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
+        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0|max:100', 'set_final' => 'nullable|boolean']);
 
         try {
             $this->workflowService->submitNA1($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
@@ -685,7 +767,7 @@ class AkreditasiController extends Controller
             ]));
         }
 
-        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
+        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0|max:100', 'set_final' => 'nullable|boolean']);
 
         try {
             $this->workflowService->submitNA2($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
@@ -711,7 +793,7 @@ class AkreditasiController extends Controller
             ]));
         }
 
-        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0', 'set_final' => 'nullable|boolean']);
+        $validated = $request->validate(['butir' => 'required|array', 'butir.*' => 'integer|min:0|max:100', 'set_final' => 'nullable|boolean']);
 
         try {
             $this->workflowService->ketuaInputNK($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
@@ -1014,6 +1096,29 @@ class AkreditasiController extends Controller
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($subQuery) use ($search) {
                     $subQuery->where('uuid', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($userQuery) => $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('user.pesantren', fn ($pesantrenQuery) => $pesantrenQuery
+                            ->where('nama_pesantren', 'like', "%{$search}%")
+                            ->orWhere('ns_pesantren', 'like', "%{$search}%"));
+                });
+            });
+    }
+
+    private function skManagementQuery(string $period, string $status, string $certificate, string $search)
+    {
+        return Akreditasi::query()
+            ->whereIn('status', [Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_COMPLETED])
+            ->when($period !== 'all', fn ($q) => $q->whereYear('created_at', (int) $period))
+            ->when($status === 'ready', fn ($q) => $q->where('status', Akreditasi::STATUS_FINAL_APPROVED))
+            ->when($status === 'published', fn ($q) => $q->where('status', Akreditasi::STATUS_COMPLETED))
+            ->when($certificate === 'with', fn ($q) => $q->whereNotNull('sertifikat_path'))
+            ->when($certificate === 'without', fn ($q) => $q->whereNull('sertifikat_path'))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('uuid', 'like', "%{$search}%")
+                        ->orWhere('nomor_sk', 'like', "%{$search}%")
                         ->orWhereHas('user', fn ($userQuery) => $userQuery
                             ->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%"))

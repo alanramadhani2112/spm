@@ -789,7 +789,7 @@ class AkreditasiWorkflowService
             ->where('tipe', 'ketua')
             ->exists();
 
-        if (! $isKetua) {
+        if (! $isKetua && ! $this->isSuperAdmin($ketua)) {
             throw new WorkflowException(
                 'Hanya ketua asesor yang dapat menandai visitasi selesai.'
             );
@@ -839,7 +839,7 @@ class AkreditasiWorkflowService
             ->where('tipe', 'ketua')
             ->exists();
 
-        if (! $isKetua) {
+        if (! $isKetua && ! $this->isSuperAdmin($ketua)) {
             throw new WorkflowException(
                 'Hanya ketua asesor yang dapat menginput NA1.'
             );
@@ -895,7 +895,7 @@ class AkreditasiWorkflowService
             ->where('tipe', 'anggota')
             ->exists();
 
-        if (! $isAnggota) {
+        if (! $isAnggota && ! $this->isSuperAdmin($anggota)) {
             throw new WorkflowException(
                 'Hanya anggota asesor yang dapat menginput NA2.'
             );
@@ -951,7 +951,7 @@ class AkreditasiWorkflowService
             ->where('tipe', 'ketua')
             ->exists();
 
-        if (! $isKetua) {
+        if (! $isKetua && ! $this->isSuperAdmin($ketua)) {
             throw new WorkflowException(
                 'Hanya ketua asesor yang dapat menginput NK.'
             );
@@ -996,7 +996,7 @@ class AkreditasiWorkflowService
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
         $pesantren = User::findOrFail($pesantrenUserId);
 
-        if ($akreditasi->user_id !== $pesantrenUserId) {
+        if ($akreditasi->user_id !== $pesantrenUserId && ! $this->isSuperAdmin($pesantren)) {
             throw new WorkflowException(
                 'Hanya pesantren pemilik akreditasi yang dapat mengupload kartu kendali.'
             );
@@ -1101,7 +1101,7 @@ class AkreditasiWorkflowService
             ->where('tipe', 'ketua')
             ->exists();
 
-        if (! $isKetua) {
+        if (! $isKetua && ! $this->isSuperAdmin($ketua)) {
             throw new WorkflowException(
                 'Hanya ketua asesor yang dapat submit hasil visitasi.'
             );
@@ -1454,5 +1454,10 @@ class AkreditasiWorkflowService
             'freeze' => 'freeze',
             default => 'reject_administrative',
         };
+    }
+
+    private function isSuperAdmin(User $user): bool
+    {
+        return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }

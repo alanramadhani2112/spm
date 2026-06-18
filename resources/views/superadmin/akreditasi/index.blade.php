@@ -32,6 +32,7 @@
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-chart-pie-4 fs-3"></i>Dashboard</a>
+        <a href="{{ route('superadmin.sk.index') }}" class="btn btn-sm btn-light-success"><i class="ki-outline ki-medal-star fs-3"></i>SK Management</a>
         <a href="{{ route('superadmin.audit.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-time fs-3"></i>Audit Log</a>
     </div>
 </div>

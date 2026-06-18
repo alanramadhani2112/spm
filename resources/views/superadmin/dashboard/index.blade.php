@@ -32,6 +32,9 @@
         <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-primary">
             <i class="ki-outline ki-document fs-3"></i>Buka Workflow Console
         </a>
+        <a href="{{ route('superadmin.sk.index') }}" class="btn btn-sm btn-light-success">
+            <i class="ki-outline ki-medal-star fs-3"></i>SK Management
+        </a>
         <a href="{{ route('superadmin.master-data.index') }}" class="btn btn-sm btn-light">
             <i class="ki-outline ki-setting-2 fs-3"></i>Master Data
         </a>

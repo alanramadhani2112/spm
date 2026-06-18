@@ -130,6 +130,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/visitasi', [DashboardController::class, 'visitasiOverview'])
         ->middleware('permission:akreditasi.visitasi.manage')
         ->name('visitasi.index');
+    Route::get('/sk', [SuperAdminAkreditasiController::class, 'skIndex'])->name('sk.index');
+    Route::get('/sk/export', [SuperAdminAkreditasiController::class, 'skExport'])
+        ->middleware('permission:superadmin.export')
+        ->name('sk.export');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');

@@ -1,6 +1,6 @@
 # Super Admin Flow Coverage Audit
 
-Tanggal audit: 2026-06-15
+Tanggal audit: 2026-06-19
 Baseline branch: `main`  
 Tujuan: memastikan Super Admin menjadi pusat kendali seluruh proses bisnis akreditasi sebelum pengembangan fitur lanjutan.
 
@@ -13,7 +13,7 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 1. Permission matrix sudah punya enforcement pada aksi sensitif awal dan sebagian workflow utama; akses area besar tetap berbasis role.
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
 3. Audit log non-akreditasi sudah diperluas, audit export CSV tersedia, dan reset/unlink SSO user sudah tercatat; live SSO credential/contract masih perlu verifikasi eksternal.
-4. Operational board, Notification Center, Workload Asesor Center, export workload asesor, export user/role/nilai/dokumen, dan konfirmasi assignment overload sudah tersedia.
+4. Operational board, Notification Center, Workload Asesor Center, SK Management, export workload asesor, export user/role/nilai/dokumen/SK, dan konfirmasi assignment overload sudah tersedia.
 5. User lifecycle SSO sudah punya pre-registration, detail user, resend invite, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
@@ -34,8 +34,8 @@ Legend:
 | Akreditasi Detail | Detail pengajuan lengkap | `superadmin.akreditasi.show` | `AkreditasiController@show` | `superadmin.akreditasi.show` | `AkreditasiConsoleTest` | Done | Perlu action audit completeness dan UI QA semua tab. |
 | Pengajuan | Buat pengajuan untuk pesantren | `superadmin.akreditasi.pengajuan`, `submit-pengajuan` | `pengajuanForm`, `submitPengajuan` | `superadmin.akreditasi.pengajuan` | `AkreditasiConsoleTest` | Done | Perlu validasi duplicate/eligibility lebih jelas di UI. |
 | Review Awal | Terima/tolak pengajuan | `review-awal`, `terima-pengajuan`, `tolak-pengajuan` | `reviewAwal`, `terimaPengajuan`, `tolakPengajuan` | `admin.akreditasi.review-awal` dengan route Super Admin | `AkreditasiConsoleTest` | Done | Aksi terima/tolak sudah dilindungi `permission:akreditasi.review_awal`; shared view menampilkan banner Super Admin Mode. |
-| Assessment | Buka assessment + deadline | `buka-assessment` | `bukaAssessment` | `admin.akreditasi.buka-assessment` | Partial coverage | Partial | Aksi sudah dilindungi `permission:akreditasi.review_awal`; method mengisi `assessment_deadline`, tetapi tidak memakai default setting `assessment_deadline` otomatis. |
-| Assessment | Upload kartu kendali | `upload-kk` | `uploadKartuKendali` | N/A action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Partial | Requirement sudah enforce sesuai `kartu_kendali_wajib_before` dan action dilindungi `permission:akreditasi.document.upload`; perlu form/CTA eksplisit di detail jika Super Admin acting as Pesantren. |
+| Assessment | Buka assessment + deadline | `buka-assessment` | `bukaAssessment` | `admin.akreditasi.buka-assessment` | `AkreditasiConsoleTest` | Done | Aksi sudah dilindungi `permission:akreditasi.review_awal`; deadline kosong otomatis memakai setting `assessment_deadline`. |
+| Assessment | Upload kartu kendali | `upload-kk` | `uploadKartuKendali` | Action Center detail Super Admin | `SettingsTest`, `AkreditasiConsoleTest` | Done | Requirement sudah enforce sesuai `kartu_kendali_wajib_before`, action dilindungi `permission:akreditasi.document.upload`, dan CTA upload eksplisit tersedia di detail. |
 | Review Tahap 1 | Review, minta perbaikan, approve | `review-tahap1`, `minta-perbaikan-tahap1`, `approve-tahap1` | `reviewTahap1`, `mintaPerbaikanTahap1`, `approveTahap1` | `admin.akreditasi.review-tahap1` | `AkreditasiConsoleTest` | Done | Aksi keputusan sudah dilindungi `permission:akreditasi.stage1_review`; perlu audit UX untuk sections dan reason required/optional. |
 | Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | `action_on_limit` sudah mengontrol default decision dan action dilindungi `permission:akreditasi.stage1_review`. |
 | Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; form memakai workload aktif terpusat dan mewajibkan konfirmasi + alasan jika pilihan mencapai overload. |
@@ -43,14 +43,14 @@ Legend:
 | Asesor Assignment | Workload center asesor | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.show`, `superadmin.asesor-workload.export` | `AssessorWorkloadController@index/show/export` | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.show` | `AssessorWorkloadTest` | Done | Menampilkan total asesor, normal/medium/overload, assignment aktif, overdue, distribusi ketua/anggota, status aktif, drill-down histori assignment/reassignment per asesor, link detail akreditasi, dan export CSV terfilter. |
 | Review Tahap 2 | Ketua Asesor review | `review-tahap2`, `layak-visitasi`, `minta-perbaikan-tahap2` | `reviewTahap2`, `nyatakanLayakVisitasi`, `mintaPerbaikanTahap2` | `asesor.ketua.review-tahap2` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.stage2_review`; shared asesor view menampilkan banner Super Admin Mode. |
 | Visitasi | Jadwalkan visitasi + schedule overview | `superadmin.visitasi.index`, `jadwalkan-visitasi` | `DashboardController@visitasiOverview`, `jadwalkanVisitasi` | `superadmin.visitasi.index`, `asesor.ketua.jadwalkan-visitasi` | `DashboardExportTest`, `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; Super Admin kini punya board operasional untuk kesiapan jadwal, overdue, scoring, dan validasi akhir visitasi. |
-| Visitasi | Tandai visitasi selesai | `tandai-visitasi-selesai` | `tandaiVisitasiSelesai` | Action endpoint | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; perlu confirmation/audit visibility di detail. |
+| Visitasi | Tandai visitasi selesai | `tandai-visitasi-selesai` | `tandaiVisitasiSelesai` | Action Center detail Super Admin | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; CTA langsung dan konfirmasi tersedia di detail. |
 | Scoring | Input NA1 | `input-na1` | `inputNA1` | `asesor.ketua.input-na1` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; shared asesor view menampilkan banner Super Admin Mode. |
 | Scoring | Input NA2 | `input-na2` | `inputNA2` | `asesor.anggota.input-na2` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; shared asesor view menampilkan banner Super Admin Mode. |
-| Scoring | Input NK | `input-nk` | `inputNK` | `asesor.ketua.input-nk` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; perlu validation completeness test. |
+| Scoring | Input NK | `input-nk` | `inputNK` | `asesor.ketua.input-nk` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; validasi rentang nilai dan prasyarat NA1/NA2 final sudah dites. |
 | Laporan Visitasi | Upload laporan individu/kelompok | `upload-laporan` | `uploadLaporan` | `asesor.ketua.upload-laporan` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.laporan.manage`; perlu document-category rule integration. |
-| Laporan Visitasi | Submit hasil visitasi | `submit-hasil-visitasi` | `submitHasilVisitasi` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | Requirement laporan sudah enforce sesuai `laporan_wajib_before` dan action dilindungi `permission:akreditasi.laporan.manage`; perlu CTA state visibility di detail. |
+| Laporan Visitasi | Submit hasil visitasi | `submit-hasil-visitasi` | `submitHasilVisitasi` | Action Center detail Super Admin | `SettingsTest`, `AkreditasiConsoleTest` | Done | Requirement laporan sudah enforce sesuai `laporan_wajib_before`, action dilindungi `permission:akreditasi.laporan.manage`, dan CTA submit tersedia di detail. |
 | Validasi Akhir | Validasi akhir | `validasi-akhir`, `approve-final`, `tolak-final` | `validasiAkhir`, `approveFinal`, `tolakFinal` | `admin.akreditasi.validasi-akhir` | `SettingsTest`, `AkreditasiConsoleTest` | Done | `approve-final` dilindungi `permission:akreditasi.final.approve`, `tolak-final` dilindungi `permission:akreditasi.final.reject`; `nv_override_allowed` dan `nv_reason_mode` sudah enforce. |
-| SK | Terbitkan SK + sertifikat digital | `form-terbitkan-sk`, `terbitkan-sk`, `akreditasi.sertifikat.download` | `formTerbitkanSK`, `terbitkanSK`, `AkreditasiCertificateController@download` | `admin.akreditasi.terbitkan-sk` (shared Super Admin/Admin), hasil akhir pesantren, detail Super Admin | `AkreditasiConsoleTest`, `AkreditasiFlowTest`, `EndToEndWorkflowTest` | Done | Sudah dilindungi `permission:sk.publish`; publish SK kini dapat menyimpan artifact sertifikat PDF opsional via document layer, `sertifikat_path` disinkronkan, dan unduh sertifikat memakai route aplikasi yang terproteksi. Export/download massal dapat dilanjutkan bila diperlukan. |
+| SK | SK Management, terbitkan SK + sertifikat digital | `superadmin.sk.index`, `superadmin.sk.export`, `form-terbitkan-sk`, `terbitkan-sk`, `akreditasi.sertifikat.download` | `skIndex`, `skExport`, `formTerbitkanSK`, `terbitkanSK`, `AkreditasiCertificateController@download` | `superadmin.sk.index`, `admin.akreditasi.terbitkan-sk` (shared Super Admin/Admin), hasil akhir pesantren, detail Super Admin | `AkreditasiConsoleTest`, `AkreditasiFlowTest`, `EndToEndWorkflowTest` | Done | SK Management sudah tersedia dengan filter, statistik, export CSV + audit, link publish, detail, dan unduh sertifikat; publish SK dilindungi `permission:sk.publish`. |
 | Banding | Lihat, terima, tolak banding | `banding`, `superadmin.banding.terima`, `superadmin.banding.tolak` | `banding`, `terimaBanding`, `tolakBanding` | `admin.akreditasi.banding` | `AkreditasiConsoleTest`, `SettingsTest` | Done | Terima/tolak sudah dilindungi `permission:akreditasi.proses_banding`; `banding_eligibility=disabled` sudah memblokir pengajuan banding. |
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
@@ -77,14 +77,14 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 
 Total area route:
 
-1. Dashboard: `superadmin.dashboard`, `superadmin.dashboard.export`, `superadmin.asesor-workload.index`.
+1. Dashboard: `superadmin.dashboard`, `superadmin.dashboard.export`, `superadmin.asesor-workload.index`, `superadmin.sk.index`.
 2. Akreditasi workflow: index, export, pengajuan, detail, review awal, assessment, review tahap 1, assign/reassign asesor, review tahap 2, visitasi, scoring, laporan, validasi akhir, SK, banding.
 3. Master data: EDPM, document categories, data pesantren, roles, users.
 4. Settings: index, update, deadline, correction, dokumen, NV, notifikasi, banding.
 5. Audit: index, show, export.
 6. Notification Center: index, mark read, mark all read.
 
-Total route Super Admin saat audit ini: 75.
+Total route Super Admin saat audit ini: 77.
 
 Kesimpulan route: coverage route end-to-end sudah luas, tetapi completeness masih perlu dinilai dari action coverage, permission granular, audit, dan test - bukan dari jumlah route saja.
 
@@ -105,7 +105,7 @@ Coverage yang kuat:
 
 - Dashboard render/export.
 - Workload Asesor Center render, overload filter, export CSV, audit export, permission export, dan eksklusi assignment terminal.
-- Akreditasi console render/detail/export.
+- Akreditasi console render/detail/export, termasuk Action Center CTA langsung.
 - Pengajuan oleh Super Admin.
 - Banding route/action Super Admin.
 - Route-aware shared views agar form submit ke route Super Admin.
@@ -116,14 +116,16 @@ Coverage yang kuat:
 - User detail, SSO pre-registration identity update, dan reset/unlink SSO dengan audit reason.
 - Settings smoke/update.
 - Notification Center render/filter/mark read.
+- SK Management list/filter/export audit.
+- Scoring NA1/NA2/NK untuk Super Admin, validasi rentang nilai, dan prasyarat NK.
 - Audit export CSV.
 - SSO mocked redirect/callback.
 
 Gap test:
 
-1. Belum ada test granular untuk semua action Super Admin end-to-end per status.
+1. Test granular sudah bertambah untuk action utama; masih perlu audit berkala bila workflow/status baru ditambahkan.
 2. Audit log user/role/master/settings/export/SSO reset sudah mulai tercakup; masih perlu live SSO failure contract bila credential tersedia.
-3. Permission enforcement sudah punya forbidden-path tests untuk settings, role permission, user access, final approval, SK publish, review awal, tahap 1, assign asesor, dan proses banding; perlu diperluas ke destructive master data/export.
+3. Permission enforcement sudah punya forbidden-path tests untuk settings, role permission, user access, final approval/reject, SK publish, export, review awal, tahap 1, assign asesor, visitasi, scoring, laporan, dokumen, dan proses banding; perlu disinkronkan bila action baru ditambahkan.
 4. Settings enforcement tests sudah mencakup deadline, max correction cycles, action on limit, banding disabled, NV override disabled, document requirement, dan `nv_reason_mode`.
 5. Belum ada test SSO live contract; wajar karena credential belum approved.
 
@@ -134,13 +136,14 @@ Sudah tercatat:
 - Banyak transisi akreditasi melalui `AkreditasiWorkflowService` menggunakan `AuditTrailService`.
 - Banding submit/process menggunakan `BandingService`.
 - Settings update menggunakan `SettingsController@update` dengan `setting_changed`.
+- Export dashboard, audit, akreditasi, nilai, dokumen, workload asesor, user/role, dan SK Management memakai `superadmin_exported`.
 
 Belum/kurang tercatat:
 
 - Live SSO failure contract bila credential tersedia.
 - Reason policy yang konsisten untuk seluruh aksi destructive/sensitif.
 
-Rekomendasi: lanjutkan audit layer untuk export lanjutan dan permission destructive master data/export.
+Rekomendasi: lanjutkan audit layer saat action baru ditambahkan dan tunggu credential untuk live SSO contract.
 
 ## Settings Enforcement Audit
 
@@ -156,7 +159,7 @@ Settings UI sudah punya kategori:
 Temuan penting:
 
 - `AkreditasiWorkflowService` sudah memakai `SuperAdminSettings::MAX_SIKLUS_TAHAP1` dan `MAX_SIKLUS_TAHAP2`.
-- `DeadlineService` dan operational board sudah memakai `SuperAdminSettings::deadlineKeyForPhase()` agar phase deadline memakai key UI yang sama.
+- `DeadlineService`, operational board, dan buka assessment sudah memakai key `assessment_deadline`/deadline Super Admin agar SLA memakai setting yang sama.
 - `AkreditasiWorkflowService` memakai `action_on_limit` untuk default limit decision.
 - `BandingService` memakai `banding_deadline` dan memblokir banding saat `banding_eligibility=disabled`.
 - `nv_override_allowed` sudah menjadi gate di validasi akhir.
@@ -216,48 +219,40 @@ Sudah dipolish:
 - User management + SSO pre-registration.
 - User detail + SSO reset/unlink management.
 - Notification Center.
+- SK Management.
 
 Partial:
 
 - Beberapa action flow Super Admin masih memakai view Admin/Asesor/Pesantren dengan route override. Ini efisien dan fungsional, tetapi perlu review UX agar pengguna sadar sedang bekerja sebagai Super Admin.
-- Action endpoints tanpa halaman tersendiri kini mengikuti pola CTA yang lebih eksplisit: satu primary CTA terlihat, action tambahan di kebab menu, dan state tanpa aksi ditampilkan jelas di Action Center.
+- Action endpoints tanpa halaman tersendiri kini mengikuti pola CTA yang eksplisit: primary CTA, aksi langsung, action tambahan di kebab menu, dan state tanpa aksi ditampilkan jelas di Action Center.
 
 Missing:
 
-- SK management.
+- Live SSO contract test menunggu credential Muhammadiyah ID.
 
 ## Recommended Next Implementation Order
 
 ### P0 — Stabilization / Governance
 
-1. **Permission enforcement expansion**
-   - Terapkan permission granular ke action destructive master data dan export berikutnya.
-   - Tambah tests permission denied per route.
+1. **QA shared Admin/Asesor views**
+   - Audit ulang seluruh shared view agar banner Super Admin Mode, wording, dan form route override tetap konsisten.
+   - Tambah test bila ditemukan view yang belum route-aware.
 
-2. **Audit log export dan bulk user**
-   - Log export lanjutan, resend invite, dan bulk import bila fitur tersedia.
-   - Log CSV exports penting.
+2. **Regression suite berkala**
+   - Jalankan `tests/Feature/SuperAdmin` setelah perubahan workflow/permission.
+   - Sinkronkan permission dan forbidden-path test setiap action baru ditambahkan.
 
-### P1 — Operational Control
+### P1 — External Dependency
 
-3. **Asesor Workload & Assignment Intelligence lanjutan**
-   - Export asesor workload sudah selesai.
-   - Riwayat reassignment dan alasan redistribusi sudah tampil di detail akreditasi.
-   - Drill-down histori assignment per asesor.
+3. **Live SSO contract**
+   - Verifikasi redirect/callback/failure contract setelah credential Muhammadiyah ID tersedia.
+   - Tambah test failure path live bila credential sudah approved.
 
 ### P2 — Data & Reporting
 
-4. **User lifecycle lanjutan**
-   - Resend invite sudah tersedia.
-   - Bulk import pre-registration sudah tersedia.
-
-5. **Data Pesantren Control lanjutan**
-   - Override dokumen/IPM/SDM/EDPM with audit sudah tersedia.
-
-6. **Reporting/export suite**
-   - Export users/roles sudah tersedia.
-   - Export nilai/peringkat sudah tersedia.
-   - Export dokumen status sudah tersedia.
+4. **Reporting/export suite lanjutan**
+   - Export users/roles/nilai/dokumen/SK/workload sudah tersedia.
+   - Perluasan berikutnya hanya bila ada domain laporan baru.
 
 ## Definition of Done untuk Super Admin
 
@@ -275,7 +270,7 @@ Super Admin bisa dianggap lengkap bila setiap flow penting memenuhi checklist in
 
 ## Keputusan Teknis yang Direkomendasikan
 
-1. Jangan menambah fitur besar sebelum permission destructive master data/export berikutnya beres.
+1. Jangan menambah action baru tanpa permission middleware, audit reason/metadata, dan forbidden-path test.
 2. Pertahankan `main` sebagai baseline tunggal; buat branch baru per topik.
-3. Untuk task berikutnya, gunakan branch baru: `feature/superadmin-governance-audit`.
-4. Implementasi berikutnya yang paling bernilai: permission enforcement dan audit trail untuk action destructive master data/export berikutnya.
+3. Untuk task berikutnya, gunakan branch kecil sesuai topik QA/regression.
+4. Implementasi berikutnya yang paling bernilai: QA shared view Super Admin dan live SSO contract saat credential tersedia.

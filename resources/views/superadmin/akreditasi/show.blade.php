@@ -58,6 +58,9 @@
         ['key' => 'banding', 'label' => 'Banding', 'icon' => 'ki-message-question'],
         ['key' => 'audit', 'label' => 'Audit', 'icon' => 'ki-time'],
     ];
+    $showUploadKkAction = $akreditasi->status === Akreditasi::STATUS_ASSESSMENT_OPEN;
+    $showMarkVisitasiDoneAction = $akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED;
+    $showSubmitVisitasiResultAction = $akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING;
 @endphp
 
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
@@ -153,6 +156,40 @@
                    data-swal-confirm-button="Ya, buka">
                     <i class="ki-outline ki-right-square fs-3"></i>{{ $primaryAction['label'] }}
                 </a>
+
+                @if($showUploadKkAction || $showMarkVisitasiDoneAction || $showSubmitVisitasiResultAction)
+                    <div class="separator separator-dashed my-5"></div>
+                    <div class="fw-bold text-gray-900 mb-3">Aksi langsung</div>
+
+                    @if($showUploadKkAction)
+                        <form method="POST" action="{{ route('superadmin.akreditasi.upload-kk', $akreditasi) }}" enctype="multipart/form-data" class="d-grid gap-3 mb-4" data-swal-confirm="true" data-swal-title="Upload kartu kendali?" data-swal-text="Dokumen kartu kendali akan disimpan untuk pengajuan {{ $akreditasi->uuid }}." data-swal-icon="question" data-swal-confirm-button="Ya, upload" data-swal-confirm-class="btn btn-primary">
+                            @csrf
+                            <input type="file" name="file" class="form-control form-control-sm" required>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="ki-outline ki-document-up fs-4"></i>Upload Kartu Kendali
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($showMarkVisitasiDoneAction)
+                        <form method="POST" action="{{ route('superadmin.akreditasi.tandai-visitasi-selesai', $akreditasi) }}" class="mb-4" data-swal-confirm="true" data-swal-title="Tandai visitasi selesai?" data-swal-text="Status pengajuan akan masuk ke penilaian pasca visitasi." data-swal-icon="warning" data-swal-confirm-button="Ya, tandai selesai" data-swal-confirm-class="btn btn-warning">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-warning w-100">
+                                <i class="ki-outline ki-check-circle fs-4"></i>Tandai Visitasi Selesai
+                            </button>
+                        </form>
+                    @endif
+
+                    @if($showSubmitVisitasiResultAction)
+                        <form method="POST" action="{{ route('superadmin.akreditasi.submit-hasil-visitasi', $akreditasi) }}" data-swal-confirm="true" data-swal-title="Submit hasil visitasi?" data-swal-text="Pastikan NA1, NA2, NK, dan dokumen laporan sudah final." data-swal-icon="warning" data-swal-confirm-button="Ya, submit" data-swal-confirm-class="btn btn-success">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-success w-100">
+                                <i class="ki-outline ki-send fs-4"></i>Submit Hasil Visitasi
+                            </button>
+                        </form>
+                    @endif
+                @endif
+
                 @if(count($secondaryActions) > 0)
                     <div class="fs-8 text-muted mt-3">Aksi tambahan tersedia di menu kanan atas kartu ini.</div>
                 @endif

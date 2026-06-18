@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AkreditasiWorkflowService;
 use App\Services\BandingService;
 use App\Services\ScoringService;
+use App\Support\SuperAdminSettings;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -140,9 +141,16 @@ class AkreditasiController extends Controller
         ]);
 
         try {
-            if ($validated['deadline'] ?? null) {
+            $deadline = $validated['deadline'] ?? null;
+
+            if (! $deadline) {
+                $days = SuperAdminSettings::int(SuperAdminSettings::ASSESSMENT_DEADLINE);
+                $deadline = $days === null ? null : now()->addDays($days);
+            }
+
+            if ($deadline) {
                 $akreditasi->forceFill([
-                    'assessment_deadline' => $validated['deadline'],
+                    'assessment_deadline' => $deadline,
                 ])->save();
             }
 

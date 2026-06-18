@@ -32,6 +32,8 @@ class DashboardExportTest extends TestCase
             ->assertSee('Dashboard Super Admin')
             ->assertSee('Ringkasan Nasional Akreditasi')
             ->assertSee('Apa yang perlu dipantau hari ini?')
+            ->assertSee('SK Management')
+            ->assertSee(route('superadmin.sk.index'), false)
             ->assertSee('Prioritas', false);
 
         $this->actingAs($superAdmin)

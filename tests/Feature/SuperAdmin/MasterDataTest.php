@@ -217,19 +217,26 @@ class MasterDataTest extends TestCase
             ->assertOk()
             ->assertDownload('roles-permissions-superadmin.csv');
 
-        $this->assertDatabaseHas('akreditasi_audit_logs', [
-            'action_type' => 'superadmin_exported',
-            'user_id' => $this->superAdmin->id,
-        ]);
-        $this->assertSame('users', AkreditasiAuditLog::where('action_type', 'superadmin_exported')->firstOrFail()->metadata['export_type']);
+        $exportTypes = AkreditasiAuditLog::where('action_type', 'superadmin_exported')
+            ->get()
+            ->pluck('metadata.export_type')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame(['roles_permissions', 'users'], $exportTypes);
     }
 
-    public function test_super_admin_without_export_permission_cannot_export_users(): void
+    public function test_super_admin_without_export_permission_cannot_export_master_data(): void
     {
         $this->revokeSuperAdminPermission('superadmin.export');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.master-data.users.export'))
+            ->assertForbidden();
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.roles.export'))
             ->assertForbidden();
     }
 
