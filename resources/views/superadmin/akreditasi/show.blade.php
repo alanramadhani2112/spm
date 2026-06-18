@@ -11,6 +11,7 @@
 @php
     use App\Models\Akreditasi;
     use App\Models\AkreditasiAuditLog;
+    use Illuminate\Support\Str;
 
     $statusColor = $statusColors[$akreditasi->status] ?? 'secondary';
     $profileDocs = collect($documentFields)->map(fn($label, $field) => [
@@ -61,6 +62,31 @@
     $showUploadKkAction = $akreditasi->status === Akreditasi::STATUS_ASSESSMENT_OPEN;
     $showMarkVisitasiDoneAction = $akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED;
     $showSubmitVisitasiResultAction = $akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING;
+    $criticalStatuses = [
+        Akreditasi::STATUS_INITIAL_SUBMITTED,
+        Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
+        Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
+        Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+        Akreditasi::STATUS_POST_VISITASI_SCORING,
+        Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+        Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+        Akreditasi::STATUS_FINAL_APPROVED,
+        Akreditasi::STATUS_APPEAL_SUBMITTED,
+    ];
+    $needsAttention = in_array($akreditasi->status, $criticalStatuses, true);
+    $missingDataItems = collect($dataItems)->filter(fn ($ok) => ! $ok)->keys()->values();
+    $documentAlerts = collect();
+    if ($showUploadKkAction) {
+        $documentAlerts->push('Kartu kendali masih perlu diunggah sebelum alur bergerak lebih jauh.');
+    }
+    if ($showSubmitVisitasiResultAction) {
+        if (! $akreditasi->is_na1_final || ! $akreditasi->is_na2_final || ! $akreditasi->is_nk_final) {
+            $documentAlerts->push('Finalisasi NA1, NA2, dan NK sebelum submit hasil visitasi.');
+        }
+        if ($documents->where('type', \App\Services\DocumentService::TYPE_LAPORAN_ASESOR)->isEmpty()) {
+            $documentAlerts->push('Laporan visitasi belum tersedia untuk mendukung submit hasil visitasi.');
+        }
+    }
 @endphp
 
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
@@ -82,6 +108,26 @@
                 <div class="fw-bold {{ $akreditasi->assessment_deadline?->isPast() ? 'text-danger' : 'text-gray-900' }}">{{ $akreditasi->assessment_deadline?->format('d M Y') ?? '—' }}</div>
             </div>
         </div>
+
+        @if($needsAttention || $missingDataItems->isNotEmpty() || $documentAlerts->isNotEmpty())
+            <div class="rounded bg-white border border-{{ $needsAttention ? 'warning' : 'primary' }} border-dashed p-5 mb-6">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
+                    <div class="mw-lg-550px">
+                        <div class="fw-bold text-gray-900 mb-1">Ringkasan tindakan saat ini</div>
+                        <div class="fs-7 text-gray-700">{{ $needsAttention ? 'Pengajuan ini berada pada status yang memerlukan keputusan atau tindak lanjut Super Admin.' : 'Pengajuan ini relatif stabil, tetapi masih ada item yang perlu dipantau.' }}</div>
+                    </div>
+                    <span class="badge badge-light-{{ $needsAttention ? 'warning' : 'primary' }}">{{ $needsAttention ? 'Perlu tindakan' : 'Perlu pemantauan' }}</span>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    @if($missingDataItems->isNotEmpty())
+                        <div class="fs-8 text-gray-700">Data belum lengkap: <span class="fw-semibold">{{ $missingDataItems->implode(', ') }}</span></div>
+                    @endif
+                    @foreach($documentAlerts as $alert)
+                        <div class="fs-8 text-gray-700">{{ $alert }}</div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
 
         <div class="row g-4">
             @foreach($workflowSteps as $index => $step)
@@ -146,6 +192,7 @@
                 <div class="rounded bg-light-primary p-4 mb-4">
                     <div class="fw-bold text-gray-900 mb-1">Langkah berikutnya</div>
                     <div class="fs-7 text-gray-700">{{ $nextStepLabel }}</div>
+                    <div class="fs-8 {{ $needsAttention ? 'text-danger fw-semibold' : 'text-muted' }} mt-2">{{ $needsAttention ? 'Selesaikan aksi utama terlebih dahulu agar workflow tidak tertahan.' : 'Pantau data pendukung sebelum melanjutkan aksi berikutnya.' }}</div>
                 </div>
                 <a href="{{ $primaryAction['route'] }}"
                    class="btn btn-{{ $primaryAction['color'] === 'warning' ? 'warning' : ($primaryAction['color'] === 'danger' ? 'danger' : ($primaryAction['color'] === 'success' ? 'success' : 'primary')) }} w-100"
@@ -292,7 +339,8 @@
             @foreach($tabs as $tab)
                 <button type="button"
                         @click="activeTab = '{{ $tab['key'] }}'"
-                        class="btn btn-sm btn-light btn-color-gray-600 border-transparent fw-semibold">
+                        :class="activeTab === '{{ $tab['key'] }}' ? 'btn-primary text-white' : 'btn-light btn-color-gray-600 border-transparent'"
+                        class="btn btn-sm fw-semibold">
                     <i class="ki-outline {{ $tab['icon'] }} fs-4"></i>{{ $tab['label'] }}
                 </button>
             @endforeach
@@ -377,8 +425,8 @@
                                 <span class="fs-8 text-muted">{{ $countDataItems($item['data']) }} item</span>
                             </div>
                             <details>
-                                <summary class="cursor-pointer fs-8 fw-semibold text-primary">Lihat data mentah</summary>
-                                <pre class="bg-light rounded p-4 fs-8 text-gray-700 mt-3 mb-0">{{ json_encode($item['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                <summary class="cursor-pointer fs-8 fw-semibold text-primary">Lihat detail data</summary>
+                                <pre class="bg-light rounded p-4 fs-8 text-gray-700 mt-3 mb-0">{{ Str::limit(json_encode($item['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), 1600) }}</pre>
                             </details>
                         </x-metronic.card>
                     </div>

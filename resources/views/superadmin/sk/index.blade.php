@@ -167,12 +167,30 @@
                             @endif
                         </td>
                         <td class="text-end pe-4">
-                            <div class="d-flex flex-column align-items-end gap-2">
+                            <x-superadmin.action-menu label="Buka aksi SK {{ $akreditasi->uuid }}">
+                                <div class="menu-item px-3">
+                                    <a href="{{ route('superadmin.akreditasi.show', $akreditasi) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                        <i class="ki-outline ki-eye fs-4"></i>
+                                        <span>Lihat Detail</span>
+                                    </a>
+                                </div>
                                 @if($akreditasi->status === Akreditasi::STATUS_FINAL_APPROVED)
-                                    <a href="{{ route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi) }}" class="btn btn-sm btn-success w-150px">Terbitkan SK</a>
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi) }}" class="menu-link px-3 d-flex align-items-center gap-2 text-success">
+                                            <i class="ki-outline ki-medal-star fs-4"></i>
+                                            <span>Terbitkan SK</span>
+                                        </a>
+                                    </div>
                                 @endif
-                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi) }}" class="btn btn-sm btn-light w-150px">Detail</a>
-                            </div>
+                                @if($akreditasi->sertifikat_path)
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('superadmin.akreditasi.sertifikat.download', $akreditasi) }}" class="menu-link px-3 d-flex align-items-center gap-2 text-primary">
+                                            <i class="ki-outline ki-file-down fs-4"></i>
+                                            <span>Unduh Sertifikat</span>
+                                        </a>
+                                    </div>
+                                @endif
+                            </x-superadmin.action-menu>
                         </td>
                     </tr>
                 @empty

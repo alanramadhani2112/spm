@@ -24,16 +24,24 @@
 @endphp
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
-    <div>
+    <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Ringkasan Nasional Akreditasi</h2>
-        <p class="fs-7 text-muted mb-0">Pantau beban kerja, status kritis, dan pengajuan terbaru dari satu tempat.</p>
+        <p class="fs-7 text-muted mb-3">Pantau beban kerja, status kritis, dan pengajuan terbaru dari satu tempat.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge badge-light-primary">{{ $totalAkreditasi }} total pengajuan</span>
+            <span class="badge badge-light-warning">{{ $overdueCount }} overdue</span>
+            <span class="badge badge-light-success">{{ $completedAkreditasi }} selesai</span>
+            @if(($period ?? 'all') !== 'all')
+                <span class="badge badge-light-info">Periode: {{ $period }}</span>
+            @endif
+        </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-primary">
             <i class="ki-outline ki-document fs-3"></i>Buka Workflow Console
         </a>
-        <a href="{{ route('superadmin.sk.index') }}" class="btn btn-sm btn-light-success">
-            <i class="ki-outline ki-medal-star fs-3"></i>SK Management
+        <a href="{{ route('superadmin.sk.index', ['status' => 'ready']) }}" class="btn btn-sm btn-light-warning">
+            <i class="ki-outline ki-medal-star fs-3"></i>SK Siap Terbit
         </a>
         <a href="{{ route('superadmin.master-data.index') }}" class="btn btn-sm btn-light">
             <i class="ki-outline ki-setting-2 fs-3"></i>Master Data
@@ -63,12 +71,15 @@
                 <div class="symbol symbol-45px">
                     <span class="symbol-label bg-primary"><i class="ki-outline ki-compass fs-2 text-white"></i></span>
                 </div>
-                <div>
+                <div class="mw-lg-500px">
                     <h3 class="fw-bold text-gray-900 mb-1">Apa yang perlu dipantau hari ini?</h3>
-                    <div class="fs-7 text-muted">Mulai dari kartu prioritas: review pengajuan baru, validasi akhir, banding, dan item yang melewati deadline.</div>
+                    <div class="fs-7 text-muted">Mulai dari prioritas kerja yang paling mendesak: review pengajuan baru, validasi akhir, banding, backlog penerbitan SK, dan item yang melewati deadline.</div>
                 </div>
             </div>
-            <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-primary">Lihat Semua Pengajuan</a>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-primary">Lihat Semua Pengajuan</a>
+                <a href="{{ route('superadmin.sk.index', ['status' => 'ready']) }}" class="btn btn-sm btn-light-warning">Fokus SK Siap Terbit</a>
+            </div>
         </div>
     </div>
 </div>
@@ -99,7 +110,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-gray-900 mb-0">Operational Board</h3>
-    <span class="fs-8 text-muted">Antrian kerja lintas status Super Admin</span>
+    <span class="fs-8 text-muted">Antrian kerja lintas status, diprioritaskan untuk keputusan operasional tercepat</span>
 </div>
 
 <div class="row g-5 g-xl-8 mb-8">
@@ -107,8 +118,8 @@
         <div class="card card-flush h-100">
             <div class="card-header align-items-center py-5">
                 <div class="card-title d-flex flex-column">
-                    <h3 class="fw-bold text-gray-900 m-0">Antrian God Mode</h3>
-                    <span class="text-muted fs-7 mt-1">Setiap kartu membuka workflow console pada status terkait.</span>
+                    <h3 class="fw-bold text-gray-900 m-0">Antrian Tindakan Cepat</h3>
+                    <span class="text-muted fs-7 mt-1">Setiap kartu membuka queue kerja yang paling relevan untuk ditindaklanjuti.</span>
                 </div>
             </div>
             <div class="card-body pt-0">
@@ -123,9 +134,10 @@
                                     <div class="min-w-0">
                                         <div class="fw-bold text-gray-900 text-truncate">{{ $queue['label'] }}</div>
                                         <div class="fs-8 text-muted text-truncate">{{ $queue['description'] }}</div>
+                                        <div class="fs-8 mt-1 {{ $queue['count'] > 0 ? 'text-gray-700 fw-semibold' : 'text-muted' }}">{{ $queue['count'] > 0 ? 'Perlu tindakan sekarang' : 'Belum ada backlog aktif' }}</div>
                                     </div>
                                 </div>
-                                <span class="badge badge-light-{{ $queue['color'] }} fs-7">{{ $queue['count'] }}</span>
+                                <span class="badge badge-light-{{ $queue['count'] > 0 ? $queue['color'] : 'secondary' }} fs-7">{{ $queue['count'] }}</span>
                             </a>
                         </div>
                     @endforeach
@@ -150,7 +162,10 @@
                                 <div class="fw-semibold text-gray-900">{{ $breach['label'] }}</div>
                                 <div class="fs-8 text-muted">{{ $breach['days'] ?? '-' }} hari batas kerja</div>
                             </div>
-                            <span class="badge badge-light-{{ $breach['count'] > 0 ? 'danger' : 'success' }}">{{ $breach['count'] }}</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge badge-light-{{ $breach['count'] > 0 ? 'danger' : 'success' }}">{{ $breach['count'] }}</span>
+                                <i class="ki-outline ki-right fs-4 text-muted"></i>
+                            </div>
                         </a>
                     @endforeach
                 </div>
@@ -190,10 +205,28 @@
                                         <div class="fw-bold text-gray-900">{{ $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? 'Pesantren' }}</div>
                                         <div class="fs-8 text-muted">{{ $akreditasi->uuid }}</div>
                                     </td>
-                                    <td><span class="badge badge-light-{{ $color }}">{{ $akreditasi->getStatusLabel() }}</span></td>
+                                    <td>
+                                        <div class="d-flex flex-column gap-1 align-items-start">
+                                            <span class="badge badge-light-{{ $color }}">{{ $akreditasi->getStatusLabel() }}</span>
+                                            <span class="fs-8 {{ ($anchorDate ? (int) $anchorDate->diffInDays(now()) : 0) >= 7 ? 'text-danger fw-semibold' : 'text-muted' }}">{{ ($anchorDate ? (int) $anchorDate->diffInDays(now()) : 0) >= 7 ? 'Perlu diprioritaskan' : 'Masih dalam antrean aktif' }}</span>
+                                        </div>
+                                    </td>
                                     <td class="text-end">{{ $anchorDate ? (int) $anchorDate->diffInDays(now()) : 0 }} hari</td>
                                     <td class="text-end">
-                                        <a href="{{ route('superadmin.akreditasi.show', $akreditasi) }}" class="btn btn-sm btn-light-primary">Detail</a>
+                                        <x-superadmin.action-menu label="Buka aksi antrian mendesak {{ $akreditasi->uuid }}">
+                                            <div class="menu-item px-3">
+                                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                                    <i class="ki-outline ki-eye fs-4"></i>
+                                                    <span>Lihat Detail</span>
+                                                </a>
+                                            </div>
+                                            <div class="menu-item px-3">
+                                                <a href="{{ route('superadmin.akreditasi.index', ['status' => $akreditasi->status, 'period' => $period ?? 'all']) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                                    <i class="ki-outline ki-filter fs-4"></i>
+                                                    <span>Buka Queue Status</span>
+                                                </a>
+                                            </div>
+                                        </x-superadmin.action-menu>
                                     </td>
                                 </tr>
                             @empty
@@ -299,7 +332,12 @@
                                 <tr>
                                     <td colspan="4">
                                         <div class="text-center py-12 text-muted border rounded bg-light">
-                                            Belum ada data akreditasi untuk periode ini. Data akan muncul setelah pesantren mengajukan akreditasi.
+                                            <div class="fw-bold text-gray-900 mb-2">Belum ada data akreditasi untuk periode ini.</div>
+                                            <div class="fs-7 text-muted">Data akan muncul setelah pesantren mengajukan akreditasi atau setelah filter periode diubah.</div>
+                                            <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+                                                <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-primary">Buka Workflow Console</a>
+                                                <a href="{{ route('superadmin.dashboard', ['period' => 'all']) }}" class="btn btn-sm btn-light">Lihat Semua Periode</a>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>

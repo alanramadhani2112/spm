@@ -79,15 +79,27 @@
                                     </div>
                                 </div>
                                 <div class="d-flex flex-wrap gap-2">
-                                    @if($notification->akreditasi_id)
-                                        <a href="{{ route('superadmin.akreditasi.show', $notification->akreditasi_id) }}" class="btn btn-sm btn-light-primary">Detail</a>
-                                    @endif
-                                    @if(! $notification->is_read)
-                                        <form method="POST" action="{{ route('superadmin.notifications.mark-read', $notification) }}">
-                                            @csrf
-                                            <button type="submit" class="btn btn-sm btn-light-success">Dibaca</button>
-                                        </form>
-                                    @endif
+                                    <x-superadmin.action-menu label="Buka aksi notifikasi {{ $notification->id }}">
+                                        @if($notification->akreditasi_id)
+                                            <div class="menu-item px-3">
+                                                <a href="{{ route('superadmin.akreditasi.show', $notification->akreditasi_id) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                                    <i class="ki-outline ki-eye fs-4"></i>
+                                                    <span>Lihat Detail</span>
+                                                </a>
+                                            </div>
+                                        @endif
+                                        @if(! $notification->is_read)
+                                            <div class="menu-item px-3">
+                                                <form method="POST" action="{{ route('superadmin.notifications.mark-read', $notification) }}">
+                                                    @csrf
+                                                    <button type="submit" class="menu-link px-3 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start text-success">
+                                                        <i class="ki-outline ki-check-circle fs-4"></i>
+                                                        <span>Tandai Dibaca</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
+                                    </x-superadmin.action-menu>
                                 </div>
                             </div>
                         </div>

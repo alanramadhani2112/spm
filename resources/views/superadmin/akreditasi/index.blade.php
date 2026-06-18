@@ -26,9 +26,18 @@
 @endphp
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
-    <div>
+    <div class="mw-lg-650px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Workflow Console Akreditasi</h2>
-        <p class="fs-7 text-muted mb-0">Pantau semua pengajuan, temukan status kritis, dan jalankan aksi operasional dari satu console.</p>
+        <p class="fs-7 text-muted mb-3">Pantau semua pengajuan, temukan status kritis, dan jalankan aksi operasional dari satu console.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge badge-light-primary">{{ $akreditasis->count() }} hasil ditampilkan</span>
+            @if(($status ?? 'all') !== 'all')
+                <span class="badge badge-light-warning">Fokus status: {{ $statusOptions[$status] ?? $status }}</span>
+            @endif
+            @if(($search ?? '') !== '')
+                <span class="badge badge-light-info">Pencarian aktif</span>
+            @endif
+        </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-chart-pie-4 fs-3"></i>Dashboard</a>
@@ -52,12 +61,15 @@
                 <div class="symbol symbol-45px">
                     <span class="symbol-label bg-primary"><i class="ki-outline ki-compass fs-2 text-white"></i></span>
                 </div>
-                <div>
+                <div class="mw-lg-550px">
                     <h3 class="fw-bold text-gray-900 mb-1">Gunakan status sebagai petunjuk aksi berikutnya</h3>
-                    <div class="fs-7 text-muted">Setiap baris menampilkan status, langkah berikutnya, asesor, nilai, dan aksi yang relevan. Mulai dari tombol <span class="fw-semibold text-gray-900">Detail</span> bila perlu melihat konteks lengkap.</div>
+                    <div class="fs-7 text-muted">Setiap baris menampilkan status, langkah berikutnya, asesor, nilai, dan aksi yang relevan. Prioritaskan item yang sudah punya backlog tindakan jelas sebelum membuka detail yang tidak mendesak.</div>
                 </div>
             </div>
-            <span class="badge badge-light-primary">{{ $akreditasis->count() }} data ditampilkan</span>
+            <div class="d-flex flex-column align-items-xl-end gap-2">
+                <span class="badge badge-light-primary">{{ $akreditasis->count() }} data ditampilkan</span>
+                <span class="fs-8 text-muted text-xl-end">Gunakan detail page saat perlu konteks penuh, blocker, atau bukti pendukung keputusan.</span>
+            </div>
         </div>
     </div>
 </div>
@@ -139,18 +151,24 @@
                             <div class="d-flex flex-column gap-1">
                                 <span class="badge badge-light-{{ $color }} w-fit-content">{{ $statusLabel }}</span>
                                 <span class="fs-8 text-gray-700">{{ $nextStep }}</span>
+                                @if(! empty($actions))
+                                    <span class="fs-8 fw-semibold {{ in_array($akreditasi->status, [Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW, Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, Akreditasi::STATUS_POST_VISITASI_SCORING, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION, Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_APPEAL_SUBMITTED], true) ? 'text-danger' : 'text-muted' }}">{{ in_array($akreditasi->status, [Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW, Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, Akreditasi::STATUS_POST_VISITASI_SCORING, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION, Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_APPEAL_SUBMITTED], true) ? 'Perlu tindakan sekarang' : 'Pantau status ini' }}</span>
+                                @endif
                             </div>
                         </td>
                         <td>
                             @forelse($akreditasi->assessments as $assessment)
                                 <div class="fs-8 mb-1"><span class="badge badge-light-info me-1">{{ strtoupper($assessment->tipe) }}</span>{{ $assessment->asesor?->name ?? '—' }}</div>
                             @empty
-                                <span class="text-muted fs-8">Belum ditugaskan</span>
+                                <span class="text-danger fs-8 fw-semibold">Belum ditugaskan</span>
                             @endforelse
                         </td>
                         <td>
                             <div class="fs-8 text-muted">Nilai: <span class="fw-bold text-gray-900">{{ $akreditasi->nilai ?? '—' }}</span></div>
                             <div class="fs-8 text-muted">Peringkat: <span class="fw-bold text-gray-900">{{ $akreditasi->peringkat ?? '—' }}</span></div>
+                            @if($akreditasi->status === Akreditasi::STATUS_FINAL_APPROVED)
+                                <div class="fs-8 fw-semibold text-success mt-1">Siap diterbitkan menjadi SK</div>
+                            @endif
                         </td>
                         <td><span class="text-muted fs-7">{{ $akreditasi->created_at->format('d M Y') }}</span></td>
                         <td class="text-end pe-4">
@@ -170,7 +188,7 @@
                                 @else
                                     <span class="badge badge-light-secondary">Tidak ada aksi</span>
                                 @endif
-                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-light">Detail</a>
+                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-light">Lihat Detail</a>
                                 @if(! empty($secondaryActions))
                                     <x-superadmin.action-menu label="Buka aksi tambahan akreditasi {{ $akreditasi->uuid }}">
                                         @foreach($secondaryActions as $action)
@@ -196,10 +214,12 @@
                     <tr>
                         <td colspan="7">
                             <div class="text-center py-12 text-muted border rounded bg-light">
-                                Belum ada akreditasi yang cocok dengan filter ini. Coba reset filter atau buat pengajuan baru.
-                                <div class="mt-4">
+                                <div class="fw-bold text-gray-900 mb-2">Belum ada akreditasi yang cocok dengan filter ini.</div>
+                                <div class="fs-7 text-muted">Coba reset filter, buat pengajuan baru, atau kembali ke dashboard untuk melihat prioritas global.</div>
+                                <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
                                     <a href="{{ route('superadmin.akreditasi.pengajuan') }}" class="btn btn-sm btn-primary">Buat Pengajuan</a>
                                     <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">Reset Filter</a>
+                                    <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light-info">Kembali ke Dashboard</a>
                                 </div>
                             </div>
                         </td>

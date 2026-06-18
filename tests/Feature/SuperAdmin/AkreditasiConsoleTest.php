@@ -59,7 +59,7 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('Pesantren Detail')
             ->assertSee('SK Management')
             ->assertSee(route('superadmin.sk.index'), false)
-            ->assertSee('Detail')
+            ->assertSee('Lihat Detail')
             ->assertSee('Review Awal');
     }
 
@@ -89,6 +89,7 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('Langkah berikutnya')
             ->assertSee('Review pengajuan awal')
             ->assertSee('Review Awal')
+            ->assertSee('Ringkasan tindakan saat ini')
             ->assertSee('Data Pesantren')
             ->assertSee('Audit Timeline')
             ->assertSee('Pesantren Detail');

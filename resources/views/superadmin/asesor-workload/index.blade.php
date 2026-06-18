@@ -161,14 +161,29 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <div class="d-flex flex-wrap justify-content-end gap-2">
-                                    <a href="{{ route('superadmin.asesor-workload.show', ['asesor' => $row['id'], 'period' => $period, 'load' => $load]) }}" class="btn btn-sm btn-light-primary">Lihat Workload</a>
+                                <x-superadmin.action-menu label="Buka aksi workload asesor {{ $row['name'] }}">
+                                    <div class="menu-item px-3">
+                                        <a href="{{ route('superadmin.asesor-workload.show', ['asesor' => $row['id'], 'period' => $period, 'load' => $load]) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                            <i class="ki-outline ki-chart-line fs-4"></i>
+                                            <span>Lihat Workload</span>
+                                        </a>
+                                    </div>
                                     @if($latestAkreditasi)
-                                        <a href="{{ route('superadmin.akreditasi.show', $latestAkreditasi) }}" class="btn btn-sm btn-light">Detail Akreditasi</a>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('superadmin.akreditasi.show', $latestAkreditasi) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                                <i class="ki-outline ki-document fs-4"></i>
+                                                <span>Detail Akreditasi</span>
+                                            </a>
+                                        </div>
                                     @else
-                                        <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="btn btn-sm btn-light">Buka Queue Assignment</a>
+                                        <div class="menu-item px-3">
+                                            <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="menu-link px-3 d-flex align-items-center gap-2">
+                                                <i class="ki-outline ki-user-tick fs-4"></i>
+                                                <span>Buka Queue Assignment</span>
+                                            </a>
+                                        </div>
                                     @endif
-                                </div>
+                                </x-superadmin.action-menu>
                             </td>
                         </tr>
                     @empty

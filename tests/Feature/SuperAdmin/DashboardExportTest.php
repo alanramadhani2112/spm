@@ -32,8 +32,8 @@ class DashboardExportTest extends TestCase
             ->assertSee('Dashboard Super Admin')
             ->assertSee('Ringkasan Nasional Akreditasi')
             ->assertSee('Apa yang perlu dipantau hari ini?')
-            ->assertSee('SK Management')
-            ->assertSee(route('superadmin.sk.index'), false)
+            ->assertSee('SK Siap Terbit')
+            ->assertSee(route('superadmin.sk.index', ['status' => 'ready']), false)
             ->assertSee('Prioritas', false);
 
         $this->actingAs($superAdmin)
@@ -100,7 +100,7 @@ class DashboardExportTest extends TestCase
             ->get(route('superadmin.dashboard', ['period' => 'all']))
             ->assertOk()
             ->assertSee('Operational Board')
-            ->assertSee('Antrian God Mode')
+            ->assertSee('Antrian Tindakan Cepat')
             ->assertSee('SLA Breach')
             ->assertSee('Antrian Paling Mendesak')
             ->assertSee('Workload Asesor')
