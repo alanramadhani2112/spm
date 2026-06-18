@@ -65,6 +65,12 @@ class AkreditasiController extends Controller
         $availableActionsById = $akreditasis
             ->mapWithKeys(fn (Akreditasi $akreditasi) => [$akreditasi->id => $this->availableActions($akreditasi)])
             ->all();
+        $primaryActionsById = collect($availableActionsById)
+            ->map(fn (array $actions) => $actions[0] ?? null)
+            ->all();
+        $secondaryActionsById = collect($availableActionsById)
+            ->map(fn (array $actions) => array_slice($actions, 1))
+            ->all();
 
         return view('superadmin.akreditasi.index', compact(
             'akreditasis',
@@ -77,6 +83,8 @@ class AkreditasiController extends Controller
             'search',
             'nextStepLabels',
             'availableActionsById',
+            'primaryActionsById',
+            'secondaryActionsById',
         ));
     }
 
@@ -268,6 +276,9 @@ class AkreditasiController extends Controller
             ->keyBy('id');
         $assignmentHistory = $this->assignmentHistory($akreditasi);
         $actions = $this->availableActions($akreditasi);
+        $primaryAction = $actions[0] ?? null;
+        $secondaryActions = array_slice($actions, 1);
+        $nextStepLabel = $this->nextStepLabels()[$akreditasi->status] ?? 'Tindak lanjuti pengajuan ini dari aksi utama yang tersedia.';
         $statusColors = $this->statusColors();
         $dataCompleteness = [
             'profil' => (bool) $pesantren,
@@ -301,6 +312,9 @@ class AkreditasiController extends Controller
             'actorUsers',
             'assignmentHistory',
             'actions',
+            'primaryAction',
+            'secondaryActions',
+            'nextStepLabel',
             'statusColors',
             'dataCompleteness',
             'documentFields',
@@ -824,22 +838,32 @@ class AkreditasiController extends Controller
         }
     }
 
+    public function formTerbitkanSK($akreditasiId)
+    {
+        $akreditasi = Akreditasi::with('user.pesantren')
+            ->where('status', Akreditasi::STATUS_FINAL_APPROVED)
+            ->findOrFail($akreditasiId);
+
+        return view('admin.akreditasi.terbitkan-sk', $this->superadminViewData(compact('akreditasi')));
+    }
+
     public function terbitkanSK(Request $request, $akreditasiId)
     {
         $validated = $request->validate([
             'nomor_sk' => 'required|string|max:100',
-            'masa_berlaku' => 'required|string',
+            'masa_berlaku' => 'required|date',
+            'sertifikat_file' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         try {
-            $this->workflowService->adminTerbitkanSK($akreditasiId, auth()->id(), $validated['nomor_sk'], $validated['masa_berlaku']);
+            $this->workflowService->adminTerbitkanSK($akreditasiId, auth()->id(), $validated['nomor_sk'], $validated['masa_berlaku'], $request->file('sertifikat_file'));
             session()->flash('success', 'SK berhasil diterbitkan.');
 
-            return redirect()->route('superadmin.akreditasi.index');
+            return redirect()->route('superadmin.akreditasi.show', $akreditasiId);
         } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
 
-            return redirect()->back();
+            return redirect()->back()->withInput();
         }
     }
 
@@ -1014,23 +1038,26 @@ class AkreditasiController extends Controller
             $actions[] = ['label' => 'Review Tahap 1', 'route' => route('superadmin.akreditasi.review-tahap1', $akreditasi), 'color' => 'warning'];
         }
         if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_ASSIGNMENT) {
-            $actions[] = ['label' => 'Assign Asesor', 'route' => route('superadmin.akreditasi.assign-asesor', $akreditasi), 'color' => 'info'];
+            $actions[] = ['label' => 'Tugaskan Asesor', 'route' => route('superadmin.akreditasi.assign-asesor', $akreditasi), 'color' => 'info'];
         }
         if (in_array($akreditasi->status, [Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW], true)) {
             $actions[] = ['label' => 'Review Tahap 2', 'route' => route('superadmin.akreditasi.review-tahap2', $akreditasi), 'color' => 'warning'];
             $actions[] = ['label' => 'Jadwalkan Visitasi', 'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi), 'color' => 'info'];
         }
         if ($akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED) {
-            $actions[] = ['label' => 'Jadwal Visitasi', 'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi), 'color' => 'info'];
+            $actions[] = ['label' => 'Jadwalkan Visitasi', 'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi), 'color' => 'info'];
         }
         if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
             $actions[] = ['label' => 'Input NA1', 'route' => route('superadmin.akreditasi.input-na1', $akreditasi), 'color' => 'danger'];
             $actions[] = ['label' => 'Input NA2', 'route' => route('superadmin.akreditasi.input-na2', $akreditasi), 'color' => 'danger'];
             $actions[] = ['label' => 'Input NK', 'route' => route('superadmin.akreditasi.input-nk', $akreditasi), 'color' => 'danger'];
-            $actions[] = ['label' => 'Upload Laporan', 'route' => route('superadmin.akreditasi.upload-laporan', $akreditasi), 'color' => 'primary'];
+            $actions[] = ['label' => 'Unggah Laporan', 'route' => route('superadmin.akreditasi.upload-laporan', $akreditasi), 'color' => 'primary'];
         }
         if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true)) {
             $actions[] = ['label' => 'Validasi Akhir', 'route' => route('superadmin.akreditasi.validasi-akhir', $akreditasi), 'color' => 'success'];
+        }
+        if ($akreditasi->status === Akreditasi::STATUS_FINAL_APPROVED) {
+            $actions[] = ['label' => 'Terbitkan SK', 'route' => route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi), 'color' => 'success'];
         }
         if ($akreditasi->status === Akreditasi::STATUS_APPEAL_SUBMITTED) {
             $pendingBanding = $akreditasi->bandings->firstWhere('status', 'pending');

@@ -197,8 +197,7 @@
             {{-- Sertifikat Download --}}
             @if($akreditasi->sertifikat_path)
                 <x-metronic.card title="Sertifikat">
-                    <a href="{{ asset('storage/' . $akreditasi->sertifikat_path) }}"
-                       target="_blank"
+                    <a href="{{ route('pesantren.akreditasi.sertifikat.download', $akreditasi) }}"
                        class="btn btn-success w-100 d-inline-flex align-items-center justify-content-center gap-2">
                         <i class="ki-outline ki-file-down fs-5"></i>
                         Unduh Sertifikat

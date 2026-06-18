@@ -153,34 +153,42 @@
                         </td>
                         <td><span class="text-muted fs-7">{{ $akreditasi->created_at->format('d M Y') }}</span></td>
                         <td class="text-end pe-4">
-                            <x-superadmin.action-menu label="Buka aksi akreditasi {{ $akreditasi->uuid }}">
-                                <div class="menu-item px-3">
-                                    <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="menu-link px-3 d-flex align-items-center gap-2">
-                                        <i class="ki-outline ki-eye fs-4"></i>
-                                        <span>Detail</span>
-                                    </a>
-                                </div>
-                                @forelse($actions as $action)
-                                    <div class="menu-item px-3">
-                                        <a href="{{ $action['route'] }}"
-                                           class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
-                                           data-swal-confirm="true"
-                                           data-swal-title="Buka aksi {{ $action['label'] }}?"
-                                           data-swal-text="Anda akan masuk ke halaman {{ $action['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
-                                           data-swal-icon="question"
-                                           data-swal-confirm-button="Ya, buka">
-                                            <i class="ki-outline ki-right-square fs-4"></i>
-                                            <span>{{ $action['label'] }}</span>
-                                        </a>
-                                    </div>
-                                @empty
-                                    <div class="menu-item px-3">
-                                        <span class="menu-link px-3 text-muted">
-                                            <i class="ki-outline ki-information-5 fs-4 me-2"></i>Tidak ada aksi
-                                        </span>
-                                    </div>
-                                @endforelse
-                            </x-superadmin.action-menu>
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+                                @php
+                                    $primaryAction = $primaryActionsById[$akreditasi->id] ?? null;
+                                    $secondaryActions = $secondaryActionsById[$akreditasi->id] ?? [];
+                                @endphp
+                                @if($primaryAction)
+                                    <a href="{{ $primaryAction['route'] }}"
+                                       class="btn btn-sm btn-{{ $primaryAction['color'] === 'warning' ? 'warning' : ($primaryAction['color'] === 'danger' ? 'danger' : ($primaryAction['color'] === 'success' ? 'success' : 'primary')) }}"
+                                       data-swal-confirm="true"
+                                       data-swal-title="Buka aksi {{ $primaryAction['label'] }}?"
+                                       data-swal-text="Anda akan masuk ke halaman {{ $primaryAction['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                                       data-swal-icon="question"
+                                       data-swal-confirm-button="Ya, buka">{{ $primaryAction['label'] }}</a>
+                                @else
+                                    <span class="badge badge-light-secondary">Tidak ada aksi</span>
+                                @endif
+                                <a href="{{ route('superadmin.akreditasi.show', $akreditasi->id) }}" class="btn btn-sm btn-light">Detail</a>
+                                @if(! empty($secondaryActions))
+                                    <x-superadmin.action-menu label="Buka aksi tambahan akreditasi {{ $akreditasi->uuid }}">
+                                        @foreach($secondaryActions as $action)
+                                            <div class="menu-item px-3">
+                                                <a href="{{ $action['route'] }}"
+                                                   class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
+                                                   data-swal-confirm="true"
+                                                   data-swal-title="Buka aksi {{ $action['label'] }}?"
+                                                   data-swal-text="Anda akan masuk ke halaman {{ $action['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                                                   data-swal-icon="question"
+                                                   data-swal-confirm-button="Ya, buka">
+                                                    <i class="ki-outline ki-right-square fs-4"></i>
+                                                    <span>{{ $action['label'] }}</span>
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </x-superadmin.action-menu>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty

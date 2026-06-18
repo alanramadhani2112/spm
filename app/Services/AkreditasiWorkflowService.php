@@ -13,6 +13,8 @@ use App\Models\Pesantren;
 use App\Models\SdmPesantren;
 use App\Models\User;
 use App\Support\SuperAdminSettings;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -1333,7 +1335,7 @@ class AkreditasiWorkflowService
         return $akreditasi;
     }
 
-    public function adminTerbitkanSK(int $akreditasiId, int $adminUserId, string $nomorSk, string $masaBerlaku): Akreditasi
+    public function adminTerbitkanSK(int $akreditasiId, int $adminUserId, string $nomorSk, string $masaBerlaku, ?UploadedFile $sertifikatFile = null): Akreditasi
     {
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
         $admin = User::findOrFail($adminUserId);
@@ -1344,10 +1346,20 @@ class AkreditasiWorkflowService
             );
         }
 
-        DB::transaction(function () use ($akreditasi, $admin, $nomorSk, $masaBerlaku) {
+        $masaBerlakuDate = Carbon::parse($masaBerlaku)->startOfDay();
+        $masaBerlakuAkhir = $masaBerlakuDate->copy()->addYears(5)->subDay();
+        $certificateDocument = null;
+
+        DB::transaction(function () use ($akreditasi, $admin, $nomorSk, $masaBerlakuDate, $masaBerlakuAkhir, $sertifikatFile, &$certificateDocument) {
+            if ($sertifikatFile) {
+                $certificateDocument = app(DocumentService::class)->storeCertificate($akreditasi->id, $admin->id, $sertifikatFile);
+            }
+
             $akreditasi->forceFill([
                 'nomor_sk' => $nomorSk,
-                'masa_berlaku' => $masaBerlaku,
+                'masa_berlaku' => $masaBerlakuDate,
+                'masa_berlaku_akhir' => $masaBerlakuAkhir,
+                'sertifikat_path' => $certificateDocument?->file_path ?? $akreditasi->sertifikat_path,
             ])->save();
 
             $this->stateMachine->transition(

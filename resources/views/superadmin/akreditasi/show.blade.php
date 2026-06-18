@@ -114,9 +114,9 @@
     <div class="col-xl-4">
         <x-metronic.card title="Action Center">
             <x-slot:header>
-                @if(! empty($actions))
-                    <x-superadmin.action-menu label="Buka aksi workflow akreditasi {{ $akreditasi->uuid }}">
-                        @foreach($actions as $action)
+                @if(count($secondaryActions) > 0)
+                    <x-superadmin.action-menu label="Buka aksi tambahan untuk {{ $akreditasi->uuid }}">
+                        @foreach($secondaryActions as $action)
                             <div class="menu-item px-3">
                                 <a href="{{ $action['route'] }}"
                                    class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
@@ -134,12 +134,28 @@
                 @endif
             </x-slot:header>
 
-            @if(empty($actions))
-                <x-metronic.alert type="info" message="Tidak ada aksi workflow aktif untuk status ini." />
-            @else
-                <div class="rounded bg-light-primary p-4 fs-7 text-gray-700">
-                    Gunakan icon aksi di kanan atas kartu ini untuk membuka opsi workflow yang tersedia.
+            @if(! $primaryAction)
+                <x-metronic.alert type="info" message="Tidak ada aksi Super Admin untuk status ini." />
+                <div class="rounded bg-light p-4 fs-7 text-gray-700 mt-4">
+                    Status ini tidak membutuhkan tindak lanjut langsung dari Super Admin. Gunakan tab detail untuk meninjau histori, data, atau hasil akhir pengajuan.
                 </div>
+            @else
+                <div class="rounded bg-light-primary p-4 mb-4">
+                    <div class="fw-bold text-gray-900 mb-1">Langkah berikutnya</div>
+                    <div class="fs-7 text-gray-700">{{ $nextStepLabel }}</div>
+                </div>
+                <a href="{{ $primaryAction['route'] }}"
+                   class="btn btn-{{ $primaryAction['color'] === 'warning' ? 'warning' : ($primaryAction['color'] === 'danger' ? 'danger' : ($primaryAction['color'] === 'success' ? 'success' : 'primary')) }} w-100"
+                   data-swal-confirm="true"
+                   data-swal-title="Buka aksi {{ $primaryAction['label'] }}?"
+                   data-swal-text="Anda akan masuk ke halaman {{ $primaryAction['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                   data-swal-icon="question"
+                   data-swal-confirm-button="Ya, buka">
+                    <i class="ki-outline ki-right-square fs-3"></i>{{ $primaryAction['label'] }}
+                </a>
+                @if(count($secondaryActions) > 0)
+                    <div class="fs-8 text-muted mt-3">Aksi tambahan tersedia di menu kanan atas kartu ini.</div>
+                @endif
             @endif
         </x-metronic.card>
 
@@ -155,6 +171,38 @@
                     </div>
                 @endforeach
             </div>
+        </x-metronic.card>
+
+        <x-metronic.card title="Status SK" class="mt-6">
+            <div class="d-grid gap-3 fs-7">
+                <div class="d-flex justify-content-between gap-4">
+                    <span class="text-muted">Nomor SK</span>
+                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->nomor_sk ?: 'Belum diterbitkan' }}</span>
+                </div>
+                <div class="d-flex justify-content-between gap-4">
+                    <span class="text-muted">Mulai Berlaku</span>
+                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->masa_berlaku?->format('d M Y') ?? '—' }}</span>
+                </div>
+                <div class="d-flex justify-content-between gap-4">
+                    <span class="text-muted">Akhir Berlaku</span>
+                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->masa_berlaku_akhir?->format('d M Y') ?? '—' }}</span>
+                </div>
+                <div class="d-flex justify-content-between gap-4">
+                    <span class="text-muted">Sertifikat Digital</span>
+                    @if($akreditasi->sertifikat_path)
+                        <a href="{{ route('superadmin.akreditasi.sertifikat.download', $akreditasi) }}" class="fw-semibold text-primary text-end">Unduh Sertifikat</a>
+                    @else
+                        <span class="fw-semibold text-gray-900 text-end">Belum tersedia</span>
+                    @endif
+                </div>
+            </div>
+
+            @if($akreditasi->status === \App\Models\Akreditasi::STATUS_FINAL_APPROVED)
+                <div class="separator separator-dashed my-5"></div>
+                <a href="{{ route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi) }}" class="btn btn-success w-100">
+                    <i class="ki-outline ki-medal-star fs-3"></i>Terbitkan SK Sekarang
+                </a>
+            @endif
         </x-metronic.card>
 
         <x-metronic.card title="Asesor" class="mt-6">

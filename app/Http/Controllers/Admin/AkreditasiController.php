@@ -390,7 +390,8 @@ class AkreditasiController extends Controller
     {
         $validated = $request->validate([
             'nomor_sk' => 'required|string|max:100',
-            'masa_berlaku' => 'required|string',
+            'masa_berlaku' => 'required|date',
+            'sertifikat_file' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
         try {
@@ -398,7 +399,8 @@ class AkreditasiController extends Controller
                 $akreditasiId,
                 auth()->id(),
                 $validated['nomor_sk'],
-                $validated['masa_berlaku']
+                $validated['masa_berlaku'],
+                $request->file('sertifikat_file')
             );
 
             session()->flash('success', 'SK berhasil diterbitkan.');

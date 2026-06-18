@@ -64,4 +64,36 @@ class DocumentServiceVisibilityTest extends TestCase
             $service->getVisibleDocuments($akreditasi->id, DocumentService::ROLE_ASESOR, null, 'anggota')->pluck('id')->all()
         );
     }
+
+    public function test_certificate_visibility_only_allows_owner_pesantren_and_admin_roles(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3]);
+        $otherPesantren = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantren->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+        ]);
+        $certificate = Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+            'file_path' => 'documents/sertifikat/test.pdf',
+            'uploaded_by_user_id' => $pesantren->id,
+        ]);
+
+        $service = new DocumentService;
+
+        $this->assertSame(
+            [$certificate->id],
+            $service->getVisibleDocuments($akreditasi->id, DocumentService::ROLE_PESANTREN, $pesantren->id)->pluck('id')->all()
+        );
+        $this->assertSame(
+            [],
+            $service->getVisibleDocuments($akreditasi->id, DocumentService::ROLE_PESANTREN, $otherPesantren->id)->pluck('id')->all()
+        );
+        $this->assertSame(
+            [$certificate->id],
+            $service->getVisibleDocuments($akreditasi->id, DocumentService::ROLE_SUPER_ADMIN)->pluck('id')->all()
+        );
+    }
 }

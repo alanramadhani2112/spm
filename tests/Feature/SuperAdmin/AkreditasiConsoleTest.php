@@ -14,7 +14,10 @@ use App\Models\PesantrenUnit;
 use App\Models\Role;
 use App\Models\SdmPesantren;
 use App\Models\User;
+use App\Services\DocumentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -28,6 +31,7 @@ class AkreditasiConsoleTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('local');
         $this->superAdmin = User::factory()->create(['role_id' => 4]);
     }
 
@@ -48,7 +52,8 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('Gunakan status sebagai petunjuk aksi berikutnya')
             ->assertSee('Status dan Langkah Berikutnya')
             ->assertSee('Pesantren Detail')
-            ->assertSee('Detail');
+            ->assertSee('Detail')
+            ->assertSee('Review Awal');
     }
 
     public function test_super_admin_can_view_akreditasi_detail_console(): void
@@ -74,9 +79,11 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.show', $akreditasi->id))
             ->assertOk()
             ->assertSee('Action Center')
+            ->assertSee('Langkah berikutnya')
+            ->assertSee('Review pengajuan awal')
+            ->assertSee('Review Awal')
             ->assertSee('Data Pesantren')
             ->assertSee('Audit Timeline')
-            ->assertSee('Review Awal')
             ->assertSee('Pesantren Detail');
     }
 
@@ -580,6 +587,124 @@ class AkreditasiConsoleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_can_view_visitasi_overview(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Visitasi']);
+        $this->createCompletePesantrenData($pesantrenUser);
+        $ketua = User::factory()->create(['role_id' => 2, 'name' => 'Ketua Visitasi']);
+        $anggota = User::factory()->create(['role_id' => 2, 'name' => 'Anggota Visitasi']);
+
+        $scheduled = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+            'tgl_visitasi' => now()->addDay(),
+            'tgl_visitasi_akhir' => now()->addDays(2),
+            'catatan_visitasi' => 'Visitasi tahap pertama.',
+        ]);
+        $scoring = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_POST_VISITASI_SCORING,
+            'na1' => 85,
+            'laporan_visitasi_asesor1' => 'laporan/a1.pdf',
+        ]);
+        $validation = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+        ]);
+
+        foreach ([$scheduled, $scoring, $validation] as $akreditasi) {
+            Assessment::create([
+                'akreditasi_id' => $akreditasi->id,
+                'asesor_id' => $ketua->id,
+                'tipe' => 'ketua',
+            ]);
+            Assessment::create([
+                'akreditasi_id' => $akreditasi->id,
+                'asesor_id' => $anggota->id,
+                'tipe' => 'anggota',
+            ]);
+        }
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.visitasi.index'))
+            ->assertOk()
+            ->assertSee('Operational Board Visitasi')
+            ->assertSee('Siap Dijadwalkan')
+            ->assertSee('Terjadwal')
+            ->assertSee('Menunggu Scoring')
+            ->assertSee('Siap Validasi')
+            ->assertSee('Pesantren Detail')
+            ->assertSee('Ketua Visitasi')
+            ->assertSee('Anggota Visitasi')
+            ->assertSee('Visitasi tahap pertama.')
+            ->assertSee('Perbarui Jadwal')
+            ->assertSee(route('superadmin.akreditasi.jadwalkan-visitasi', $scheduled), false)
+            ->assertSee(route('superadmin.akreditasi.input-na1', $scoring), false)
+            ->assertSee(route('superadmin.akreditasi.validasi-akhir', $validation), false);
+    }
+
+    public function test_visitasi_overview_filters_by_status_and_schedule(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Filter Visitasi']);
+        $scheduled = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'VIS-SCHEDULED',
+            'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+            'tgl_visitasi' => now()->subDays(3),
+            'tgl_visitasi_akhir' => now()->subDay(),
+        ]);
+        $scoring = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'VIS-SCORING',
+            'status' => Akreditasi::STATUS_POST_VISITASI_SCORING,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.visitasi.index', ['status' => Akreditasi::STATUS_POST_VISITASI_SCORING]))
+            ->assertOk()
+            ->assertSee('VIS-SCORING')
+            ->assertDontSee('VIS-SCHEDULED');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.visitasi.index', ['schedule' => 'past_due']))
+            ->assertOk()
+            ->assertSee('VIS-SCHEDULED')
+            ->assertDontSee('VIS-SCORING');
+    }
+
+    public function test_visitasi_overview_searches_by_uuid_and_respects_permission(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Search Visitasi']);
+        Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'VIS-SEARCH-001',
+            'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+            'tgl_visitasi' => now()->addDays(5),
+            'tgl_visitasi_akhir' => now()->addDays(6),
+        ]);
+        Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'VIS-HIDDEN-002',
+            'status' => Akreditasi::STATUS_POST_VISITASI_SCORING,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.visitasi.index', ['q' => 'SEARCH-001']))
+            ->assertOk()
+            ->assertSee('VIS-SEARCH-001')
+            ->assertDontSee('VIS-HIDDEN-002');
+
+        $restricted = User::factory()->create(['role_id' => 4]);
+        $this->revokeSuperAdminPermission('akreditasi.visitasi.manage');
+
+        $this->actingAs($restricted)
+            ->get(route('superadmin.visitasi.index'))
+            ->assertForbidden();
+    }
+
     public function test_super_admin_without_visitasi_permission_cannot_schedule_visitasi(): void
     {
         $this->revokeSuperAdminPermission('akreditasi.visitasi.manage');
@@ -686,6 +811,91 @@ class AkreditasiConsoleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_can_open_and_submit_sk_publish_flow(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_FINAL_APPROVED,
+            'nilai' => 91.25,
+            'peringkat' => 'A',
+            'nv' => 3.65,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi->id))
+            ->assertOk()
+            ->assertSee('Terbitkan SK Akreditasi')
+            ->assertSee(route('superadmin.akreditasi.terbitkan-sk', $akreditasi->id), false);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.terbitkan-sk', $akreditasi->id), [
+                'nomor_sk' => 'SK-TEST-001',
+                'masa_berlaku' => '2026-07-01',
+                'sertifikat_file' => UploadedFile::fake()->create('sertifikat.pdf', 120, 'application/pdf'),
+            ])
+            ->assertRedirect(route('superadmin.akreditasi.show', $akreditasi->id));
+
+        $this->assertDatabaseHas('akreditasis', [
+            'id' => $akreditasi->id,
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'nomor_sk' => 'SK-TEST-001',
+            'masa_berlaku' => '2026-07-01 00:00:00',
+            'masa_berlaku_akhir' => '2031-06-30 00:00:00',
+        ]);
+        $this->assertDatabaseHas('documents', [
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+        ]);
+        $akreditasi->refresh();
+        $this->assertNotNull($akreditasi->sertifikat_path);
+        Storage::disk('local')->assertExists($akreditasi->sertifikat_path);
+    }
+
+    public function test_super_admin_console_and_detail_show_sk_action_and_metadata(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'SK-MANAGEMENT-001',
+            'status' => Akreditasi::STATUS_FINAL_APPROVED,
+        ]);
+        $completed = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'SK-MANAGEMENT-002',
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'nomor_sk' => 'SK/2026/002',
+            'masa_berlaku' => '2026-07-01',
+            'masa_berlaku_akhir' => '2031-06-30',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.index', ['status' => Akreditasi::STATUS_FINAL_APPROVED, 'q' => 'SK-MANAGEMENT-001']))
+            ->assertOk()
+            ->assertSee(route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi->id), false)
+            ->assertSee('Terbitkan SK');
+
+        $completed->forceFill([
+            'sertifikat_path' => 'documents/sertifikat/demo.pdf',
+        ])->save();
+        \App\Models\Document::create([
+            'akreditasi_id' => $completed->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+            'file_path' => 'documents/sertifikat/demo.pdf',
+            'uploaded_by_user_id' => $this->superAdmin->id,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.show', $completed->id))
+            ->assertOk()
+            ->assertSee('Status SK')
+            ->assertSee('SK/2026/002')
+            ->assertSee('01 Jul 2026')
+            ->assertSee('30 Jun 2031')
+            ->assertSee(route('superadmin.akreditasi.sertifikat.download', $completed), false);
+    }
+
     public function test_super_admin_without_sk_publish_permission_cannot_publish_sk(): void
     {
         $this->revokeSuperAdminPermission('sk.publish');
@@ -698,11 +908,46 @@ class AkreditasiConsoleTest extends TestCase
         ]);
 
         $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi->id))
+            ->assertForbidden();
+
+        $this->actingAs($this->superAdmin)
             ->post(route('superadmin.akreditasi.terbitkan-sk', $akreditasi->id), [
                 'nomor_sk' => 'SK-TEST-001',
-                'masa_berlaku' => '2026-2030',
+                'masa_berlaku' => '2026-07-01',
             ])
             ->assertForbidden();
+    }
+
+    public function test_super_admin_cannot_open_sk_form_for_wrong_status(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi->id))
+            ->assertNotFound();
+    }
+
+    public function test_completed_akreditasi_shows_no_action_state_in_action_center(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $this->createCompletePesantrenData($pesantrenUser);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.show', $akreditasi->id))
+            ->assertOk()
+            ->assertSee('Action Center')
+            ->assertSee('Tidak ada aksi Super Admin untuk status ini.');
     }
 
     private function createAkreditasi(User $user, string $status): Akreditasi

@@ -122,11 +122,19 @@ class EndToEndWorkflowTest extends TestCase
             $akreditasi->id,
             $admin->id,
             'SK-001/SPM/2026',
-            '2031-07-01'
+            '2031-07-01',
+            UploadedFile::fake()->create('sertifikat.pdf', 120, 'application/pdf')
         );
 
         $this->assertSame(Akreditasi::STATUS_COMPLETED, $akreditasi->status);
         $this->assertSame('SK-001/SPM/2026', $akreditasi->nomor_sk);
+        $this->assertNotNull($akreditasi->sertifikat_path);
+        Storage::disk('local')->assertExists($akreditasi->sertifikat_path);
+        $this->assertDatabaseHas('documents', [
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+            'file_path' => $akreditasi->sertifikat_path,
+        ]);
         $this->assertDatabaseCount('assessments', 2);
         $this->assertSame(3, AkreditasiEdpm::where('akreditasi_id', $akreditasi->id)->where('type', 'nv')->count());
     }

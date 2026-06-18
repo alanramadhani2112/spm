@@ -79,6 +79,15 @@ class DashboardExportTest extends TestCase
             'status_changed_at' => now()->subDays(2),
         ]);
 
+        $visitasi = Akreditasi::create([
+            'user_id' => $pesantren->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+            'tgl_visitasi' => now()->addDay(),
+            'tgl_visitasi_akhir' => now()->addDays(2),
+            'status_changed_at' => now()->subDay(),
+        ]);
+
         Assessment::create([
             'akreditasi_id' => $assignment->id,
             'asesor_id' => $asesor->id,
@@ -95,7 +104,9 @@ class DashboardExportTest extends TestCase
             ->assertSee('Workload Asesor')
             ->assertSee('Review Awal')
             ->assertSee('Asesor Workload')
-            ->assertSee($reviewAwal->uuid);
+            ->assertSee($reviewAwal->uuid)
+            ->assertSee('/superadmin/visitasi?period=all&amp;status='.Akreditasi::STATUS_VISITASI_SCHEDULED, false)
+            ->assertSee('Jadwal visitasi yang perlu dipantau.');
     }
 
     private function revokeSuperAdminPermission(string $key): void

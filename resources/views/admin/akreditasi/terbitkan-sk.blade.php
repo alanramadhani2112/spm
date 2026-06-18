@@ -65,7 +65,7 @@
         </div>
 
         <div class="px-6 py-6">
-            <form method="POST" action="{{ route($akreditasiRoutePrefix.'.terbitkan-sk', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Terbitkan SK akreditasi?" data-swal-text="SK untuk pengajuan {{ $akreditasi->uuid }} akan diterbitkan dan status menjadi selesai." data-swal-icon="warning" data-swal-confirm-button="Ya, terbitkan" data-swal-confirm-class="btn btn-success">
+            <form method="POST" enctype="multipart/form-data" action="{{ route($akreditasiRoutePrefix.'.terbitkan-sk', $akreditasi->id) }}" data-swal-confirm="true" data-swal-title="Terbitkan SK akreditasi?" data-swal-text="SK untuk pengajuan {{ $akreditasi->uuid }} akan diterbitkan dan status menjadi selesai." data-swal-icon="warning" data-swal-confirm-button="Ya, terbitkan" data-swal-confirm-class="btn btn-success">
                 @csrf
 
                 <div class="space-y-5">
@@ -90,7 +90,16 @@
                                value="{{ old('masa_berlaku') }}"
                                required
                                class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900 focus:border-green-500 focus:" />
-                        <p class="mt-1 fs-8 text-gray-500">Tanggal mulai berlakunya SK akreditasi.</p>
+                        <p class="mt-1 fs-8 text-gray-500">Tanggal mulai berlakunya SK akreditasi. Sistem akan menghitung akhir masa berlaku berdasarkan periode akreditasi aktif.</p>
+                    </div>
+
+                    <div>
+                        <label for="sertifikat_file" class="block fs-7 fw-medium text-gray-700">
+                            Sertifikat Digital (Opsional)
+                        </label>
+                        <input type="file" id="sertifikat_file" name="sertifikat_file" accept="application/pdf"
+                               class="mt-1 block w-100 rounded border border-gray-200 bg-light px-3 py-2 fs-7 text-gray-900" />
+                        <p class="mt-1 fs-8 text-gray-500">Unggah file PDF sertifikat jika sudah tersedia saat SK diterbitkan.</p>
                     </div>
 
                     <div class="rounded border border-blue-100 bg-light-primary p-4">
@@ -100,8 +109,8 @@
                                 <p class="fw-medium">Setelah SK diterbitkan:</p>
                                 <ul class="mt-1 list-disc list-inside text-primary space-y-0.5">
                                     <li>Akreditasi akan berstatus Selesai (Completed)</li>
-                                    <li>Sertifikat SK akan digenerate secara otomatis</li>
-                                    <li>Pesantren akan dapat mengunduh sertifikat</li>
+                                    <li>Nomor SK, tanggal mulai berlaku, dan akhir masa berlaku akan tersimpan</li>
+                                    <li>Jika PDF sertifikat diunggah, sistem akan menautkannya untuk unduh aman melalui aplikasi</li>
                                 </ul>
                             </div>
                         </div>

@@ -6,6 +6,7 @@ use App\Exceptions\WorkflowException;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Support\SuperAdminSettings;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 
 class DocumentService
@@ -43,6 +44,25 @@ class DocumentService
         }
 
         return Document::create($data);
+    }
+
+    public function storeCertificate(int $akreditasiId, int $uploadedByUserId, UploadedFile $file): Document
+    {
+        return $this->upload([
+            'akreditasi_id' => $akreditasiId,
+            'type' => self::TYPE_SERTIFIKAT,
+            'uploaded_by_user_id' => $uploadedByUserId,
+            'file' => $file,
+        ]);
+    }
+
+    public function latestCertificate(int $akreditasiId): ?Document
+    {
+        return Document::query()
+            ->where('akreditasi_id', $akreditasiId)
+            ->where('type', self::TYPE_SERTIFIKAT)
+            ->latest('id')
+            ->first();
     }
 
     /**

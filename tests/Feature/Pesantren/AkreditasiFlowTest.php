@@ -3,8 +3,11 @@
 namespace Tests\Feature\Pesantren;
 
 use App\Models\Akreditasi;
+use App\Models\Document;
 use App\Models\User;
+use App\Services\DocumentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -17,6 +20,7 @@ class AkreditasiFlowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake('local');
         $this->pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Test']);
     }
 
@@ -67,6 +71,49 @@ class AkreditasiFlowTest extends TestCase
         $this->actingAs($this->pesantrenUser)
             ->get(route('pesantren.akreditasi.hasil', ['id' => $akreditasi->id]))
             ->assertStatus(200);
+    }
+
+    public function test_pesantren_owner_can_download_own_certificate(): void
+    {
+        $akreditasi = Akreditasi::create([
+            'user_id' => $this->pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'sertifikat_path' => 'documents/sertifikat/owner.pdf',
+        ]);
+        Storage::disk('local')->put('documents/sertifikat/owner.pdf', 'certificate-pdf');
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+            'file_path' => 'documents/sertifikat/owner.pdf',
+            'uploaded_by_user_id' => $this->pesantrenUser->id,
+        ]);
+
+        $this->actingAs($this->pesantrenUser)
+            ->get(route('pesantren.akreditasi.sertifikat.download', $akreditasi))
+            ->assertOk();
+    }
+
+    public function test_pesantren_cannot_download_other_users_certificate(): void
+    {
+        $otherUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $otherUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'sertifikat_path' => 'documents/sertifikat/other.pdf',
+        ]);
+        Storage::disk('local')->put('documents/sertifikat/other.pdf', 'certificate-pdf');
+        Document::create([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => DocumentService::TYPE_SERTIFIKAT,
+            'file_path' => 'documents/sertifikat/other.pdf',
+            'uploaded_by_user_id' => $otherUser->id,
+        ]);
+
+        $this->actingAs($this->pesantrenUser)
+            ->get(route('pesantren.akreditasi.sertifikat.download', $akreditasi))
+            ->assertForbidden();
     }
 
     public function test_cannot_view_hasil_for_other_user_akreditasi(): void

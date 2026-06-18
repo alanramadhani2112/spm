@@ -161,11 +161,14 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                @if($latestAkreditasi)
-                                    <a href="{{ route('superadmin.akreditasi.show', $latestAkreditasi) }}" class="btn btn-sm btn-light-primary">Detail</a>
-                                @else
-                                    <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="btn btn-sm btn-light">Queue</a>
-                                @endif
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <a href="{{ route('superadmin.asesor-workload.show', ['asesor' => $row['id'], 'period' => $period, 'load' => $load]) }}" class="btn btn-sm btn-light-primary">Lihat Workload</a>
+                                    @if($latestAkreditasi)
+                                        <a href="{{ route('superadmin.akreditasi.show', $latestAkreditasi) }}" class="btn btn-sm btn-light">Detail Akreditasi</a>
+                                    @else
+                                        <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="btn btn-sm btn-light">Buka Queue Assignment</a>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

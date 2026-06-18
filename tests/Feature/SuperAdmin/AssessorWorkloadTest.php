@@ -45,7 +45,9 @@ class AssessorWorkloadTest extends TestCase
             ->assertSee('Anggota 4')
             ->assertSee('Asesor Siap')
             ->assertSee('Aktif 1')
-            ->assertSee('Assignment Aktif');
+            ->assertSee('Assignment Aktif')
+            ->assertSee('Lihat Workload')
+            ->assertSee('/superadmin/asesor-workload/'.$busyAssessor->id, false);
     }
 
     public function test_assessor_workload_excludes_terminal_assignments(): void
@@ -119,6 +121,148 @@ class AssessorWorkloadTest extends TestCase
         $this->assertSame(1, $auditLog->metadata['rows_exported']);
     }
 
+    public function test_super_admin_can_view_assessor_workload_detail_page(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Detil']);
+        $assessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Detail', 'email' => 'detail@test.com']);
+        $firstAkreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW);
+        $secondAkreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_POST_VISITASI_SCORING, ['assessment_deadline' => now()->subDay()]);
+
+        Assessment::create([
+            'akreditasi_id' => $firstAkreditasi->id,
+            'asesor_id' => $assessor->id,
+            'tipe' => 'ketua',
+        ]);
+        Assessment::create([
+            'akreditasi_id' => $secondAkreditasi->id,
+            'asesor_id' => $assessor->id,
+            'tipe' => 'anggota',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.show', ['asesor' => $assessor->id, 'period' => 'all']))
+            ->assertOk()
+            ->assertSee('Detail Workload Asesor')
+            ->assertSee('Asesor Detail')
+            ->assertSee('detail@test.com')
+            ->assertSee('Assignment Aktif')
+            ->assertSee('Ketua')
+            ->assertSee('Anggota')
+            ->assertSee('Overdue')
+            ->assertSee('Pesantren Detil')
+            ->assertSee('Belum ada riwayat assignment yang relevan untuk asesor ini.');
+    }
+
+    public function test_assessor_workload_detail_page_shows_assignment_history_for_selected_assessor_only(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Histori']);
+        $selectedAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Histori']);
+        $otherAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Lain']);
+        $previousAssessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Lama']);
+        $akreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW);
+        $anotherAkreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW);
+
+        Assessment::create([
+            'akreditasi_id' => $akreditasi->id,
+            'asesor_id' => $selectedAssessor->id,
+            'tipe' => 'ketua',
+        ]);
+
+        AkreditasiAuditLog::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $this->superAdmin->id,
+            'actor_user_id' => $this->superAdmin->id,
+            'action_type' => 'asesor_assigned',
+            'reason' => 'Redistribusi beban kerja asesor.',
+            'metadata' => [
+                'assignment_context' => 'superadmin_reassign',
+                'ketua_id' => $selectedAssessor->id,
+                'anggota_ids' => [$otherAssessor->id],
+                'previous_assignments' => [
+                    [
+                        'asesor_id' => $previousAssessor->id,
+                        'name' => $previousAssessor->name,
+                        'email' => $previousAssessor->email,
+                        'tipe' => 'ketua',
+                    ],
+                ],
+                'overload_warnings' => [
+                    ['id' => $selectedAssessor->id, 'name' => $selectedAssessor->name],
+                ],
+            ],
+            'created_at' => now(),
+        ]);
+
+        AkreditasiAuditLog::create([
+            'akreditasi_id' => $anotherAkreditasi->id,
+            'user_id' => $this->superAdmin->id,
+            'actor_user_id' => $this->superAdmin->id,
+            'action_type' => 'asesor_assigned',
+            'reason' => 'Log untuk asesor lain.',
+            'metadata' => [
+                'assignment_context' => 'superadmin_assign',
+                'ketua_id' => $otherAssessor->id,
+                'anggota_ids' => [],
+            ],
+            'created_at' => now()->subMinute(),
+        ]);
+
+        AkreditasiAuditLog::create([
+            'akreditasi_id' => $akreditasi->id,
+            'user_id' => $this->superAdmin->id,
+            'actor_user_id' => $this->superAdmin->id,
+            'action_type' => 'asesor_assigned',
+            'reason' => 'Log admin legacy tidak boleh muncul di histori super admin.',
+            'metadata' => [
+                'ketua_id' => $selectedAssessor->id,
+                'anggota_ids' => [],
+            ],
+            'created_at' => now()->subSeconds(30),
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.show', ['asesor' => $selectedAssessor->id]))
+            ->assertOk()
+            ->assertSee('Riwayat Assignment &amp; Reassignment', false)
+            ->assertSee('Reassignment')
+            ->assertSee('Pesantren Histori')
+            ->assertSee('Redistribusi beban kerja asesor.')
+            ->assertSee('Asesor Lain')
+            ->assertSee('Asesor Lama')
+            ->assertSee('Overload dikonfirmasi untuk Asesor Histori.')
+            ->assertDontSee('Log untuk asesor lain.')
+            ->assertDontSee('Log admin legacy tidak boleh muncul di histori super admin.');
+    }
+
+    public function test_assessor_workload_detail_page_respects_period_filter_for_active_assignments(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Periode']);
+        $assessor = User::factory()->create(['role_id' => 2, 'name' => 'Asesor Periode']);
+        $currentAkreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, ['created_at' => '2026-02-01 09:00:00']);
+        $oldAkreditasi = $this->createAkreditasi($pesantren, Akreditasi::STATUS_POST_VISITASI_SCORING, ['created_at' => '2025-02-01 09:00:00']);
+
+        Assessment::create([
+            'akreditasi_id' => $currentAkreditasi->id,
+            'asesor_id' => $assessor->id,
+            'tipe' => 'ketua',
+        ]);
+        Assessment::create([
+            'akreditasi_id' => $oldAkreditasi->id,
+            'asesor_id' => $assessor->id,
+            'tipe' => 'anggota',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.show', ['asesor' => $assessor->id, 'period' => '2026']))
+            ->assertOk()
+            ->assertSee('Periode 2026')
+            ->assertSee('Assignment aktif 1')
+            ->assertSee('Asesor ketua')
+            ->assertSee('Asesor anggota')
+            ->assertSee('>1<', false)
+            ->assertSee('>0<', false);
+    }
+
     public function test_super_admin_without_export_permission_cannot_export_assessor_workload(): void
     {
         $this->revokeSuperAdminPermission('superadmin.export');
@@ -135,6 +279,25 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($admin)
             ->get(route('superadmin.asesor-workload.index'))
             ->assertForbidden();
+    }
+
+    public function test_non_super_admin_cannot_view_assessor_workload_detail_page(): void
+    {
+        $admin = User::factory()->create(['role_id' => 1]);
+        $assessor = User::factory()->create(['role_id' => 2]);
+
+        $this->actingAs($admin)
+            ->get(route('superadmin.asesor-workload.show', $assessor))
+            ->assertForbidden();
+    }
+
+    public function test_workload_detail_returns_404_for_non_assessor_user(): void
+    {
+        $pesantren = User::factory()->create(['role_id' => 3]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.asesor-workload.show', $pesantren))
+            ->assertNotFound();
     }
 
     private function createAssignments(User $assessor, User $pesantren, int $ketuaCount, int $anggotaCount): void
@@ -156,14 +319,21 @@ class AssessorWorkloadTest extends TestCase
         }
     }
 
-    private function createAkreditasi(User $pesantren, string $status): Akreditasi
+    private function createAkreditasi(User $pesantren, string $status, array $overrides = []): Akreditasi
     {
-        return Akreditasi::create([
+        $akreditasi = Akreditasi::create([
             'user_id' => $pesantren->id,
             'uuid' => (string) Str::uuid(),
             'status' => $status,
             'status_changed_at' => now()->subDay(),
+            'assessment_deadline' => now()->addWeek(),
         ]);
+
+        if ($overrides !== []) {
+            $akreditasi->forceFill($overrides)->save();
+        }
+
+        return $akreditasi;
     }
 
     private function revokeSuperAdminPermission(string $key): void

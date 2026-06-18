@@ -9,7 +9,9 @@ use App\Services\AuditTrailService;
 use App\Support\SuperAdminSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -71,6 +73,53 @@ class DashboardController extends Controller
         ));
     }
 
+    public function visitasiOverview(Request $request)
+    {
+        $period = (string) $request->query('period', 'all');
+        $status = $this->normalizeVisitasiStatus((string) $request->query('status', 'all'));
+        $schedule = $this->normalizeVisitasiSchedule((string) $request->query('schedule', 'all'));
+        $search = trim((string) $request->query('q', ''));
+        $periodOptions = $this->periodOptions();
+        $statusColors = $this->statusColors();
+        $statusOptions = $this->visitasiStatusOptions();
+        $scheduleOptions = $this->visitasiScheduleOptions();
+        $baseQuery = $this->visitasiOverviewBaseQuery($period, $search);
+        $summary = $this->visitasiSummary(clone $baseQuery);
+        $nextStepLabels = $this->visitasiNextStepLabels();
+        $akreditasis = $this->applyVisitasiOverviewFilters(clone $baseQuery, $status, $schedule)
+            ->with(['user.pesantren', 'assessments.asesor'])
+            ->orderByRaw("CASE status
+                WHEN 'assessor_stage_2_review' THEN 1
+                WHEN 'visitasi_scheduled' THEN 2
+                WHEN 'post_visitasi_scoring' THEN 3
+                WHEN 'visitasi_result_submitted' THEN 4
+                WHEN 'admin_final_validation' THEN 5
+                ELSE 99
+            END")
+            ->orderByRaw('CASE WHEN tgl_visitasi IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('tgl_visitasi')
+            ->orderBy('tgl_visitasi_akhir')
+            ->orderByRaw('COALESCE(status_changed_at, created_at) asc')
+            ->get();
+        $visitasiRows = $this->visitasiRows($akreditasis);
+        $displayedCount = $visitasiRows->count();
+
+        return view('superadmin.visitasi.index', compact(
+            'period',
+            'status',
+            'schedule',
+            'search',
+            'periodOptions',
+            'statusColors',
+            'statusOptions',
+            'scheduleOptions',
+            'summary',
+            'nextStepLabels',
+            'visitasiRows',
+            'displayedCount',
+        ));
+    }
+
     public function export(Request $request)
     {
         $period = $request->query('period', 'all');
@@ -115,6 +164,49 @@ class DashboardController extends Controller
         }
 
         return $query;
+    }
+
+    private function visitasiOverviewBaseQuery(string $period, string $search)
+    {
+        return Akreditasi::query()
+            ->whereIn('status', [
+                Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+                Akreditasi::STATUS_VISITASI_SCHEDULED,
+                Akreditasi::STATUS_POST_VISITASI_SCORING,
+                Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+                Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+            ])
+            ->when($period !== 'all', fn ($query) => $query->whereYear('created_at', (int) $period))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('uuid', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn ($userQuery) => $userQuery
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%"))
+                        ->orWhereHas('user.pesantren', fn ($pesantrenQuery) => $pesantrenQuery
+                            ->where('nama_pesantren', 'like', "%{$search}%")
+                            ->orWhere('ns_pesantren', 'like', "%{$search}%"));
+                });
+            });
+    }
+
+    private function applyVisitasiOverviewFilters($query, string $status, string $schedule)
+    {
+        $today = now()->startOfDay();
+
+        return $query
+            ->when($status !== 'all', fn ($filteredQuery) => $filteredQuery->where('status', $status))
+            ->when($schedule === 'unscheduled', fn ($filteredQuery) => $filteredQuery->where('status', Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW))
+            ->when($schedule === 'upcoming', fn ($filteredQuery) => $filteredQuery
+                ->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)
+                ->whereDate('tgl_visitasi', '>', $today))
+            ->when($schedule === 'ongoing', fn ($filteredQuery) => $filteredQuery
+                ->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)
+                ->whereDate('tgl_visitasi', '<=', $today)
+                ->whereDate('tgl_visitasi_akhir', '>=', $today))
+            ->when($schedule === 'past_due', fn ($filteredQuery) => $filteredQuery
+                ->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)
+                ->whereDate('tgl_visitasi_akhir', '<', $today));
     }
 
     private function periodOptions(): array
@@ -196,7 +288,17 @@ class DashboardController extends Controller
                 Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
                 Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
             ], 'warning', 'ki-teacher', $period),
-            $this->queueCard($baseQuery, 'Visitasi', 'Jadwal visitasi yang perlu dipantau.', [Akreditasi::STATUS_VISITASI_SCHEDULED], 'info', 'ki-calendar-tick', $period),
+            [
+                'label' => 'Visitasi',
+                'description' => 'Jadwal visitasi yang perlu dipantau.',
+                'count' => (clone $baseQuery)->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)->count(),
+                'color' => 'info',
+                'icon' => 'ki-calendar-tick',
+                'route' => route('superadmin.visitasi.index', [
+                    'period' => $period,
+                    'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+                ]),
+            ],
             $this->queueCard($baseQuery, 'Scoring', 'NA1, NA2, NK, dan laporan visitasi.', [Akreditasi::STATUS_POST_VISITASI_SCORING], 'danger', 'ki-chart-line', $period),
             $this->queueCard($baseQuery, 'Validasi Akhir', 'Hasil visitasi siap difinalisasi.', [
                 Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
@@ -347,5 +449,216 @@ class DashboardController extends Controller
             Akreditasi::STATUS_APPEAL_SUBMITTED => 'warning',
             Akreditasi::STATUS_COMPLETED => 'success',
         ];
+    }
+
+    private function visitasiStatusOptions(): array
+    {
+        return [
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW => 'Siap Dijadwalkan',
+            Akreditasi::STATUS_VISITASI_SCHEDULED => Akreditasi::STATUS_LABELS[Akreditasi::STATUS_VISITASI_SCHEDULED],
+            Akreditasi::STATUS_POST_VISITASI_SCORING => Akreditasi::STATUS_LABELS[Akreditasi::STATUS_POST_VISITASI_SCORING],
+            Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED => Akreditasi::STATUS_LABELS[Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED],
+            Akreditasi::STATUS_ADMIN_FINAL_VALIDATION => Akreditasi::STATUS_LABELS[Akreditasi::STATUS_ADMIN_FINAL_VALIDATION],
+        ];
+    }
+
+    private function visitasiScheduleOptions(): array
+    {
+        return [
+            'all' => 'Semua Window Jadwal',
+            'unscheduled' => 'Belum Dijadwalkan',
+            'upcoming' => 'Akan Datang',
+            'ongoing' => 'Sedang Berjalan',
+            'past_due' => 'Lewat Jadwal',
+        ];
+    }
+
+    private function normalizeVisitasiStatus(string $status): string
+    {
+        return $status === 'all' || array_key_exists($status, $this->visitasiStatusOptions())
+            ? $status
+            : 'all';
+    }
+
+    private function normalizeVisitasiSchedule(string $schedule): string
+    {
+        return array_key_exists($schedule, $this->visitasiScheduleOptions())
+            ? $schedule
+            : 'all';
+    }
+
+    private function visitasiSummary($baseQuery): array
+    {
+        $today = now()->startOfDay();
+
+        return [
+            'ready' => (clone $baseQuery)->where('status', Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW)->count(),
+            'scheduled' => (clone $baseQuery)->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)->count(),
+            'ongoing' => (clone $baseQuery)
+                ->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)
+                ->whereDate('tgl_visitasi', '<=', $today)
+                ->whereDate('tgl_visitasi_akhir', '>=', $today)
+                ->count(),
+            'past_due' => (clone $baseQuery)
+                ->where('status', Akreditasi::STATUS_VISITASI_SCHEDULED)
+                ->whereDate('tgl_visitasi_akhir', '<', $today)
+                ->count(),
+            'scoring' => (clone $baseQuery)->where('status', Akreditasi::STATUS_POST_VISITASI_SCORING)->count(),
+            'validation' => (clone $baseQuery)->whereIn('status', [
+                Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+                Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+            ])->count(),
+        ];
+    }
+
+    private function visitasiNextStepLabels(): array
+    {
+        return [
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW => 'Tetapkan jadwal visitasi dan catatan pelaksanaan.',
+            Akreditasi::STATUS_VISITASI_SCHEDULED => 'Pantau jadwal dan pastikan visitasi selesai sesuai rencana.',
+            Akreditasi::STATUS_POST_VISITASI_SCORING => 'Lengkapi NA1, NA2, NK, dan laporan visitasi.',
+            Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED => 'Masuk ke validasi akhir hasil visitasi.',
+            Akreditasi::STATUS_ADMIN_FINAL_VALIDATION => 'Finalisasi keputusan validasi akhir.',
+        ];
+    }
+
+    private function visitasiRows(Collection $akreditasis): Collection
+    {
+        return $akreditasis
+            ->map(fn (Akreditasi $akreditasi) => $this->visitasiRow($akreditasi))
+            ->values();
+    }
+
+    private function visitasiRow(Akreditasi $akreditasi): array
+    {
+        $scheduleState = $this->visitasiScheduleState($akreditasi);
+        $team = $this->visitasiTeam($akreditasi);
+
+        return [
+            'akreditasi' => $akreditasi,
+            'status_label' => $akreditasi->getStatusLabel(),
+            'status_color' => $this->statusColors()[$akreditasi->status] ?? 'secondary',
+            'next_step' => $this->visitasiNextStepLabels()[$akreditasi->status] ?? 'Pantau progress visitasi.',
+            'pesantren_name' => $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? 'Pesantren',
+            'pesantren_email' => $akreditasi->user?->email,
+            'pesantren_nsp' => $akreditasi->user?->pesantren?->ns_pesantren,
+            'schedule_state' => $scheduleState,
+            'schedule_range' => $akreditasi->tgl_visitasi
+                ? $akreditasi->tgl_visitasi->format('d M Y').($akreditasi->tgl_visitasi_akhir ? ' — '.$akreditasi->tgl_visitasi_akhir->format('d M Y') : '')
+                : 'Belum dijadwalkan',
+            'team' => $team,
+            'catatan_preview' => filled($akreditasi->catatan_visitasi)
+                ? Str::limit((string) $akreditasi->catatan_visitasi, 100)
+                : 'Belum ada catatan visitasi.',
+            'progress' => $this->visitasiProgressItems($akreditasi),
+            'actions' => $this->visitasiActions($akreditasi),
+        ];
+    }
+
+    private function visitasiScheduleState(Akreditasi $akreditasi): array
+    {
+        $today = now()->startOfDay();
+
+        if ($akreditasi->status === Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW) {
+            return [
+                'label' => 'Belum Dijadwalkan',
+                'color' => 'warning',
+            ];
+        }
+
+        if ($akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED) {
+            if (! $akreditasi->tgl_visitasi || ! $akreditasi->tgl_visitasi_akhir) {
+                return [
+                    'label' => 'Jadwal Belum Lengkap',
+                    'color' => 'warning',
+                ];
+            }
+
+            if ($akreditasi->tgl_visitasi_akhir->lt($today)) {
+                return [
+                    'label' => 'Lewat Jadwal',
+                    'color' => 'danger',
+                ];
+            }
+
+            if ($akreditasi->tgl_visitasi->gt($today)) {
+                return [
+                    'label' => 'Akan Datang',
+                    'color' => 'info',
+                ];
+            }
+
+            return [
+                'label' => 'Sedang Berjalan',
+                'color' => 'primary',
+            ];
+        }
+
+        if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
+            return [
+                'label' => 'Masuk Scoring',
+                'color' => 'danger',
+            ];
+        }
+
+        return [
+            'label' => 'Siap Validasi',
+            'color' => 'success',
+        ];
+    }
+
+    private function visitasiTeam(Akreditasi $akreditasi): array
+    {
+        $ketua = $akreditasi->assessments->firstWhere('tipe', 'ketua');
+        $anggota = $akreditasi->assessments
+            ->where('tipe', 'anggota')
+            ->map(fn ($assessment) => $assessment->asesor?->name)
+            ->filter()
+            ->values();
+
+        return [
+            'ketua' => $ketua?->asesor?->name,
+            'anggota' => $anggota,
+        ];
+    }
+
+    private function visitasiProgressItems(Akreditasi $akreditasi): array
+    {
+        return [
+            ['label' => 'NA1', 'done' => filled($akreditasi->na1)],
+            ['label' => 'NA2', 'done' => filled($akreditasi->na2)],
+            ['label' => 'NK', 'done' => filled($akreditasi->nk)],
+            ['label' => 'Lap. A1', 'done' => filled($akreditasi->laporan_visitasi_asesor1)],
+            ['label' => 'Lap. A2', 'done' => filled($akreditasi->laporan_visitasi_asesor2)],
+            ['label' => 'Lap. Kelompok', 'done' => filled($akreditasi->laporan_visitasi_kelompok)],
+        ];
+    }
+
+    private function visitasiActions(Akreditasi $akreditasi): array
+    {
+        $actions = [
+            ['label' => 'Detail', 'route' => route('superadmin.akreditasi.show', $akreditasi), 'color' => 'primary'],
+        ];
+
+        if (in_array($akreditasi->status, [Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, Akreditasi::STATUS_VISITASI_SCHEDULED], true)) {
+            $actions[] = [
+                'label' => $akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED ? 'Perbarui Jadwal' : 'Jadwalkan Visitasi',
+                'route' => route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi),
+                'color' => 'info',
+            ];
+        }
+
+        if ($akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING) {
+            $actions[] = ['label' => 'Input NA1', 'route' => route('superadmin.akreditasi.input-na1', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Input NA2', 'route' => route('superadmin.akreditasi.input-na2', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Input NK', 'route' => route('superadmin.akreditasi.input-nk', $akreditasi), 'color' => 'danger'];
+            $actions[] = ['label' => 'Upload Laporan', 'route' => route('superadmin.akreditasi.upload-laporan', $akreditasi), 'color' => 'primary'];
+        }
+
+        if (in_array($akreditasi->status, [Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION], true)) {
+            $actions[] = ['label' => 'Validasi Akhir', 'route' => route('superadmin.akreditasi.validasi-akhir', $akreditasi), 'color' => 'success'];
+        }
+
+        return $actions;
     }
 }

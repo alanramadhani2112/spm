@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AkreditasiCertificateController;
 use App\Http\Controllers\Auth\MuhammadiyahIdController;
 use App\Http\Controllers\Pesantren\AkreditasiController;
 use App\Http\Controllers\Pesantren\DataController as PesantrenDataController;
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'role:pesantren,super_admin'])->prefix('pesantren')->
     Route::post('/akreditasi/{id}/koreksi', [AkreditasiController::class, 'submitCorrection'])->name('akreditasi.submit-koreksi');
     Route::post('/akreditasi/{id}/kartu-kendali', [AkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
     Route::get('/akreditasi/{id}/hasil', [AkreditasiController::class, 'hasilAkhir'])->name('akreditasi.hasil');
+    Route::get('/akreditasi/{akreditasi}/sertifikat', [AkreditasiCertificateController::class, 'download'])->name('akreditasi.sertifikat.download');
     Route::post('/akreditasi/{id}/banding', [AkreditasiController::class, 'submitBanding'])->name('akreditasi.submit-banding');
 });
 
@@ -124,6 +126,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/asesor-workload/export', [AssessorWorkloadController::class, 'export'])
         ->middleware('permission:superadmin.export')
         ->name('asesor-workload.export');
+    Route::get('/asesor-workload/{asesor}', [AssessorWorkloadController::class, 'show'])->name('asesor-workload.show');
+    Route::get('/visitasi', [DashboardController::class, 'visitasiOverview'])
+        ->middleware('permission:akreditasi.visitasi.manage')
+        ->name('visitasi.index');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
@@ -205,6 +211,11 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/akreditasi/{id}/tolak-final', [SuperAdminAkreditasiController::class, 'tolakFinal'])
         ->middleware('permission:akreditasi.final.reject')
         ->name('akreditasi.tolak-final');
+    Route::get('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'formTerbitkanSK'])
+        ->middleware('permission:sk.publish')
+        ->name('akreditasi.form-terbitkan-sk');
+    Route::get('/akreditasi/{akreditasi}/sertifikat', [AkreditasiCertificateController::class, 'download'])
+        ->name('akreditasi.sertifikat.download');
     Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])
         ->middleware('permission:sk.publish')
         ->name('akreditasi.terbitkan-sk');

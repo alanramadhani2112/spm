@@ -40,9 +40,9 @@ Legend:
 | Koreksi Tahap 1 Limit | Keputusan saat batas koreksi | `handle-limit-review` | `handleLimitReview` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | `action_on_limit` sudah mengontrol default decision dan action dilindungi `permission:akreditasi.stage1_review`. |
 | Asesor Assignment | Assign asesor | `assign-asesor` | `assignAsesor` | `admin.akreditasi.assign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; form memakai workload aktif terpusat dan mewajibkan konfirmasi + alasan jika pilihan mencapai overload. |
 | Asesor Assignment | Reassign asesor | `reassign-asesor` | `reassignAsesor` | `admin.akreditasi.reassign-asesor` | `AkreditasiConsoleTest` | Done | Sudah dilindungi `permission:akreditasi.assign_asesor`; reason, asesor sebelumnya, asesor baru, dan overload metadata tampil di riwayat assignment detail. |
-| Asesor Assignment | Workload center asesor | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.export` | `AssessorWorkloadController@index/export` | `superadmin.asesor-workload.index` | `AssessorWorkloadTest` | Done | Menampilkan total asesor, normal/medium/overload, assignment aktif, overdue, distribusi ketua/anggota, status aktif, link detail assignment, dan export CSV terfilter. |
+| Asesor Assignment | Workload center asesor | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.show`, `superadmin.asesor-workload.export` | `AssessorWorkloadController@index/show/export` | `superadmin.asesor-workload.index`, `superadmin.asesor-workload.show` | `AssessorWorkloadTest` | Done | Menampilkan total asesor, normal/medium/overload, assignment aktif, overdue, distribusi ketua/anggota, status aktif, drill-down histori assignment/reassignment per asesor, link detail akreditasi, dan export CSV terfilter. |
 | Review Tahap 2 | Ketua Asesor review | `review-tahap2`, `layak-visitasi`, `minta-perbaikan-tahap2` | `reviewTahap2`, `nyatakanLayakVisitasi`, `mintaPerbaikanTahap2` | `asesor.ketua.review-tahap2` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.stage2_review`; shared asesor view menampilkan banner Super Admin Mode. |
-| Visitasi | Jadwalkan visitasi | `jadwalkan-visitasi` | `jadwalkanVisitasi` | `asesor.ketua.jadwalkan-visitasi` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; perlu calendar/list schedule overview. |
+| Visitasi | Jadwalkan visitasi + schedule overview | `superadmin.visitasi.index`, `jadwalkan-visitasi` | `DashboardController@visitasiOverview`, `jadwalkanVisitasi` | `superadmin.visitasi.index`, `asesor.ketua.jadwalkan-visitasi` | `DashboardExportTest`, `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; Super Admin kini punya board operasional untuk kesiapan jadwal, overdue, scoring, dan validasi akhir visitasi. |
 | Visitasi | Tandai visitasi selesai | `tandai-visitasi-selesai` | `tandaiVisitasiSelesai` | Action endpoint | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.visitasi.manage`; perlu confirmation/audit visibility di detail. |
 | Scoring | Input NA1 | `input-na1` | `inputNA1` | `asesor.ketua.input-na1` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; shared asesor view menampilkan banner Super Admin Mode. |
 | Scoring | Input NA2 | `input-na2` | `inputNA2` | `asesor.anggota.input-na2` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.scoring.manage`; shared asesor view menampilkan banner Super Admin Mode. |
@@ -50,7 +50,7 @@ Legend:
 | Laporan Visitasi | Upload laporan individu/kelompok | `upload-laporan` | `uploadLaporan` | `asesor.ketua.upload-laporan` | `AkreditasiConsoleTest` | Done | Action dilindungi `permission:akreditasi.laporan.manage`; perlu document-category rule integration. |
 | Laporan Visitasi | Submit hasil visitasi | `submit-hasil-visitasi` | `submitHasilVisitasi` | Action endpoint | `SettingsTest`, `AkreditasiConsoleTest` | Done | Requirement laporan sudah enforce sesuai `laporan_wajib_before` dan action dilindungi `permission:akreditasi.laporan.manage`; perlu CTA state visibility di detail. |
 | Validasi Akhir | Validasi akhir | `validasi-akhir`, `approve-final`, `tolak-final` | `validasiAkhir`, `approveFinal`, `tolakFinal` | `admin.akreditasi.validasi-akhir` | `SettingsTest`, `AkreditasiConsoleTest` | Done | `approve-final` dilindungi `permission:akreditasi.final.approve`, `tolak-final` dilindungi `permission:akreditasi.final.reject`; `nv_override_allowed` dan `nv_reason_mode` sudah enforce. |
-| SK | Terbitkan SK | `terbitkan-sk` | `terbitkanSK` | shared admin flow/action | Indirect | Done | Sudah dilindungi `permission:sk.publish`; perlu template/nomor SK management dan export/download SK. |
+| SK | Terbitkan SK + sertifikat digital | `form-terbitkan-sk`, `terbitkan-sk`, `akreditasi.sertifikat.download` | `formTerbitkanSK`, `terbitkanSK`, `AkreditasiCertificateController@download` | `admin.akreditasi.terbitkan-sk` (shared Super Admin/Admin), hasil akhir pesantren, detail Super Admin | `AkreditasiConsoleTest`, `AkreditasiFlowTest`, `EndToEndWorkflowTest` | Done | Sudah dilindungi `permission:sk.publish`; publish SK kini dapat menyimpan artifact sertifikat PDF opsional via document layer, `sertifikat_path` disinkronkan, dan unduh sertifikat memakai route aplikasi yang terproteksi. Export/download massal dapat dilanjutkan bila diperlukan. |
 | Banding | Lihat, terima, tolak banding | `banding`, `superadmin.banding.terima`, `superadmin.banding.tolak` | `banding`, `terimaBanding`, `tolakBanding` | `admin.akreditasi.banding` | `AkreditasiConsoleTest`, `SettingsTest` | Done | Terima/tolak sudah dilindungi `permission:akreditasi.proses_banding`; `banding_eligibility=disabled` sudah memblokir pengajuan banding. |
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
@@ -220,14 +220,11 @@ Sudah dipolish:
 Partial:
 
 - Beberapa action flow Super Admin masih memakai view Admin/Asesor/Pesantren dengan route override. Ini efisien dan fungsional, tetapi perlu review UX agar pengguna sadar sedang bekerja sebagai Super Admin.
-- Action endpoints tanpa halaman tersendiri perlu dipastikan punya CTA/confirmation yang jelas di Action Center.
+- Action endpoints tanpa halaman tersendiri kini mengikuti pola CTA yang lebih eksplisit: satu primary CTA terlihat, action tambahan di kebab menu, dan state tanpa aksi ditampilkan jelas di Action Center.
 
 Missing:
 
-- Drill-down histori assignment per asesor.
-- Visitasi schedule overview.
 - SK management.
-- Action center CTA polish.
 
 ## Recommended Next Implementation Order
 
