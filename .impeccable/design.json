@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-19T00:00:00Z",
+  "title": "Design System: PesantrenMu",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Operational Blue",
+        "canonical": "#2e90fa",
+        "tonalRamp": ["#0f2747", "#123b69", "#18508d", "#1f67b2", "#2e90fa", "#67adfb", "#9bc9fd", "#d7ebff"]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Approval Green",
+        "canonical": "#079455",
+        "tonalRamp": ["#062e1d", "#0a4d2f", "#0d6b41", "#0f8450", "#079455", "#35ae73", "#7fd0a7", "#d7f3e4"]
+      },
+      "info": {
+        "role": "secondary",
+        "displayName": "Signal Violet",
+        "canonical": "#7239ea",
+        "tonalRamp": ["#1f1244", "#311b68", "#43258b", "#5a30bc", "#7239ea", "#9570ef", "#bca7f6", "#e7defd"]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Attention Amber",
+        "canonical": "#dc6803",
+        "tonalRamp": ["#3e1a01", "#622903", "#863804", "#b24d03", "#dc6803", "#ec8c37", "#f5bb83", "#fde7d0"]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Critical Red",
+        "canonical": "#d92d20",
+        "tonalRamp": ["#3f0d09", "#641410", "#8d1c17", "#b7231c", "#d92d20", "#e35f55", "#f0a39d", "#fbe3e1"]
+      },
+      "body-bg": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#202430", "#3a4050", "#5e6678", "#8890a0", "#ffffff", "#ffffff", "#ffffff", "#ffffff"]
+      },
+      "body-ink": {
+        "role": "neutral",
+        "displayName": "Ink Navy",
+        "canonical": "#181c32",
+        "tonalRamp": ["#181c32", "#252a45", "#343957", "#4c516f", "#6a708d", "#9398b0", "#c6cad7", "#eef0f5"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page title and high-priority numbers." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles and board headers." },
+      "title": { "displayName": "Title", "purpose": "Card labels and local headers." },
+      "body": { "displayName": "Body", "purpose": "Operational descriptions and content text." },
+      "label": { "displayName": "Label", "purpose": "Form labels, badge text, helper copy." }
+    },
+    "shadows": [
+      {
+        "name": "surface-base",
+        "value": "0 0.5rem 1.5rem 0.5rem rgba(0, 0, 0, 0.075)",
+        "purpose": "Primary card and container separation."
+      },
+      {
+        "name": "surface-compact",
+        "value": "0 0.1rem 1rem 0.25rem rgba(0, 0, 0, 0.05)",
+        "purpose": "Compact panels and fields."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "ease-in-out",
+        "purpose": "Short default state transitions in fields and buttons."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Hover, border, and focus transitions."
+      }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "992px" },
+      { "name": "xl", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary action button for key workflow progression.",
+      "html": "<button class=\"ds-btn-primary\">Terapkan</button>",
+      "css": ".ds-btn-primary{background:var(--bs-primary);color:#fff;padding:.625rem 1rem;border:none;border-radius:var(--bs-border-radius);font:600 .875rem/1.4 Inter,Helvetica,sans-serif;transition:background-color .15s ease-in-out,box-shadow .15s ease-in-out}.ds-btn-primary:hover{background:#1f67b2}.ds-btn-primary:focus-visible{outline:none;box-shadow:0 0 0 .25rem rgba(46,144,250,.25)}"
+    },
+    {
+      "name": "Light Button",
+      "kind": "button",
+      "refersTo": "button-light",
+      "description": "Secondary navigation and reset action button.",
+      "html": "<button class=\"ds-btn-light\">Reset</button>",
+      "css": ".ds-btn-light{background:var(--bs-gray-100);color:var(--bs-gray-900);padding:.625rem 1rem;border:1px solid var(--bs-gray-300);border-radius:var(--bs-border-radius);font:600 .875rem/1.4 Inter,Helvetica,sans-serif;transition:background-color .15s ease-in-out,border-color .15s ease-in-out}.ds-btn-light:hover{background:var(--bs-gray-200)}.ds-btn-light:focus-visible{outline:none;box-shadow:0 0 0 .25rem rgba(46,144,250,.16)}"
+    },
+    {
+      "name": "Stat Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Compact dashboard metric card with strong value emphasis.",
+      "html": "<div class=\"ds-stat-card\"><div class=\"ds-stat-value\">24</div><div class=\"ds-stat-label\">SK Terbit</div></div>",
+      "css": ".ds-stat-card{background:#fff;border-radius:var(--bs-border-radius);box-shadow:0 .5rem 1.5rem .5rem rgba(0,0,0,.075);padding:1.5rem}.ds-stat-value{font:700 2.25rem/1.1 Inter,Helvetica,sans-serif;color:var(--bs-gray-900);letter-spacing:-.02em}.ds-stat-label{margin-top:.35rem;font:600 .875rem/1.4 Inter,Helvetica,sans-serif;color:var(--bs-gray-500)}"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-light-primary",
+      "description": "Light semantic badge for workflow status and filter summaries.",
+      "html": "<span class=\"ds-badge\">Siap Terbit</span>",
+      "css": ".ds-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .65rem;border-radius:var(--bs-border-radius-sm);background:#cfe2ff;color:#0a58ca;font:600 .875rem/1.3 Inter,Helvetica,sans-serif}"
+    },
+    {
+      "name": "Toolbar Search Input",
+      "kind": "input",
+      "refersTo": "card-surface",
+      "description": "Standard filter/search field used in console and management pages.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Cari</span><input class=\"ds-input\" placeholder=\"UUID, nomor SK, pesantren...\" /></label>",
+      "css": ".ds-field{display:grid;gap:.5rem}.ds-field-label{font:600 .875rem/1.4 Inter,Helvetica,sans-serif;color:var(--bs-gray-900)}.ds-input{width:100%;padding:.75rem 1rem;border:1px solid var(--bs-gray-300);border-radius:var(--bs-border-radius);background:#fff;color:var(--bs-body-color);font:400 1rem/1.5 Inter,Helvetica,sans-serif;transition:border-color .15s ease-in-out,box-shadow .15s ease-in-out}.ds-input:focus-visible{outline:none;border-color:var(--bs-primary);box-shadow:0 0 0 .25rem rgba(46,144,250,.25)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Operational Courtyard",
+    "overview": "PesantrenMu memakai dashboard operasional yang familiar, terang, dan tertib untuk mendukung keputusan akreditasi yang sensitif. Visual system ini menempatkan kejelasan status, keterbacaan data, dan rasa aman pengguna di atas ekspresi visual yang berlebihan.",
+    "keyCharacteristics": [
+      "Dashboard-first workflow hierarchy",
+      "Dark shell with light content surfaces",
+      "Restrained accent with semantic state colors",
+      "Single-family sans-serif typography",
+      "Card and table patterns tuned for operational clarity"
+    ],
+    "rules": [
+      {
+        "name": "The Status-First Rule",
+        "body": "Blue is for primary actions; semantic hues carry status meaning. Color should not be decorative.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Drama Type Rule",
+        "body": "Typography must stay familiar and quiet enough that the workflow remains the focus.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do use strong ink contrast for primary text and numbers.",
+      "Do keep badges, buttons, and cards aligned to existing Metronic component vocabulary.",
+      "Do make next-step actions obvious in every workflow surface."
+    ],
+    "donts": [
+      "Don't add side-stripe accent borders to cards or alerts.",
+      "Don't use glassmorphism, gradient text, or decorative effects that don't serve the task.",
+      "Don't let the UI drift into generic SaaS polish or cold bureaucratic rigidity."
+    ]
+  }
+}
