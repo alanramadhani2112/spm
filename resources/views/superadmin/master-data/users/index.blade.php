@@ -298,6 +298,12 @@
                                           data-swal-confirm-class="btn btn-primary">
                                         @csrf @method('PUT')
 
+                                        @if($roleParameter === 'super_admin')
+                                            <div class="rounded bg-light-warning border border-warning border-dashed p-4 fs-7 text-gray-700">
+                                                Akun Super Admin dilindungi dari self-lockout dan penonaktifan Super Admin terakhir.
+                                            </div>
+                                        @endif
+
                                         <div class="rounded bg-light-primary p-4">
                                             <div class="d-flex align-items-center gap-3">
                                                 <span class="symbol symbol-40px flex-shrink-0"><span class="symbol-label bg-primary text-white fw-bold">{{ $initials }}</span></span>

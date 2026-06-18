@@ -121,6 +121,13 @@
 
     <div class="col-xl-7">
         <x-metronic.card title="Role dan Status Akun" class="mb-8">
+            @if($roleParameter === 'super_admin')
+                <x-metronic.alert type="warning">
+                    <div class="fw-semibold mb-1">Akun Super Admin dilindungi.</div>
+                    <div>Super Admin terakhir atau akun yang sedang login tidak boleh dinonaktifkan atau diturunkan rolenya.</div>
+                </x-metronic.alert>
+            @endif
+
             <form method="POST"
                   action="{{ route('superadmin.master-data.users.update', $user) }}"
                   class="row g-5"

@@ -733,6 +733,34 @@ class MasterDataTest extends TestCase
         ]);
     }
 
+    public function test_super_admin_cannot_downgrade_own_super_admin_account(): void
+    {
+        $adminRole = Role::where('parameter', 'admin')->firstOrFail();
+
+        $this->actingAs($this->superAdmin)
+            ->from(route('superadmin.master-data.users.show', $this->superAdmin))
+            ->put(route('superadmin.master-data.users.update', $this->superAdmin), [
+                'role_id' => $adminRole->id,
+                'status' => 'inactive',
+                'reason' => 'Menguji proteksi self-lockout Super Admin.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.show', $this->superAdmin))
+            ->assertSessionHasErrors('role_id');
+
+        $this->superAdmin->refresh();
+        $this->assertSame(4, $this->superAdmin->role_id);
+        $this->assertSame('active', $this->superAdmin->status);
+        $this->assertDatabaseMissing('akreditasi_audit_logs', ['action_type' => 'user_access_updated']);
+    }
+
+    public function test_super_admin_detail_warns_for_protected_super_admin_account(): void
+    {
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.show', $this->superAdmin))
+            ->assertOk()
+            ->assertSeeText('Akun Super Admin dilindungi');
+    }
+
     public function test_super_admin_without_user_access_permission_cannot_update_user_role_and_status(): void
     {
         $this->revokeSuperAdminPermission('user.access.update');

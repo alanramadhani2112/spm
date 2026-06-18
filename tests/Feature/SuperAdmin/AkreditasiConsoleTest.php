@@ -465,6 +465,39 @@ class AkreditasiConsoleTest extends TestCase
         $this->assertSame(5, $auditLog->metadata['overload_warnings'][0]['projected_total']);
     }
 
+    public function test_super_admin_shared_workflow_views_show_acting_as_banner(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $banner = 'Anda sedang menjalankan flow ini sebagai Super Admin';
+        $routes = [
+            route('superadmin.akreditasi.review-awal', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_INITIAL_SUBMITTED)),
+            route('superadmin.akreditasi.review-tahap1', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW)),
+            route('superadmin.akreditasi.review-tahap2', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW)),
+            route('superadmin.akreditasi.jadwalkan-visitasi', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_VISITASI_SCHEDULED)),
+            route('superadmin.akreditasi.input-na1', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_POST_VISITASI_SCORING)),
+            route('superadmin.akreditasi.input-na2', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_POST_VISITASI_SCORING)),
+            route('superadmin.akreditasi.input-nk', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_POST_VISITASI_SCORING)),
+            route('superadmin.akreditasi.upload-laporan', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_VISITASI_COMPLETED)),
+            route('superadmin.akreditasi.validasi-akhir', $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION)),
+        ];
+
+        $bandingAkreditasi = $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_APPEAL_SUBMITTED);
+        Banding::create([
+            'akreditasi_id' => $bandingAkreditasi->id,
+            'user_id' => $pesantrenUser->id,
+            'reason' => 'Mohon banding.',
+            'status' => 'pending',
+        ]);
+        $routes[] = route('superadmin.akreditasi.banding', $bandingAkreditasi);
+
+        foreach ($routes as $route) {
+            $this->actingAs($this->superAdmin)
+                ->get($route)
+                ->assertOk()
+                ->assertSeeText($banner);
+        }
+    }
+
     public function test_super_admin_without_final_approval_permission_cannot_approve_final(): void
     {
         $this->revokeSuperAdminPermission('akreditasi.final.approve');
@@ -531,6 +564,104 @@ class AkreditasiConsoleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_without_stage2_permission_cannot_open_review_tahap2(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.stage2_review');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.review-tahap2', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_visitasi_permission_cannot_schedule_visitasi(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.visitasi.manage');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_VISITASI_SCHEDULED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.jadwalkan-visitasi', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_scoring_permission_cannot_open_scoring(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.scoring.manage');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_POST_VISITASI_SCORING,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.input-na1', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_laporan_permission_cannot_open_laporan_upload(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.laporan.manage');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_VISITASI_COMPLETED,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.upload-laporan', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_document_upload_permission_cannot_upload_kartu_kendali(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.document.upload');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ASSESSMENT_OPEN,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.upload-kk', $akreditasi->id))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_final_reject_permission_cannot_reject_final(): void
+    {
+        $this->revokeSuperAdminPermission('akreditasi.final.reject');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.akreditasi.tolak-final', $akreditasi->id), [
+                'reason' => 'Menguji permission final reject.',
+            ])
+            ->assertForbidden();
+    }
+
     public function test_super_admin_without_banding_process_permission_cannot_accept_banding(): void
     {
         $this->revokeSuperAdminPermission('akreditasi.proses_banding');
@@ -572,6 +703,15 @@ class AkreditasiConsoleTest extends TestCase
                 'masa_berlaku' => '2026-2030',
             ])
             ->assertForbidden();
+    }
+
+    private function createAkreditasi(User $user, string $status): Akreditasi
+    {
+        return Akreditasi::create([
+            'user_id' => $user->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => $status,
+        ]);
     }
 
     private function createCompletePesantrenData(User $user): void

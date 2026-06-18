@@ -867,6 +867,10 @@ class MasterDataController extends Controller
             'reason' => ['required', 'string', 'min:3'],
         ]);
 
+        if ($guardMessage = $this->superAdminAccountGuardMessage($user, (int) $validated['role_id'], $validated['status'])) {
+            return back()->withErrors(['role_id' => $guardMessage])->withInput();
+        }
+
         $before = $user->only(['role_id', 'status']);
 
         $user->forceFill([
@@ -882,6 +886,34 @@ class MasterDataController extends Controller
         ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Akun pengguna berhasil diperbarui.');
+    }
+
+    private function superAdminAccountGuardMessage(User $user, int $newRoleId, string $newStatus): ?string
+    {
+        $superAdminRole = Role::where('parameter', 'super_admin')->first();
+
+        if (! $superAdminRole || (int) $user->role_id !== (int) $superAdminRole->id) {
+            return null;
+        }
+
+        $keepsSuperAdminActive = $newRoleId === (int) $superAdminRole->id && $newStatus === 'active';
+
+        if ($keepsSuperAdminActive) {
+            return null;
+        }
+
+        if ((int) auth()->id() === (int) $user->id) {
+            return 'Akun Super Admin yang sedang login tidak boleh dinonaktifkan atau diturunkan rolenya.';
+        }
+
+        $otherActiveSuperAdmins = User::where('id', '!=', $user->id)
+            ->where('role_id', $superAdminRole->id)
+            ->where('status', 'active')
+            ->count();
+
+        return $otherActiveSuperAdmins === 0
+            ? 'Super Admin terakhir tidak boleh dinonaktifkan atau diturunkan rolenya.'
+            : null;
     }
 
     public function showUser(User $user)

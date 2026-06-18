@@ -165,22 +165,46 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::post('/akreditasi/{id}/handle-limit-review', [SuperAdminAkreditasiController::class, 'handleLimitReview'])
         ->middleware('permission:akreditasi.stage1_review')
         ->name('akreditasi.handle-limit-review');
-    Route::get('/akreditasi/{id}/review-tahap2', [SuperAdminAkreditasiController::class, 'reviewTahap2'])->name('akreditasi.review-tahap2');
-    Route::post('/akreditasi/{id}/layak-visitasi', [SuperAdminAkreditasiController::class, 'nyatakanLayakVisitasi'])->name('akreditasi.layak-visitasi');
-    Route::post('/akreditasi/{id}/minta-perbaikan-tahap2', [SuperAdminAkreditasiController::class, 'mintaPerbaikanTahap2'])->name('akreditasi.minta-perbaikan-tahap2');
-    Route::match(['get', 'post'], '/akreditasi/{id}/jadwalkan-visitasi', [SuperAdminAkreditasiController::class, 'jadwalkanVisitasi'])->name('akreditasi.jadwalkan-visitasi');
-    Route::post('/akreditasi/{id}/tandai-visitasi-selesai', [SuperAdminAkreditasiController::class, 'tandaiVisitasiSelesai'])->name('akreditasi.tandai-visitasi-selesai');
-    Route::match(['get', 'post'], '/akreditasi/{id}/input-na1', [SuperAdminAkreditasiController::class, 'inputNA1'])->name('akreditasi.input-na1');
-    Route::match(['get', 'post'], '/akreditasi/{id}/input-na2', [SuperAdminAkreditasiController::class, 'inputNA2'])->name('akreditasi.input-na2');
-    Route::match(['get', 'post'], '/akreditasi/{id}/input-nk', [SuperAdminAkreditasiController::class, 'inputNK'])->name('akreditasi.input-nk');
-    Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan', [SuperAdminAkreditasiController::class, 'uploadLaporan'])->name('akreditasi.upload-laporan');
-    Route::post('/akreditasi/{id}/submit-hasil-visitasi', [SuperAdminAkreditasiController::class, 'submitHasilVisitasi'])->name('akreditasi.submit-hasil-visitasi');
-    Route::post('/akreditasi/{id}/kartu-kendali', [SuperAdminAkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
+    Route::get('/akreditasi/{id}/review-tahap2', [SuperAdminAkreditasiController::class, 'reviewTahap2'])
+        ->middleware('permission:akreditasi.stage2_review')
+        ->name('akreditasi.review-tahap2');
+    Route::post('/akreditasi/{id}/layak-visitasi', [SuperAdminAkreditasiController::class, 'nyatakanLayakVisitasi'])
+        ->middleware('permission:akreditasi.stage2_review')
+        ->name('akreditasi.layak-visitasi');
+    Route::post('/akreditasi/{id}/minta-perbaikan-tahap2', [SuperAdminAkreditasiController::class, 'mintaPerbaikanTahap2'])
+        ->middleware('permission:akreditasi.stage2_review')
+        ->name('akreditasi.minta-perbaikan-tahap2');
+    Route::match(['get', 'post'], '/akreditasi/{id}/jadwalkan-visitasi', [SuperAdminAkreditasiController::class, 'jadwalkanVisitasi'])
+        ->middleware('permission:akreditasi.visitasi.manage')
+        ->name('akreditasi.jadwalkan-visitasi');
+    Route::post('/akreditasi/{id}/tandai-visitasi-selesai', [SuperAdminAkreditasiController::class, 'tandaiVisitasiSelesai'])
+        ->middleware('permission:akreditasi.visitasi.manage')
+        ->name('akreditasi.tandai-visitasi-selesai');
+    Route::match(['get', 'post'], '/akreditasi/{id}/input-na1', [SuperAdminAkreditasiController::class, 'inputNA1'])
+        ->middleware('permission:akreditasi.scoring.manage')
+        ->name('akreditasi.input-na1');
+    Route::match(['get', 'post'], '/akreditasi/{id}/input-na2', [SuperAdminAkreditasiController::class, 'inputNA2'])
+        ->middleware('permission:akreditasi.scoring.manage')
+        ->name('akreditasi.input-na2');
+    Route::match(['get', 'post'], '/akreditasi/{id}/input-nk', [SuperAdminAkreditasiController::class, 'inputNK'])
+        ->middleware('permission:akreditasi.scoring.manage')
+        ->name('akreditasi.input-nk');
+    Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan', [SuperAdminAkreditasiController::class, 'uploadLaporan'])
+        ->middleware('permission:akreditasi.laporan.manage')
+        ->name('akreditasi.upload-laporan');
+    Route::post('/akreditasi/{id}/submit-hasil-visitasi', [SuperAdminAkreditasiController::class, 'submitHasilVisitasi'])
+        ->middleware('permission:akreditasi.laporan.manage')
+        ->name('akreditasi.submit-hasil-visitasi');
+    Route::post('/akreditasi/{id}/kartu-kendali', [SuperAdminAkreditasiController::class, 'uploadKartuKendali'])
+        ->middleware('permission:akreditasi.document.upload')
+        ->name('akreditasi.upload-kk');
     Route::get('/akreditasi/{id}/validasi-akhir', [SuperAdminAkreditasiController::class, 'validasiAkhir'])->name('akreditasi.validasi-akhir');
     Route::post('/akreditasi/{id}/approve-final', [SuperAdminAkreditasiController::class, 'approveFinal'])
         ->middleware('permission:akreditasi.final.approve')
         ->name('akreditasi.approve-final');
-    Route::post('/akreditasi/{id}/tolak-final', [SuperAdminAkreditasiController::class, 'tolakFinal'])->name('akreditasi.tolak-final');
+    Route::post('/akreditasi/{id}/tolak-final', [SuperAdminAkreditasiController::class, 'tolakFinal'])
+        ->middleware('permission:akreditasi.final.reject')
+        ->name('akreditasi.tolak-final');
     Route::post('/akreditasi/{id}/terbitkan-sk', [SuperAdminAkreditasiController::class, 'terbitkanSK'])
         ->middleware('permission:sk.publish')
         ->name('akreditasi.terbitkan-sk');

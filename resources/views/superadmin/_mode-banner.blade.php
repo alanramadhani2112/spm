@@ -9,7 +9,7 @@
                 </span>
                 <div>
                     <span class="badge badge-light-warning fs-8 fw-bold text-uppercase">Super Admin Mode</span>
-                    <span class="fs-8 text-muted ms-2">Anda bertindak sebagai Super Admin — semua aksi tercatat di audit log.</span>
+                    <span class="fs-8 text-muted ms-2">Anda sedang menjalankan flow ini sebagai Super Admin — semua aksi tercatat di audit log.</span>
                 </div>
             </div>
             <a href="{{ $superadminBackRoute ?? route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">
