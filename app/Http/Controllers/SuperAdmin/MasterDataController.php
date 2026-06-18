@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\AuditTrailService;
 use App\Services\PesantrenService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -652,6 +653,53 @@ class MasterDataController extends Controller
         return redirect()->route('superadmin.master-data.users.index')->with('success', 'Pengguna berhasil diundang. Akun siap ditautkan saat login Muhammadiyah ID.');
     }
 
+    public function importUsers(Request $request)
+    {
+        $validated = $request->validate([
+            'users_csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        [$rows, $errors] = $this->parseUserImportCsv($validated['users_csv']->getRealPath());
+
+        if ($errors) {
+            return back()->withErrors(['users_csv' => implode(' ', $errors)])->withInput();
+        }
+
+        $roles = $this->userImportRoleMap();
+        $emails = collect($rows)->pluck('email')->values();
+        $existingEmails = User::whereIn('email', $emails->all())->pluck('email')->all();
+        $duplicateEmails = $emails->duplicates()->merge($existingEmails)->unique()->values();
+
+        if ($duplicateEmails->isNotEmpty()) {
+            return back()->withErrors(['users_csv' => 'Email duplikat atau sudah terdaftar: '.$duplicateEmails->implode(', ')])->withInput();
+        }
+
+        $createdUsers = DB::transaction(function () use ($rows, $roles) {
+            return collect($rows)->map(function (array $row) use ($roles) {
+                $role = $roles->get(is_numeric($row['role']) ? 'id:'.$row['role'] : strtolower($row['role']));
+
+                return User::forceCreate([
+                    'name' => $row['name'],
+                    'email' => $row['email'],
+                    'password' => Hash::make(Str::random(64)),
+                    'role_id' => $role->id,
+                    'uuid' => (string) Str::uuid(),
+                    'status' => $row['status'] ?: 'active',
+                    'm_id' => $row['m_id'] ?: null,
+                    'nbm' => $row['nbm'] ?: null,
+                ]);
+            });
+        });
+
+        $this->auditTrail->log('user_bulk_imported', null, auth()->id(), [
+            'total_created' => $createdUsers->count(),
+            'emails' => $createdUsers->pluck('email')->values()->all(),
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.users.index')->with('success', $createdUsers->count().' pengguna berhasil diimport.');
+    }
+
     public function updateUser(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -728,6 +776,25 @@ class MasterDataController extends Controller
         return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Identitas SSO pengguna berhasil diperbarui.');
     }
 
+    public function resendUserInvite(Request $request, User $user)
+    {
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+
+        $this->auditTrail->log('user_invite_resent', null, auth()->id(), [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'role_id' => $user->role_id,
+            'status' => $user->status,
+            'sso_linked' => filled($user->sso_id),
+            'm_id' => $user->m_id,
+            'nbm' => $user->nbm,
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Invite pengguna berhasil dikirim ulang.');
+    }
+
     public function unlinkUserSso(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -752,6 +819,83 @@ class MasterDataController extends Controller
         ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Tautan SSO pengguna berhasil direset.');
+    }
+
+    private function userImportRoleMap(): Collection
+    {
+        return Role::all()->reduce(function (Collection $roles, Role $role) {
+            return $roles
+                ->put('id:'.$role->id, $role)
+                ->put(strtolower((string) $role->parameter), $role)
+                ->put(strtolower((string) $role->name), $role);
+        }, collect());
+    }
+
+    private function parseUserImportCsv(string $path): array
+    {
+        $handle = fopen($path, 'r');
+
+        if (! $handle) {
+            return [[], ['File CSV tidak dapat dibaca.']];
+        }
+
+        $headers = array_map(fn ($header) => strtolower(trim((string) $header)), fgetcsv($handle) ?: []);
+        $requiredHeaders = ['name', 'email', 'role', 'status'];
+        $missingHeaders = array_diff($requiredHeaders, $headers);
+
+        if ($missingHeaders) {
+            fclose($handle);
+
+            return [[], ['Kolom wajib tidak ada: '.implode(', ', $missingHeaders).'.']];
+        }
+
+        $rows = [];
+        $errors = [];
+        $line = 1;
+        $roles = $this->userImportRoleMap();
+
+        while (($data = fgetcsv($handle)) !== false) {
+            $line++;
+            $data = array_slice(array_pad($data, count($headers), ''), 0, count($headers));
+            $row = array_combine($headers, $data) ?: [];
+            $row = collect($row)->map(fn ($value) => trim((string) $value))->all();
+
+            if (collect($row)->filter()->isEmpty()) {
+                continue;
+            }
+
+            $roleValue = $row['role'] ?? '';
+            $role = $roles->get(is_numeric($roleValue) ? 'id:'.$roleValue : strtolower($roleValue));
+
+            if (blank($row['name'] ?? null) || blank($row['email'] ?? null) || ! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "Baris {$line}: nama/email tidak valid.";
+            }
+
+            if (! $role) {
+                $errors[] = "Baris {$line}: role tidak valid.";
+            }
+
+            if (! in_array($row['status'] ?? 'active', ['active', 'inactive'], true)) {
+                $errors[] = "Baris {$line}: status tidak valid.";
+            }
+
+            $rows[] = [
+                'name' => $row['name'] ?? '',
+                'email' => $row['email'] ?? '',
+                'role' => $row['role'] ?? '',
+                'status' => $row['status'] ?? 'active',
+                'm_id' => $row['m_id'] ?? '',
+                'nbm' => $row['nbm'] ?? '',
+            ];
+        }
+
+        fclose($handle);
+
+        if (! $rows) {
+            $errors[] = 'CSV tidak memiliki data user.';
+        }
+
+        return [$rows, $errors];
     }
 
     private function validatePesantrenOverride(Request $request): array

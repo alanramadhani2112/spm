@@ -191,6 +191,7 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Control Center Akses Pengguna')
             ->assertSeeText('Filter Akun')
             ->assertSeeText('Tambah / Undang Pengguna')
+            ->assertSeeText('Import CSV')
             ->assertSeeText('Menunggu SSO')
             ->assertSee($user->email)
             ->assertSeeText('Role & Permission');
@@ -450,6 +451,72 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'user.guard@example.com']);
     }
 
+    public function test_super_admin_can_bulk_import_pre_registered_users(): void
+    {
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+        $csv = $this->csvUpload("name,email,role,status,m_id,nbm\nImport Satu,import.satu@example.com,{$role->parameter},active,MID-1,NBM-1\nImport Dua,import.dua@example.com,{$role->id},inactive,MID-2,NBM-2\n");
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.import'), [
+                'users_csv' => $csv,
+                'reason' => 'Import batch user asesor.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'import.satu@example.com',
+            'role_id' => $role->id,
+            'status' => 'active',
+            'm_id' => 'MID-1',
+            'nbm' => 'NBM-1',
+        ]);
+        $this->assertDatabaseHas('users', [
+            'email' => 'import.dua@example.com',
+            'role_id' => $role->id,
+            'status' => 'inactive',
+        ]);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'user_bulk_imported')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Import batch user asesor.', $auditLog->reason);
+        $this->assertSame(2, $auditLog->metadata['total_created']);
+    }
+
+    public function test_super_admin_bulk_import_rejects_duplicate_email(): void
+    {
+        User::factory()->create(['email' => 'duplicate.import@example.com']);
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+        $csv = $this->csvUpload("name,email,role,status,m_id,nbm\nDuplicate User,duplicate.import@example.com,{$role->parameter},active,,\n");
+
+        $this->actingAs($this->superAdmin)
+            ->from(route('superadmin.master-data.users.index'))
+            ->post(route('superadmin.master-data.users.import'), [
+                'users_csv' => $csv,
+                'reason' => 'Menguji duplicate import.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.index'))
+            ->assertSessionHasErrors('users_csv');
+
+        $this->assertDatabaseMissing('akreditasi_audit_logs', ['action_type' => 'user_bulk_imported']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_bulk_import_users(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+        $csv = $this->csvUpload("name,email,role,status,m_id,nbm\nGuard Import,guard.import@example.com,{$role->parameter},active,,\n");
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.import'), [
+                'users_csv' => $csv,
+                'reason' => 'Menguji permission import.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('users', ['email' => 'guard.import@example.com']);
+    }
+
     public function test_super_admin_can_update_role_permissions(): void
     {
         $role = Role::where('parameter', 'pesantren')->firstOrFail();
@@ -545,8 +612,47 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Detail Akun Pengguna')
             ->assertSeeText('Profil SSO Muhammadiyah ID')
             ->assertSeeText('Identitas Pre-registration SSO')
+            ->assertSeeText('Kirim Ulang Invite')
             ->assertSeeText('Reset Tautan SSO')
             ->assertSeeText('sso-user-001');
+    }
+
+    public function test_super_admin_can_resend_user_invite_with_audit_log(): void
+    {
+        $user = User::factory()->create([
+            'role_id' => 3,
+            'email' => 'invite.resend@example.com',
+            'm_id' => 'mid-resend',
+            'nbm' => 'nbm-resend',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.invite.resend', $user), [
+                'reason' => 'User meminta instruksi login ulang.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.users.show', $user));
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'user_invite_resent')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('User meminta instruksi login ulang.', $auditLog->reason);
+        $this->assertSame($user->id, $auditLog->metadata['user_id']);
+        $this->assertSame('invite.resend@example.com', $auditLog->metadata['user_email']);
+        $this->assertFalse($auditLog->metadata['sso_linked']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_resend_user_invite(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $user = User::factory()->create(['role_id' => 3]);
+
+        $this->actingAs($this->superAdmin)
+            ->post(route('superadmin.master-data.users.invite.resend', $user), [
+                'reason' => 'Menguji permission resend invite.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('akreditasi_audit_logs', ['action_type' => 'user_invite_resent']);
     }
 
     public function test_super_admin_can_update_user_sso_identity_with_audit_log(): void
@@ -626,6 +732,11 @@ class MasterDataTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame('sso-guard', $user->fresh()->sso_id);
+    }
+
+    private function csvUpload(string $content): \Illuminate\Http\UploadedFile
+    {
+        return \Illuminate\Http\UploadedFile::fake()->createWithContent('users.csv', $content);
     }
 
     private function revokeSuperAdminPermission(string $key): void

@@ -186,6 +186,28 @@
             </form>
         </x-metronic.card>
 
+        <x-metronic.card title="Kirim Ulang Invite" class="mb-8">
+            <x-metronic.alert type="info">
+                <div class="fw-semibold mb-1">Kirim ulang instruksi akses untuk user ini.</div>
+                <div>Gunakan saat user belum menautkan SSO atau butuh instruksi login ulang.</div>
+            </x-metronic.alert>
+
+            <form method="POST"
+                  action="{{ route('superadmin.master-data.users.invite.resend', $user) }}"
+                  data-swal-confirm="true"
+                  data-swal-title="Kirim ulang invite?"
+                  data-swal-text="Aktivitas ini akan dicatat di audit log."
+                  data-swal-icon="warning"
+                  data-swal-confirm-button="Ya, kirim">
+                @csrf
+                <label for="resend_invite_reason" class="form-label required">Alasan Resend</label>
+                <textarea id="resend_invite_reason" name="reason" class="form-control form-control-solid mb-5" rows="3" required placeholder="Jelaskan alasan kirim ulang invite">{{ old('reason') }}</textarea>
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-light-primary">Kirim Ulang Invite</button>
+                </div>
+            </form>
+        </x-metronic.card>
+
         <x-metronic.card title="Reset Tautan SSO">
             <x-metronic.alert type="{{ $isSsoLinked ? 'warning' : 'info' }}">
                 <div class="fw-semibold mb-1">{{ $isSsoLinked ? 'Akun ini sudah tertaut ke SSO.' : 'Akun ini belum tertaut ke SSO.' }}</div>

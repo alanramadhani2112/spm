@@ -220,6 +220,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::post('/users', [MasterDataController::class, 'storeUser'])
             ->middleware('permission:user.access.update')
             ->name('users.store');
+        Route::post('/users/import', [MasterDataController::class, 'importUsers'])
+            ->middleware('permission:user.access.update')
+            ->name('users.import');
         Route::get('/users/{user}', [MasterDataController::class, 'showUser'])->name('users.show');
         Route::put('/users/{user}', [MasterDataController::class, 'updateUser'])
             ->middleware('permission:user.access.update')
@@ -227,6 +230,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::patch('/users/{user}/sso-identity', [MasterDataController::class, 'updateUserSsoIdentity'])
             ->middleware('permission:user.access.update')
             ->name('users.sso-identity.update');
+        Route::post('/users/{user}/resend-invite', [MasterDataController::class, 'resendUserInvite'])
+            ->middleware('permission:user.access.update')
+            ->name('users.invite.resend');
         Route::delete('/users/{user}/sso-link', [MasterDataController::class, 'unlinkUserSso'])
             ->middleware('permission:user.access.update')
             ->name('users.sso-link.destroy');

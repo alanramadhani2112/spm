@@ -8,6 +8,9 @@
     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#invite-user-modal">
         <i class="ki-outline ki-plus fs-3"></i>Tambah / Undang Pengguna
     </button>
+    <button type="button" class="btn btn-sm btn-light-primary" data-bs-toggle="modal" data-bs-target="#import-users-modal">
+        <i class="ki-outline ki-file-up fs-3"></i>Import CSV
+    </button>
     <a href="{{ route('superadmin.master-data.roles.index') }}" class="btn btn-sm btn-light-primary">
         <i class="ki-outline ki-security-user fs-3"></i>Role & Permission
     </a>
@@ -121,6 +124,38 @@
     <x-slot:footer>
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
         <button type="submit" form="invite-user-form" class="btn btn-primary">Undang Pengguna</button>
+    </x-slot:footer>
+</x-metronic.modal>
+
+<x-metronic.modal id="import-users-modal" title="Import Pre-registration User" size="lg">
+    <form id="import-users-form"
+          method="POST"
+          action="{{ route('superadmin.master-data.users.import') }}"
+          enctype="multipart/form-data"
+          class="row g-4 text-start"
+          data-swal-confirm="true"
+          data-swal-title="Import user dari CSV?"
+          data-swal-text="User baru akan dibuat massal dan dicatat di audit log."
+          data-swal-icon="warning"
+          data-swal-confirm-button="Ya, import">
+        @csrf
+        <div class="col-12">
+            <div class="rounded bg-light-info border border-info border-dashed p-4 fs-7 text-muted">
+                Format kolom: <span class="font-monospace">name,email,role,status,m_id,nbm</span>. Role dapat memakai ID, parameter, atau nama role. Status: active/inactive.
+            </div>
+        </div>
+        <div class="col-12">
+            <label for="users_csv" class="form-label required">File CSV</label>
+            <input id="users_csv" type="file" name="users_csv" class="form-control form-control-solid" accept=".csv,text/csv" required>
+        </div>
+        <div class="col-12">
+            <label for="import_reason" class="form-label required">Alasan Import</label>
+            <textarea id="import_reason" name="reason" class="form-control form-control-solid" rows="3" required placeholder="Jelaskan alasan bulk import user">{{ old('reason') }}</textarea>
+        </div>
+    </form>
+    <x-slot:footer>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" form="import-users-form" class="btn btn-primary">Import User</button>
     </x-slot:footer>
 </x-metronic.modal>
 

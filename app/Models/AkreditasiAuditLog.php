@@ -53,6 +53,8 @@ class AkreditasiAuditLog extends Model
             'document_category_deleted' => 'Kategori Dokumen Dihapus',
             'role_permissions_updated' => 'Permission Role Diperbarui',
             'user_invited' => 'Pengguna Diundang',
+            'user_invite_resent' => 'Invite Pengguna Dikirim Ulang',
+            'user_bulk_imported' => 'Pengguna Diimport Massal',
             'user_access_updated' => 'Akses Pengguna Diperbarui',
             'pesantren_profile_lock_toggled' => 'Lock Data Pesantren Diubah',
             'pesantren_profile_overridden' => 'Profil Pesantren Dioverride',

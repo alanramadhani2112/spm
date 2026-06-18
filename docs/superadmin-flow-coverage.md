@@ -14,7 +14,7 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
 3. Audit log non-akreditasi sudah diperluas, audit export CSV tersedia, dan reset/unlink SSO user sudah tercatat; live SSO credential/contract masih perlu verifikasi eksternal.
 4. Operational board, Notification Center, Workload Asesor Center, export workload asesor, dan konfirmasi assignment overload sudah tersedia; export operasional lintas domain lain masih perlu dikembangkan.
-5. User lifecycle SSO sudah punya pre-registration, detail user, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
+5. User lifecycle SSO sudah punya pre-registration, detail user, resend invite, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
 ## Coverage Matrix Utama
@@ -58,7 +58,7 @@ Legend:
 | Data Pesantren Control | List/detail readiness, lock/unlock, dan override profil/unit pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen/IPM/SDM/EDPM masih gap lanjutan. |
 | Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
 | User Management | List/filter/detail user | `master-data.users.index/show` | `users`, `showUser` | `superadmin.master-data.users.*` | `MasterDataTest` | Done | Detail user sudah menampilkan role/status, profil SSO, statistik akreditasi, dan audit terbaru. |
-| User Management | Invite/pre-register SSO user | `master-data.users.store` | `storeUser` | Modal users page | `MasterDataTest` | Done | Perlu email invite, resend invite, bulk import. |
+| User Management | Invite/pre-register SSO user | `master-data.users.store`, `master-data.users.import`, `master-data.users.invite.resend` | `storeUser`, `importUsers`, `resendUserInvite` | Modal users page + detail page | `MasterDataTest` | Done | Pre-registration, bulk import CSV, dan resend invite sudah dilindungi `permission:user.access.update` dengan audit reason. |
 | User Management | Edit role/status | `master-data.users.update` | `updateUser` | Modal users page + detail page | `MasterDataTest` | Partial | Sudah dilindungi `permission:user.access.update` dan reason perubahan; perlu protection lebih eksplisit untuk role Super Admin. |
 | SSO | Muhammadiyah ID env + detail/reset management | `/auth/muhammadiyah/*`, `master-data.users.sso-*` | `Auth\MuhammadiyahIdController`, `MasterDataController` | Login button, user detail | `MuhammadiyahIdSsoTest`, `MasterDataTest` | Partial | Live credential belum ada; update M-ID/NBM dan reset/unlink SSO sudah tersedia dengan audit. |
 | Settings | Settings dashboard | `superadmin.settings.index` | `SettingsController@index` | `superadmin.settings.index` | `SettingsTest` | Done | Good UI, but enforcement coverage perlu audit. |
@@ -138,10 +138,9 @@ Sudah tercatat:
 Belum/kurang tercatat:
 
 - Live SSO failure contract bila credential tersedia.
-- Resend invite/bulk import activity bila fitur itu ditambahkan.
 - Reason policy yang konsisten untuk seluruh aksi destructive/sensitif.
 
-Rekomendasi: lanjutkan audit layer untuk export, bulk import/resend invite, dan permission destructive master data/export.
+Rekomendasi: lanjutkan audit layer untuk export lanjutan dan permission destructive master data/export.
 
 ## Settings Enforcement Audit
 
@@ -220,7 +219,6 @@ Partial:
 
 Missing:
 
-- Resend invite/bulk import user.
 - Override dokumen/IPM/SDM/EDPM dari Super Admin.
 
 ## Recommended Next Implementation Order
@@ -245,8 +243,8 @@ Missing:
 ### P2 — Data & Reporting
 
 4. **User lifecycle lanjutan**
-   - Resend invite.
-   - Bulk import pre-registration.
+   - Resend invite sudah tersedia.
+   - Bulk import pre-registration sudah tersedia.
 
 5. **Data Pesantren Control lanjutan**
    - Override dokumen/IPM/SDM/EDPM with audit.
