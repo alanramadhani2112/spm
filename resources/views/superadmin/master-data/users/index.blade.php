@@ -11,6 +11,9 @@
     <button type="button" class="btn btn-sm btn-light-primary" data-bs-toggle="modal" data-bs-target="#import-users-modal">
         <i class="ki-outline ki-file-up fs-3"></i>Import CSV
     </button>
+    <a href="{{ route('superadmin.master-data.users.export', request()->only(['q', 'role', 'status'])) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-exit-up fs-3"></i>Export Users
+    </a>
     <a href="{{ route('superadmin.master-data.roles.index') }}" class="btn btn-sm btn-light-primary">
         <i class="ki-outline ki-security-user fs-3"></i>Role & Permission
     </a>

@@ -58,6 +58,7 @@ class AkreditasiAuditLog extends Model
             'user_access_updated' => 'Akses Pengguna Diperbarui',
             'pesantren_profile_lock_toggled' => 'Lock Data Pesantren Diubah',
             'pesantren_profile_overridden' => 'Profil Pesantren Dioverride',
+            'pesantren_documents_overridden' => 'Dokumen Pesantren Dioverride',
             'pesantren_ipm_overridden' => 'Data IPM Pesantren Dioverride',
             'pesantren_sdm_overridden' => 'Data SDM Pesantren Dioverride',
             'pesantren_edpm_overridden' => 'Data EDPM Pesantren Dioverride',

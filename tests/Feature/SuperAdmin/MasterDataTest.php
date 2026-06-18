@@ -197,6 +197,42 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Role & Permission');
     }
 
+    public function test_super_admin_can_export_users_and_roles(): void
+    {
+        $role = Role::where('parameter', 'asesor')->firstOrFail();
+        User::factory()->create([
+            'role_id' => $role->id,
+            'name' => 'User Export Report',
+            'email' => 'user.export.report@example.com',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.export', ['q' => 'Export Report']))
+            ->assertOk()
+            ->assertDownload('users-superadmin.csv');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.roles.export'))
+            ->assertOk()
+            ->assertDownload('roles-permissions-superadmin.csv');
+
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'superadmin_exported',
+            'user_id' => $this->superAdmin->id,
+        ]);
+        $this->assertSame('users', AkreditasiAuditLog::where('action_type', 'superadmin_exported')->firstOrFail()->metadata['export_type']);
+    }
+
+    public function test_super_admin_without_export_permission_cannot_export_users(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.export'))
+            ->assertForbidden();
+    }
+
     public function test_pesantren_data_control_page_displays_readiness_and_lock_state(): void
     {
         $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'User Pesantren Ready']);
@@ -298,6 +334,7 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Detail Pesantren')
             ->assertSeeText('Pesantren Detail')
             ->assertSeeText('Override Profil Pesantren')
+            ->assertSeeText('Override Dokumen Pesantren')
             ->assertSeeText('Override Data IPM')
             ->assertSeeText('Override Data SDM')
             ->assertSeeText('Override Data EDPM')
@@ -369,6 +406,61 @@ class MasterDataTest extends TestCase
         $this->assertTrue($auditLog->metadata['was_locked']);
         $this->assertSame('Pesantren Lama', $auditLog->metadata['old']['profile']['nama_pesantren']);
         $this->assertSame('Pesantren Baru', $auditLog->metadata['new']['profile']['nama_pesantren']);
+    }
+
+    public function test_super_admin_can_override_pesantren_documents_with_audit_log(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Dokumen',
+            'dok_profil' => 'old/profile.pdf',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.documents.update', $pesantren), [
+                'dok_profil' => \Illuminate\Http\UploadedFile::fake()->create('profil-baru.pdf', 120, 'application/pdf'),
+                'dok_nsp' => \Illuminate\Http\UploadedFile::fake()->create('nsp-baru.pdf', 120, 'application/pdf'),
+                'reason' => 'Koreksi dokumen berdasarkan arsip resmi.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
+
+        $pesantren->refresh();
+        $this->assertNotSame('old/profile.pdf', $pesantren->dok_profil);
+        $this->assertNotNull($pesantren->dok_nsp);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($pesantren->dok_profil);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($pesantren->dok_nsp);
+
+        $auditLog = AkreditasiAuditLog::where('action_type', 'pesantren_documents_overridden')->firstOrFail();
+        $this->assertSame($this->superAdmin->id, $auditLog->user_id);
+        $this->assertSame('Koreksi dokumen berdasarkan arsip resmi.', $auditLog->reason);
+        $this->assertSame($pesantren->id, $auditLog->metadata['pesantren_id']);
+        $this->assertSame(['dok_profil', 'dok_nsp'], $auditLog->metadata['fields']);
+        $this->assertSame('old/profile.pdf', $auditLog->metadata['old']['dok_profil']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_override_pesantren_documents(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Dokumen Guard',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.documents.update', $pesantren), [
+                'dok_profil' => \Illuminate\Http\UploadedFile::fake()->create('profil-guard.pdf', 120, 'application/pdf'),
+                'reason' => 'Menguji permission dokumen.',
+            ])
+            ->assertForbidden();
+
+        $this->assertNull($pesantren->fresh()->dok_profil);
+        $this->assertDatabaseMissing('akreditasi_audit_logs', ['action_type' => 'pesantren_documents_overridden']);
     }
 
     public function test_super_admin_can_override_pesantren_assessment_datasets_with_audit_log(): void

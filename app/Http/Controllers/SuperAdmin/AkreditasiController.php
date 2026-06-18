@@ -127,6 +127,88 @@ class AkreditasiController extends Controller
         }, 'akreditasi-superadmin.csv', ['Content-Type' => 'text/csv']);
     }
 
+    public function exportScores(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $search = trim((string) $request->query('q', ''));
+        $akreditasis = $this->akreditasiIndexQuery($period, $status, $search)
+            ->with(['user.pesantren'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'akreditasi_scores',
+            'format' => 'csv',
+            'filters' => compact('period', 'status') + ['q' => $search],
+            'rows_exported' => $akreditasis->count(),
+        ]);
+
+        return response()->streamDownload(function () use ($akreditasis) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['UUID', 'Pesantren', 'Status', 'NA1', 'NA2', 'NK', 'NV', 'Nilai', 'Peringkat', 'Tanggal']);
+
+            foreach ($akreditasis as $akreditasi) {
+                fputcsv($out, [
+                    $akreditasi->uuid,
+                    $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '-',
+                    $akreditasi->getStatusLabel(),
+                    $akreditasi->na1 ?? '-',
+                    $akreditasi->na2 ?? '-',
+                    $akreditasi->nk ?? '-',
+                    $akreditasi->nv ?? '-',
+                    $akreditasi->nilai ?? '-',
+                    $akreditasi->peringkat ?? '-',
+                    $akreditasi->created_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($out);
+        }, 'nilai-peringkat-superadmin.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    public function exportDocumentStatus(Request $request)
+    {
+        $period = $request->query('period', 'all');
+        $status = $request->query('status', 'all');
+        $search = trim((string) $request->query('q', ''));
+        $documentFields = $this->pesantrenDocumentFields();
+        $akreditasis = $this->akreditasiIndexQuery($period, $status, $search)
+            ->with(['user.pesantren'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'document_status',
+            'format' => 'csv',
+            'filters' => compact('period', 'status') + ['q' => $search],
+            'rows_exported' => $akreditasis->count(),
+        ]);
+
+        return response()->streamDownload(function () use ($akreditasis, $documentFields) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['UUID', 'Pesantren', 'Status', 'Dokumen Terisi', 'Total Dokumen', 'Kurang']);
+
+            foreach ($akreditasis as $akreditasi) {
+                $pesantren = $akreditasi->user?->pesantren;
+                $missing = collect($documentFields)
+                    ->filter(fn ($label, $field) => blank($pesantren?->{$field}))
+                    ->values();
+
+                fputcsv($out, [
+                    $akreditasi->uuid,
+                    $pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '-',
+                    $akreditasi->getStatusLabel(),
+                    count($documentFields) - $missing->count(),
+                    count($documentFields),
+                    $missing->implode(' | '),
+                ]);
+            }
+
+            fclose($out);
+        }, 'dokumen-status-superadmin.csv', ['Content-Type' => 'text/csv']);
+    }
+
     // ============================================================
     // PENGAJUAN — superadmin ajukan untuk pesantren tertentu
     // ============================================================
@@ -958,6 +1040,23 @@ class AkreditasiController extends Controller
         }
 
         return $actions;
+    }
+
+    private function pesantrenDocumentFields(): array
+    {
+        return [
+            'dok_profil' => 'Dokumen Profil',
+            'dok_nsp' => 'Sertifikat NSP',
+            'dok_renstra' => 'Renstra',
+            'dok_rk_anggaran' => 'RK Anggaran',
+            'dok_kurikulum' => 'Kurikulum',
+            'dok_silabus_rpp' => 'Silabus/RPP',
+            'dok_kepengasuhan' => 'Kepengasuhan',
+            'dok_peraturan_kepegawaian' => 'Peraturan Kepegawaian',
+            'dok_sarpras' => 'Sarpras',
+            'dok_laporan_tahunan' => 'Laporan Tahunan',
+            'dok_sop' => 'SOP',
+        ];
     }
 
     private function assignmentHistory(Akreditasi $akreditasi): Collection

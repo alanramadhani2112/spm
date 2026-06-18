@@ -48,6 +48,20 @@ class MasterDataController extends Controller
         'layanan_satuan_pendidikan',
     ];
 
+    private const PESANTREN_DOCUMENT_FIELDS = [
+        'dok_profil' => 'Dokumen Profil',
+        'dok_nsp' => 'Sertifikat NSP',
+        'dok_renstra' => 'Renstra',
+        'dok_rk_anggaran' => 'RK Anggaran',
+        'dok_kurikulum' => 'Kurikulum',
+        'dok_silabus_rpp' => 'Silabus/RPP',
+        'dok_kepengasuhan' => 'Kepengasuhan',
+        'dok_peraturan_kepegawaian' => 'Peraturan Kepegawaian',
+        'dok_sarpras' => 'Sarpras',
+        'dok_laporan_tahunan' => 'Laporan Tahunan',
+        'dok_sop' => 'SOP',
+    ];
+
     public function __construct(
         private AuditTrailService $auditTrail,
         private PesantrenService $pesantrenService,
@@ -329,7 +343,9 @@ class MasterDataController extends Controller
             ->latest()
             ->get();
 
-        return view('superadmin.master-data.pesantren.show', compact('pesantren', 'ipm', 'sdm', 'edpm', 'completeness', 'activeAkreditasis'));
+        $documentFields = self::PESANTREN_DOCUMENT_FIELDS;
+
+        return view('superadmin.master-data.pesantren.show', compact('pesantren', 'ipm', 'sdm', 'edpm', 'documentFields', 'completeness', 'activeAkreditasis'));
     }
 
     public function updatePesantrenIpm(Request $request, Pesantren $pesantren)
@@ -345,6 +361,45 @@ class MasterDataController extends Controller
     public function updatePesantrenEdpm(Request $request, Pesantren $pesantren)
     {
         return $this->updatePesantrenDataset($request, $pesantren, 'edpm');
+    }
+
+    public function updatePesantrenDocuments(Request $request, Pesantren $pesantren)
+    {
+        $rules = ['reason' => ['required', 'string', 'min:3']];
+
+        foreach (self::PESANTREN_DOCUMENT_FIELDS as $field => $label) {
+            $rules[$field] = ['nullable', 'file', 'mimes:pdf', 'max:5120'];
+        }
+
+        $validated = $request->validate($rules);
+        $uploadedFields = collect(array_keys(self::PESANTREN_DOCUMENT_FIELDS))
+            ->filter(fn (string $field) => $request->hasFile($field))
+            ->values();
+
+        if ($uploadedFields->isEmpty()) {
+            return back()->withErrors(['documents' => 'Minimal satu dokumen PDF harus diupload.'])->withInput();
+        }
+
+        $before = $pesantren->only($uploadedFields->all());
+        $new = [];
+
+        foreach ($uploadedFields as $field) {
+            $path = $request->file($field)->store('pesantren-documents');
+            $pesantren->{$field} = $path;
+            $new[$field] = $path;
+        }
+
+        $pesantren->save();
+
+        $this->auditTrail->log('pesantren_documents_overridden', null, auth()->id(), [
+            'pesantren_id' => $pesantren->id,
+            'user_id' => $pesantren->user_id,
+            'fields' => $uploadedFields->all(),
+            'old' => $before,
+            'new' => $new,
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.pesantren.show', $pesantren)->with('success', 'Dokumen pesantren berhasil dioverride.');
     }
 
     public function updatePesantren(Request $request, Pesantren $pesantren)
@@ -565,6 +620,34 @@ class MasterDataController extends Controller
         return view('superadmin.master-data.roles.index', compact('roles', 'permissions', 'roleStats', 'totalPermissions'));
     }
 
+    public function exportRoles()
+    {
+        $roles = Role::with('permissions')->withCount('users')->orderBy('id')->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'roles_permissions',
+            'format' => 'csv',
+            'rows_exported' => $roles->count(),
+        ]);
+
+        return response()->streamDownload(function () use ($roles) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Role ID', 'Role', 'Parameter', 'Total User', 'Permissions']);
+
+            foreach ($roles as $role) {
+                fputcsv($out, [
+                    $role->id,
+                    $role->name,
+                    $role->parameter,
+                    $role->users_count,
+                    $role->permissions->pluck('key')->sort()->implode(' | '),
+                ]);
+            }
+
+            fclose($out);
+        }, 'roles-permissions-superadmin.csv', ['Content-Type' => 'text/csv']);
+    }
+
     public function updateRolePermissions(Request $request, Role $role)
     {
         $validated = $request->validate([
@@ -642,6 +725,61 @@ class MasterDataController extends Controller
         ];
 
         return view('superadmin.master-data.users.index', compact('users', 'roles', 'filters', 'hasFilters', 'statusOptions', 'userStats'));
+    }
+
+    public function exportUsers(Request $request)
+    {
+        $filters = [
+            'q' => trim((string) $request->query('q', '')),
+            'role' => $request->query('role'),
+            'status' => $request->query('status'),
+        ];
+        $users = User::with('role')
+            ->when($filters['q'] !== '', function ($query) use ($filters) {
+                $keyword = '%'.$filters['q'].'%';
+
+                $query->where(function ($query) use ($keyword) {
+                    $query->where('name', 'like', $keyword)
+                        ->orWhere('email', 'like', $keyword)
+                        ->orWhere('uuid', 'like', $keyword)
+                        ->orWhere('sso_id', 'like', $keyword)
+                        ->orWhere('m_id', 'like', $keyword)
+                        ->orWhere('nbm', 'like', $keyword)
+                        ->orWhereHas('role', fn ($roleQuery) => $roleQuery->where('name', 'like', $keyword));
+                });
+            })
+            ->when(filled($filters['role']), fn ($query) => $query->where('role_id', $filters['role']))
+            ->when(filled($filters['status']), fn ($query) => $query->where('status', $filters['status']))
+            ->orderBy('name')
+            ->get();
+
+        $this->auditTrail->log('superadmin_exported', null, auth()->id(), [
+            'export_type' => 'users',
+            'format' => 'csv',
+            'filters' => $filters,
+            'rows_exported' => $users->count(),
+        ]);
+
+        return response()->streamDownload(function () use ($users) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['User ID', 'Nama', 'Email', 'Role', 'Status', 'SSO ID', 'M-ID', 'NBM', 'Terdaftar']);
+
+            foreach ($users as $user) {
+                fputcsv($out, [
+                    $user->id,
+                    $user->name,
+                    $user->email,
+                    $user->role?->name ?? '-',
+                    $user->status,
+                    $user->sso_id ?? '-',
+                    $user->m_id ?? '-',
+                    $user->nbm ?? '-',
+                    $user->created_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+
+            fclose($out);
+        }, 'users-superadmin.csv', ['Content-Type' => 'text/csv']);
     }
 
     public function storeUser(Request $request)

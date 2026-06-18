@@ -89,6 +89,41 @@
     </x-metronic.card>
 @endif
 
+<x-metronic.card title="Override Dokumen Pesantren" class="mb-8">
+    <x-slot:header>
+        <span class="badge badge-light-danger">PDF max 5MB</span>
+    </x-slot:header>
+
+    <form method="POST" action="{{ route('superadmin.master-data.pesantren.documents.update', $pesantren) }}" enctype="multipart/form-data" class="d-grid gap-6">
+        @csrf
+        @method('PATCH')
+        <div class="row g-5">
+            @foreach($documentFields as $field => $label)
+                <div class="col-md-6">
+                    <label for="{{ $field }}" class="form-label">{{ $label }}</label>
+                    <input id="{{ $field }}" type="file" name="{{ $field }}" class="form-control form-control-solid" accept="application/pdf,.pdf">
+                    <div class="fs-8 text-muted mt-1">Saat ini: {{ $pesantren->{$field} ?: 'Belum ada' }}</div>
+                </div>
+            @endforeach
+        </div>
+        <div>
+            <label for="documents_reason" class="form-label required">Alasan Override Dokumen</label>
+            <textarea id="documents_reason" name="reason" class="form-control form-control-solid" rows="3" required placeholder="Jelaskan alasan Super Admin mengubah dokumen pesantren">{{ old('reason') }}</textarea>
+            @error('documents')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-light-primary"
+                    data-swal-confirm="true"
+                    data-swal-title="Simpan override dokumen?"
+                    data-swal-text="Dokumen yang diupload akan mengganti dokumen lama dan tercatat di audit log."
+                    data-swal-icon="warning"
+                    data-swal-confirm-button="Ya, simpan">
+                Simpan Dokumen
+            </button>
+        </div>
+    </form>
+</x-metronic.card>
+
 <div class="row g-5 g-xl-8 mb-8">
     @foreach($datasetOverrides as $key => $override)
         <div class="col-xl-4">

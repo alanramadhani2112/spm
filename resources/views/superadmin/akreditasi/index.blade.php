@@ -8,6 +8,12 @@
     <a href="{{ route('superadmin.akreditasi.export', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
         <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
     </a>
+    <a href="{{ route('superadmin.akreditasi.export-scores', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-chart-line fs-2"></i>Export Nilai
+    </a>
+    <a href="{{ route('superadmin.akreditasi.export-documents', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+        <i class="ki-outline ki-document fs-2"></i>Export Dokumen
+    </a>
     <a href="{{ route('superadmin.akreditasi.pengajuan') }}" class="btn btn-sm btn-primary">
         <i class="ki-outline ki-add-files fs-2"></i>Pengajuan Baru
     </a>

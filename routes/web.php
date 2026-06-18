@@ -130,6 +130,12 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::get('/akreditasi/export', [SuperAdminAkreditasiController::class, 'export'])
         ->middleware('permission:superadmin.export')
         ->name('akreditasi.export');
+    Route::get('/akreditasi/export-scores', [SuperAdminAkreditasiController::class, 'exportScores'])
+        ->middleware('permission:superadmin.export')
+        ->name('akreditasi.export-scores');
+    Route::get('/akreditasi/export-documents', [SuperAdminAkreditasiController::class, 'exportDocumentStatus'])
+        ->middleware('permission:superadmin.export')
+        ->name('akreditasi.export-documents');
     Route::get('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
     Route::get('/akreditasi/{id}', [SuperAdminAkreditasiController::class, 'show'])->name('akreditasi.show');
@@ -221,11 +227,20 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::patch('/pesantren/{pesantren}/edpm', [MasterDataController::class, 'updatePesantrenEdpm'])
             ->middleware('permission:user.access.update')
             ->name('pesantren.edpm.update');
+        Route::patch('/pesantren/{pesantren}/documents', [MasterDataController::class, 'updatePesantrenDocuments'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.documents.update');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
+        Route::get('/roles/export', [MasterDataController::class, 'exportRoles'])
+            ->middleware('permission:superadmin.export')
+            ->name('roles.export');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
             ->middleware('permission:role.permissions.update')
             ->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
+        Route::get('/users/export', [MasterDataController::class, 'exportUsers'])
+            ->middleware('permission:superadmin.export')
+            ->name('users.export');
         Route::post('/users', [MasterDataController::class, 'storeUser'])
             ->middleware('permission:user.access.update')
             ->name('users.store');

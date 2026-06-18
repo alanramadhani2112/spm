@@ -200,6 +200,44 @@ class AkreditasiConsoleTest extends TestCase
         $this->assertSame(1, $auditLog->metadata['rows_exported']);
     }
 
+    public function test_super_admin_can_export_scores_and_document_status(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3, 'name' => 'Pesantren Report']);
+        Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Report',
+            'dok_profil' => 'dok/profil.pdf',
+        ]);
+        $akreditasi = Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => (string) Str::uuid(),
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'na1' => 90,
+            'na2' => 88,
+            'nk' => 91,
+            'nv' => 89,
+            'nilai' => 89.5,
+            'peringkat' => 'A',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-scores', ['q' => 'Pesantren Report']))
+            ->assertOk()
+            ->assertDownload('nilai-peringkat-superadmin.csv');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-documents', ['q' => 'Pesantren Report']))
+            ->assertOk()
+            ->assertDownload('dokumen-status-superadmin.csv');
+
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'superadmin_exported',
+            'user_id' => $this->superAdmin->id,
+        ]);
+        $this->assertSame(2, AkreditasiAuditLog::where('action_type', 'superadmin_exported')->count());
+        $this->assertSame($akreditasi->id, Akreditasi::where('uuid', $akreditasi->uuid)->firstOrFail()->id);
+    }
+
     public function test_super_admin_without_export_permission_cannot_export_akreditasi_console(): void
     {
         $this->revokeSuperAdminPermission('superadmin.export');

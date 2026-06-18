@@ -13,7 +13,7 @@ Gap utama bukan lagi akses route dasar, tetapi governance dan operasional:
 1. Permission matrix sudah punya enforcement pada aksi sensitif awal dan sebagian workflow utama; akses area besar tetap berbasis role.
 2. Settings sudah punya UI, key alignment terpusat, dan enforcement untuk deadline, correction cycles, limit action, banding eligibility, NV override, document requirement, dan `nv_reason_mode`.
 3. Audit log non-akreditasi sudah diperluas, audit export CSV tersedia, dan reset/unlink SSO user sudah tercatat; live SSO credential/contract masih perlu verifikasi eksternal.
-4. Operational board, Notification Center, Workload Asesor Center, export workload asesor, dan konfirmasi assignment overload sudah tersedia; export operasional lintas domain lain masih perlu dikembangkan.
+4. Operational board, Notification Center, Workload Asesor Center, export workload asesor, export user/role/nilai/dokumen, dan konfirmasi assignment overload sudah tersedia.
 5. User lifecycle SSO sudah punya pre-registration, detail user, resend invite, update identitas SSO, dan reset/unlink SSO; live integration tetap menunggu credential.
 6. Beberapa flow memakai view milik Admin/Asesor dengan route override; fungsional, tetapi perlu QA UI konsistensi dan wording Super Admin.
 
@@ -30,7 +30,7 @@ Legend:
 | Dashboard | Ringkasan nasional akreditasi | `superadmin.dashboard` | `DashboardController@index` | `superadmin.dashboard.index` | `DashboardExportTest` | Done | Sudah dilengkapi operational board; export masih perlu diperluas. |
 | Dashboard | Export CSV dashboard | `superadmin.dashboard.export` | `DashboardController@export` | N/A | `DashboardExportTest` | Done | Export masih ringkasan dashboard, belum laporan lengkap per domain. |
 | Akreditasi Console | List semua akreditasi | `superadmin.akreditasi.index` | `AkreditasiController@index` | `superadmin.akreditasi.index` | `AkreditasiConsoleTest` | Done | Operational board sudah link ke console terfilter. |
-| Akreditasi Console | Export console CSV | `superadmin.akreditasi.export` | `AkreditasiController@export` | N/A | `AkreditasiConsoleTest` | Done | Perlu export tambahan: nilai, asesor workload, audit, dokumen. |
+| Akreditasi Console | Export console CSV | `superadmin.akreditasi.export`, `superadmin.akreditasi.export-scores`, `superadmin.akreditasi.export-documents` | `AkreditasiController@export/exportScores/exportDocumentStatus` | N/A | `AkreditasiConsoleTest` | Done | Export console, nilai/peringkat, status dokumen, workload asesor, dan audit sudah tersedia. |
 | Akreditasi Detail | Detail pengajuan lengkap | `superadmin.akreditasi.show` | `AkreditasiController@show` | `superadmin.akreditasi.show` | `AkreditasiConsoleTest` | Done | Perlu action audit completeness dan UI QA semua tab. |
 | Pengajuan | Buat pengajuan untuk pesantren | `superadmin.akreditasi.pengajuan`, `submit-pengajuan` | `pengajuanForm`, `submitPengajuan` | `superadmin.akreditasi.pengajuan` | `AkreditasiConsoleTest` | Done | Perlu validasi duplicate/eligibility lebih jelas di UI. |
 | Review Awal | Terima/tolak pengajuan | `review-awal`, `terima-pengajuan`, `tolak-pengajuan` | `reviewAwal`, `terimaPengajuan`, `tolakPengajuan` | `admin.akreditasi.review-awal` dengan route Super Admin | `AkreditasiConsoleTest` | Done | Aksi terima/tolak sudah dilindungi `permission:akreditasi.review_awal`; view masih share Admin. |
@@ -55,9 +55,9 @@ Legend:
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
-| Data Pesantren Control | List/detail readiness, lock/unlock, override profil/unit, IPM, SDM, dan EDPM pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `updatePesantrenIpm`, `updatePesantrenSdm`, `updatePesantrenEdpm`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit/IPM/SDM/EDPM sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen masih gap lanjutan. |
-| Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
-| User Management | List/filter/detail user | `master-data.users.index/show` | `users`, `showUser` | `superadmin.master-data.users.*` | `MasterDataTest` | Done | Detail user sudah menampilkan role/status, profil SSO, statistik akreditasi, dan audit terbaru. |
+| Data Pesantren Control | List/detail readiness, lock/unlock, override profil/unit, dokumen, IPM, SDM, dan EDPM pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `updatePesantrenDocuments`, `updatePesantrenIpm`, `updatePesantrenSdm`, `updatePesantrenEdpm`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit/dokumen/IPM/SDM/EDPM sudah dilindungi `permission:user.access.update` dan audit reason. |
+| Role & Permission | Matrix read-only + modal edit/export | `master-data.roles.index`, `roles.export`, `roles.permissions.update` | `roles`, `exportRoles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update`, punya audit diff, dan export matrix permission. |
+| User Management | List/filter/detail/export user | `master-data.users.index/show/export` | `users`, `showUser`, `exportUsers` | `superadmin.master-data.users.*` | `MasterDataTest` | Done | Detail user sudah menampilkan role/status, profil SSO, statistik akreditasi, audit terbaru, dan export CSV terfilter. |
 | User Management | Invite/pre-register SSO user | `master-data.users.store`, `master-data.users.import`, `master-data.users.invite.resend` | `storeUser`, `importUsers`, `resendUserInvite` | Modal users page + detail page | `MasterDataTest` | Done | Pre-registration, bulk import CSV, dan resend invite sudah dilindungi `permission:user.access.update` dengan audit reason. |
 | User Management | Edit role/status | `master-data.users.update` | `updateUser` | Modal users page + detail page | `MasterDataTest` | Partial | Sudah dilindungi `permission:user.access.update` dan reason perubahan; perlu protection lebih eksplisit untuk role Super Admin. |
 | SSO | Muhammadiyah ID env + detail/reset management | `/auth/muhammadiyah/*`, `master-data.users.sso-*` | `Auth\MuhammadiyahIdController`, `MasterDataController` | Login button, user detail | `MuhammadiyahIdSsoTest`, `MasterDataTest` | Partial | Live credential belum ada; update M-ID/NBM dan reset/unlink SSO sudah tersedia dengan audit. |
@@ -219,7 +219,7 @@ Partial:
 
 Missing:
 
-- Override dokumen dari Super Admin.
+- Hardening role Super Admin dan UX acting-as flow shared.
 
 ## Recommended Next Implementation Order
 
@@ -247,13 +247,12 @@ Missing:
    - Bulk import pre-registration sudah tersedia.
 
 5. **Data Pesantren Control lanjutan**
-   - Override IPM/SDM/EDPM with audit sudah tersedia.
-   - Override dokumen with audit.
+   - Override dokumen/IPM/SDM/EDPM with audit sudah tersedia.
 
 6. **Reporting/export suite**
-   - Export users/roles.
-   - Export nilai/peringkat.
-   - Export dokumen status.
+   - Export users/roles sudah tersedia.
+   - Export nilai/peringkat sudah tersedia.
+   - Export dokumen status sudah tersedia.
 
 ## Definition of Done untuk Super Admin
 
