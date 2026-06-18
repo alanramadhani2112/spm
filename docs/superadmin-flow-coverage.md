@@ -55,7 +55,7 @@ Legend:
 | Master Data | Dashboard master data | `superadmin.master-data.index` | `MasterDataController@index` | `superadmin.master-data.index` | `MasterDataTest` | Done | Good. |
 | Master Data EDPM | CRUD komponen & butir | `master-data.edpm.*` | `edpm`, `store/update/destroy Komponen/Butir` | `superadmin.master-data.edpm.index` | `MasterDataTest` | Done | Perlu audit log perubahan master instrumen. |
 | Document Categories | CRUD/toggle kategori dokumen | `master-data.document-categories.*` | `documentCategories`, `store/update/toggle/destroy` | `superadmin.master-data.document-categories.index` | `MasterDataTest` | Done | Perlu audit log; rules belum sepenuhnya terhubung ke workflow upload/visibility. |
-| Data Pesantren Control | List/detail readiness, lock/unlock, dan override profil/unit pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen/IPM/SDM/EDPM masih gap lanjutan. |
+| Data Pesantren Control | List/detail readiness, lock/unlock, override profil/unit, IPM, SDM, dan EDPM pesantren | `master-data.pesantren.*` | `pesantren`, `showPesantren`, `updatePesantren`, `updatePesantrenIpm`, `updatePesantrenSdm`, `updatePesantrenEdpm`, `togglePesantrenLock` | `superadmin.master-data.pesantren.*` | `MasterDataTest` | Done | Override profil/unit/IPM/SDM/EDPM sudah dilindungi `permission:user.access.update` dan audit reason; override dokumen masih gap lanjutan. |
 | Role & Permission | Matrix read-only + modal edit | `master-data.roles.index`, `roles.permissions.update` | `roles`, `updateRolePermissions` | `superadmin.master-data.roles.index` | `MasterDataTest` | Done | Update permission sudah dilindungi `permission:role.permissions.update` dan punya audit diff. |
 | User Management | List/filter/detail user | `master-data.users.index/show` | `users`, `showUser` | `superadmin.master-data.users.*` | `MasterDataTest` | Done | Detail user sudah menampilkan role/status, profil SSO, statistik akreditasi, dan audit terbaru. |
 | User Management | Invite/pre-register SSO user | `master-data.users.store`, `master-data.users.import`, `master-data.users.invite.resend` | `storeUser`, `importUsers`, `resendUserInvite` | Modal users page + detail page | `MasterDataTest` | Done | Pre-registration, bulk import CSV, dan resend invite sudah dilindungi `permission:user.access.update` dengan audit reason. |
@@ -219,7 +219,7 @@ Partial:
 
 Missing:
 
-- Override dokumen/IPM/SDM/EDPM dari Super Admin.
+- Override dokumen dari Super Admin.
 
 ## Recommended Next Implementation Order
 
@@ -247,7 +247,8 @@ Missing:
    - Bulk import pre-registration sudah tersedia.
 
 5. **Data Pesantren Control lanjutan**
-   - Override dokumen/IPM/SDM/EDPM with audit.
+   - Override IPM/SDM/EDPM with audit sudah tersedia.
+   - Override dokumen with audit.
 
 6. **Reporting/export suite**
    - Export users/roles.

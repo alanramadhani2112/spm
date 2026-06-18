@@ -212,6 +212,15 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         Route::put('/pesantren/{pesantren}', [MasterDataController::class, 'updatePesantren'])
             ->middleware('permission:user.access.update')
             ->name('pesantren.update');
+        Route::patch('/pesantren/{pesantren}/ipm', [MasterDataController::class, 'updatePesantrenIpm'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.ipm.update');
+        Route::patch('/pesantren/{pesantren}/sdm', [MasterDataController::class, 'updatePesantrenSdm'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.sdm.update');
+        Route::patch('/pesantren/{pesantren}/edpm', [MasterDataController::class, 'updatePesantrenEdpm'])
+            ->middleware('permission:user.access.update')
+            ->name('pesantren.edpm.update');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
             ->middleware('permission:role.permissions.update')

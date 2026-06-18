@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
 use App\Models\AkreditasiAuditLog;
 use App\Models\DocumentCategory;
+use App\Models\Edpm;
+use App\Models\Ipm;
 use App\Models\MasterEdpmButir;
 use App\Models\MasterEdpmKomponen;
 use App\Models\Permission;
 use App\Models\Pesantren;
 use App\Models\PesantrenUnit;
 use App\Models\Role;
+use App\Models\SdmPesantren;
 use App\Models\User;
 use App\Services\AuditTrailService;
 use App\Services\PesantrenService;
@@ -316,6 +319,9 @@ class MasterDataController extends Controller
     public function showPesantren(Pesantren $pesantren)
     {
         $pesantren->load(['user', 'units']);
+        $ipm = Ipm::where('user_id', $pesantren->user_id)->first();
+        $sdm = SdmPesantren::where('user_id', $pesantren->user_id)->first();
+        $edpm = Edpm::where('user_id', $pesantren->user_id)->first();
         $completeness = $this->pesantrenService->checkDataCompleteness($pesantren->user_id);
         $activeAkreditasis = Akreditasi::query()
             ->where('user_id', $pesantren->user_id)
@@ -323,7 +329,22 @@ class MasterDataController extends Controller
             ->latest()
             ->get();
 
-        return view('superadmin.master-data.pesantren.show', compact('pesantren', 'completeness', 'activeAkreditasis'));
+        return view('superadmin.master-data.pesantren.show', compact('pesantren', 'ipm', 'sdm', 'edpm', 'completeness', 'activeAkreditasis'));
+    }
+
+    public function updatePesantrenIpm(Request $request, Pesantren $pesantren)
+    {
+        return $this->updatePesantrenDataset($request, $pesantren, 'ipm');
+    }
+
+    public function updatePesantrenSdm(Request $request, Pesantren $pesantren)
+    {
+        return $this->updatePesantrenDataset($request, $pesantren, 'sdm');
+    }
+
+    public function updatePesantrenEdpm(Request $request, Pesantren $pesantren)
+    {
+        return $this->updatePesantrenDataset($request, $pesantren, 'edpm');
     }
 
     public function updatePesantren(Request $request, Pesantren $pesantren)
@@ -819,6 +840,39 @@ class MasterDataController extends Controller
         ], $validated['reason']);
 
         return redirect()->route('superadmin.master-data.users.show', $user)->with('success', 'Tautan SSO pengguna berhasil direset.');
+    }
+
+    private function updatePesantrenDataset(Request $request, Pesantren $pesantren, string $dataset)
+    {
+        $validated = $request->validate([
+            'data_json' => ['required', 'string'],
+            'reason' => ['required', 'string', 'min:3'],
+        ]);
+        $data = json_decode($validated['data_json'], true);
+
+        if (! is_array($data) || json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors(['data_json' => 'Data harus berupa JSON object valid.'])->withInput();
+        }
+
+        $config = match ($dataset) {
+            'ipm' => [Ipm::class, 'pesantren_ipm_overridden', 'Data IPM'],
+            'sdm' => [SdmPesantren::class, 'pesantren_sdm_overridden', 'Data SDM'],
+            'edpm' => [Edpm::class, 'pesantren_edpm_overridden', 'Data EDPM'],
+        };
+
+        [$modelClass, $actionType, $label] = $config;
+        $record = $modelClass::firstOrNew(['user_id' => $pesantren->user_id]);
+        $old = $record->exists ? ($record->data ?? []) : null;
+        $record->forceFill(['data' => $data])->save();
+
+        $this->auditTrail->log($actionType, null, auth()->id(), [
+            'pesantren_id' => $pesantren->id,
+            'user_id' => $pesantren->user_id,
+            'old' => $old,
+            'new' => $data,
+        ], $validated['reason']);
+
+        return redirect()->route('superadmin.master-data.pesantren.show', $pesantren)->with('success', $label.' berhasil dioverride.');
     }
 
     private function userImportRoleMap(): Collection

@@ -25,6 +25,11 @@
         'jumlah_rombel' => $unit->jumlah_rombel,
     ])->toArray()))->pad(3, ['layanan_satuan_pendidikan' => '', 'jumlah_rombel' => 0])->take(5);
     $layananOptions = ['PDF Ulya', 'PDF Wustha', 'Muadalah', 'MTs', 'MA'];
+    $datasetOverrides = [
+        'ipm' => ['title' => 'Override Data IPM', 'route' => route('superadmin.master-data.pesantren.ipm.update', $pesantren), 'data' => $ipm?->data ?? new stdClass()],
+        'sdm' => ['title' => 'Override Data SDM', 'route' => route('superadmin.master-data.pesantren.sdm.update', $pesantren), 'data' => $sdm?->data ?? new stdClass()],
+        'edpm' => ['title' => 'Override Data EDPM', 'route' => route('superadmin.master-data.pesantren.edpm.update', $pesantren), 'data' => $edpm?->data ?? new stdClass()],
+    ];
 @endphp
 
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
@@ -83,6 +88,35 @@
         </div>
     </x-metronic.card>
 @endif
+
+<div class="row g-5 g-xl-8 mb-8">
+    @foreach($datasetOverrides as $key => $override)
+        <div class="col-xl-4">
+            <x-metronic.card title="{{ $override['title'] }}" class="h-100">
+                <form method="POST" action="{{ $override['route'] }}" class="d-grid gap-4">
+                    @csrf
+                    @method('PATCH')
+                    <div>
+                        <label for="{{ $key }}_data_json" class="form-label required">Data JSON</label>
+                        <textarea id="{{ $key }}_data_json" name="data_json" class="form-control form-control-solid font-monospace" rows="10" required>{{ old('data_json', json_encode($override['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) }}</textarea>
+                    </div>
+                    <div>
+                        <label for="{{ $key }}_reason" class="form-label required">Alasan Override</label>
+                        <textarea id="{{ $key }}_reason" name="reason" class="form-control form-control-solid" rows="3" required placeholder="Jelaskan alasan override {{ strtoupper($key) }}">{{ old('reason') }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-light-primary"
+                            data-swal-confirm="true"
+                            data-swal-title="Simpan override {{ strtoupper($key) }}?"
+                            data-swal-text="Perubahan akan tercatat di audit log."
+                            data-swal-icon="warning"
+                            data-swal-confirm-button="Ya, simpan">
+                        Simpan {{ strtoupper($key) }}
+                    </button>
+                </form>
+            </x-metronic.card>
+        </div>
+    @endforeach
+</div>
 
 <x-metronic.card title="Override Profil Pesantren">
     <x-slot:header>

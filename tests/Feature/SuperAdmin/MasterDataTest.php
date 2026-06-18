@@ -298,6 +298,9 @@ class MasterDataTest extends TestCase
             ->assertSeeText('Detail Pesantren')
             ->assertSeeText('Pesantren Detail')
             ->assertSeeText('Override Profil Pesantren')
+            ->assertSeeText('Override Data IPM')
+            ->assertSeeText('Override Data SDM')
+            ->assertSeeText('Override Data EDPM')
             ->assertSeeText('Wajib alasan audit');
     }
 
@@ -366,6 +369,67 @@ class MasterDataTest extends TestCase
         $this->assertTrue($auditLog->metadata['was_locked']);
         $this->assertSame('Pesantren Lama', $auditLog->metadata['old']['profile']['nama_pesantren']);
         $this->assertSame('Pesantren Baru', $auditLog->metadata['new']['profile']['nama_pesantren']);
+    }
+
+    public function test_super_admin_can_override_pesantren_assessment_datasets_with_audit_log(): void
+    {
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Dataset',
+        ]);
+        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100]]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.ipm.update', $pesantren), [
+                'data_json' => json_encode(['santri_mukim' => 125, 'santri_non_mukim' => 30]),
+                'reason' => 'Koreksi data IPM dari dokumen resmi.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.sdm.update', $pesantren), [
+                'data_json' => json_encode(['ustaz_tetap' => 12]),
+                'reason' => 'Koreksi data SDM.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.edpm.update', $pesantren), [
+                'data_json' => json_encode(['status' => 'lengkap']),
+                'reason' => 'Koreksi data EDPM.',
+            ])
+            ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
+
+        $this->assertSame(125, Ipm::where('user_id', $pesantrenUser->id)->firstOrFail()->data['santri_mukim']);
+        $this->assertSame(12, SdmPesantren::where('user_id', $pesantrenUser->id)->firstOrFail()->data['ustaz_tetap']);
+        $this->assertSame('lengkap', Edpm::where('user_id', $pesantrenUser->id)->firstOrFail()->data['status']);
+        $this->assertDatabaseHas('akreditasi_audit_logs', [
+            'action_type' => 'pesantren_ipm_overridden',
+            'reason' => 'Koreksi data IPM dari dokumen resmi.',
+        ]);
+        $this->assertDatabaseHas('akreditasi_audit_logs', ['action_type' => 'pesantren_sdm_overridden']);
+        $this->assertDatabaseHas('akreditasi_audit_logs', ['action_type' => 'pesantren_edpm_overridden']);
+    }
+
+    public function test_super_admin_without_user_access_permission_cannot_override_pesantren_dataset(): void
+    {
+        $this->revokeSuperAdminPermission('user.access.update');
+
+        $pesantrenUser = User::factory()->create(['role_id' => 3]);
+        $pesantren = Pesantren::create([
+            'user_id' => $pesantrenUser->id,
+            'nama_pesantren' => 'Pesantren Dataset Guard',
+        ]);
+
+        $this->actingAs($this->superAdmin)
+            ->patch(route('superadmin.master-data.pesantren.ipm.update', $pesantren), [
+                'data_json' => json_encode(['santri_mukim' => 125]),
+                'reason' => 'Menguji permission dataset.',
+            ])
+            ->assertForbidden();
+
+        $this->assertDatabaseMissing('ipms', ['user_id' => $pesantrenUser->id]);
     }
 
     public function test_super_admin_without_user_access_permission_cannot_override_pesantren_profile(): void
