@@ -231,10 +231,17 @@ class AkreditasiController extends Controller
             ->orderByDesc('created_at')
             ->get();
         $stats = [
+            'displayed' => $skRows->count(),
             'ready' => Akreditasi::where('status', Akreditasi::STATUS_FINAL_APPROVED)->count(),
             'published' => Akreditasi::where('status', Akreditasi::STATUS_COMPLETED)->whereNotNull('nomor_sk')->count(),
             'certificate' => Akreditasi::whereNotNull('sertifikat_path')->count(),
+            'missingCertificatePublished' => Akreditasi::where('status', Akreditasi::STATUS_COMPLETED)->whereNull('sertifikat_path')->count(),
             'expired' => Akreditasi::whereNotNull('masa_berlaku_akhir')->whereDate('masa_berlaku_akhir', '<', now())->count(),
+            'expiringSoon' => Akreditasi::where('status', Akreditasi::STATUS_COMPLETED)
+                ->whereNotNull('masa_berlaku_akhir')
+                ->whereDate('masa_berlaku_akhir', '>=', now())
+                ->whereDate('masa_berlaku_akhir', '<=', now()->copy()->addDays(60))
+                ->count(),
         ];
         $periodOptions = $this->periodOptions();
         $statusOptions = [

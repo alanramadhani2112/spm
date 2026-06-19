@@ -1107,6 +1107,7 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.show', $completed->id))
             ->assertOk()
             ->assertSee('Status SK')
+            ->assertSeeText('Sertifikat digital tersedia')
             ->assertSee('SK/2026/002')
             ->assertSee('01 Jul 2026')
             ->assertSee('30 Jun 2031')
@@ -1132,11 +1133,25 @@ class AkreditasiConsoleTest extends TestCase
             'masa_berlaku_akhir' => '2031-07-31',
             'sertifikat_path' => 'documents/sertifikat/sk-center.pdf',
         ]);
+        Akreditasi::create([
+            'user_id' => $pesantrenUser->id,
+            'uuid' => 'SK-CENTER-MISSING-CERTIFICATE',
+            'status' => Akreditasi::STATUS_COMPLETED,
+            'nomor_sk' => 'SK/2026/004',
+            'masa_berlaku' => '2026-08-01',
+            'masa_berlaku_akhir' => '2031-07-31',
+        ]);
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.sk.index', ['q' => 'SK-CENTER']))
             ->assertOk()
             ->assertSeeText('SK Management')
+            ->assertSeeText('Command Center SK')
+            ->assertSeeText('Fokus Siap Terbit')
+            ->assertSeeText('Perlu penerbitan SK')
+            ->assertSeeText('Terbitkan SK sekarang')
+            ->assertSeeText('Belum Ada Sertifikat')
+            ->assertSeeText('Lengkapi sertifikat digital')
             ->assertSee('SK-CENTER-READY')
             ->assertSee('SK/2026/003')
             ->assertSee(route('superadmin.akreditasi.form-terbitkan-sk', $ready), false)

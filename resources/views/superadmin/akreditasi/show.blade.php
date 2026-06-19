@@ -258,6 +258,28 @@
         </x-metronic.card>
 
         <x-metronic.card title="Status SK" class="mt-6">
+            @php
+                $hasCertificate = filled($akreditasi->sertifikat_path);
+                $isSkReady = $akreditasi->status === Akreditasi::STATUS_FINAL_APPROVED;
+                $isSkCompleted = $akreditasi->status === Akreditasi::STATUS_COMPLETED;
+                $skSignalColor = $isSkReady ? 'warning' : ($isSkCompleted && ! $hasCertificate ? 'danger' : ($hasCertificate ? 'success' : 'secondary'));
+                $skSignalLabel = $isSkReady
+                    ? 'Siap diterbitkan'
+                    : ($isSkCompleted
+                        ? ($hasCertificate ? 'Sertifikat digital tersedia' : 'Sertifikat digital belum tersedia')
+                        : 'Belum masuk tahap penerbitan SK');
+            @endphp
+            <div class="rounded border border-{{ $skSignalColor }} border-dashed bg-light-{{ $skSignalColor }} p-4 mb-5">
+                <div class="d-flex align-items-start gap-3">
+                    <span class="symbol symbol-35px flex-shrink-0">
+                        <span class="symbol-label bg-white"><i class="ki-outline ki-medal-star fs-3 text-{{ $skSignalColor }}"></i></span>
+                    </span>
+                    <div>
+                        <div class="fw-bold text-gray-900">{{ $skSignalLabel }}</div>
+                        <div class="fs-8 text-gray-700">{{ $isSkReady ? 'Terbitkan nomor SK dan masa berlaku agar pengajuan masuk status selesai.' : ($isSkCompleted && ! $hasCertificate ? 'Lengkapi sertifikat digital agar dokumen SK bisa diunduh dari sistem.' : 'Pantau nomor SK, masa berlaku, dan dokumen sertifikat dari panel ini.') }}</div>
+                    </div>
+                </div>
+            </div>
             <div class="d-grid gap-3 fs-7">
                 <div class="d-flex justify-content-between gap-4">
                     <span class="text-muted">Nomor SK</span>
