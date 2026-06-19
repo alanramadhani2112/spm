@@ -28,9 +28,16 @@
 
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
-    <div>
+    <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Pusat Workload Asesor</h2>
-        <p class="fs-7 text-muted mb-0">Distribusi assignment aktif, peran ketua/anggota, status berjalan, dan sinyal overload.</p>
+        <p class="fs-7 text-muted mb-3">Distribusi assignment aktif, peran ketua/anggota, status berjalan, dan sinyal overload.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge badge-light-primary">{{ $filteredRows->count() }} asesor ditampilkan</span>
+            <span class="badge badge-light-{{ $summary['high'] > 0 ? 'danger' : 'success' }}">{{ $summary['high'] > 0 ? $summary['high'].' overload' : 'Tidak ada overload' }}</span>
+            @if(($load ?? 'all') !== 'all')
+                <span class="badge badge-light-warning">Filter beban aktif</span>
+            @endif
+        </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('superadmin.dashboard', ['period' => $period]) }}" class="btn btn-sm btn-light">
@@ -86,6 +93,9 @@
         <div class="card-title d-flex flex-column">
             <h3 class="fw-bold text-gray-900 m-0">Distribusi Beban Asesor</h3>
             <span class="text-muted fs-7 mt-1">{{ $filteredRows->count() }} dari {{ $rows->count() }} asesor ditampilkan.</span>
+        </div>
+        <div class="card-toolbar">
+            <span class="fs-8 text-muted">Gunakan menu aksi untuk membuka detail workload atau queue assignment.</span>
         </div>
     </div>
     <div class="card-body pt-0">

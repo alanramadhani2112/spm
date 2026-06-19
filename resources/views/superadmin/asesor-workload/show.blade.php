@@ -53,6 +53,7 @@
                     </div>
                     <div class="fs-7 text-muted">{{ $asesor->email ?? 'Email belum tersedia' }}</div>
                     <div class="fs-8 text-muted">Assignment aktif {{ $heroStats['total'] }} • Ketua {{ $heroStats['ketua'] }} • Anggota {{ $heroStats['anggota'] }}</div>
+                    <div class="fs-8 mt-2 {{ $heroStats['overdue'] > 0 ? 'text-danger fw-semibold' : 'text-gray-700' }}">{{ $heroStats['overdue'] > 0 ? 'Perlu redistribusi atau pemantauan cepat pada assignment overdue.' : 'Kapasitas masih aman untuk pemantauan rutin.' }}</div>
                 </div>
             </div>
             <div class="text-end">

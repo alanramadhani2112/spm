@@ -5,9 +5,16 @@
 
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
-    <div>
+    <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Jejak Aktivitas Super Admin</h2>
-        <p class="fs-7 text-muted mb-0">Telusuri perubahan status, setting, dan aksi operasional yang tercatat pada audit trail.</p>
+        <p class="fs-7 text-muted mb-3">Telusuri perubahan status, setting, dan aksi operasional yang tercatat pada audit trail.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge badge-light-primary">{{ $logs->total() }} log</span>
+            @if($hasFilters)
+                <span class="badge badge-light-warning">Filter investigasi aktif</span>
+            @endif
+            <span class="badge badge-light-info">{{ $stats['action_types'] ?? 0 }} tipe aksi</span>
+        </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ route('superadmin.audit.export', request()->only(['actor', 'action', 'start_date', 'end_date'])) }}" class="btn btn-sm btn-light-success">
@@ -62,7 +69,10 @@
 
 <x-metronic.card title="Daftar Audit Trail" flush>
     <x-slot:header>
-        <span class="badge badge-light-primary">{{ $logs->total() }} log</span>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge badge-light-primary">{{ $logs->total() }} log</span>
+            <span class="fs-8 text-muted">Gunakan menu aksi untuk membuka detail atau melompat ke akreditasi terkait.</span>
+        </div>
     </x-slot:header>
 
     @if($logs->isEmpty())
@@ -98,6 +108,7 @@
                             <td>
                                 <span class="badge badge-light-primary">{{ \App\Models\AkreditasiAuditLog::getActionTypeLabel($log->action_type) }}</span>
                                 <div class="fs-8 text-muted font-monospace mt-1">{{ $log->action_type }}</div>
+                                <div class="fs-8 mt-1 {{ $log->reason ? 'text-gray-700' : 'text-muted' }}">{{ $log->reason ? \Illuminate\Support\Str::limit($log->reason, 60) : 'Tanpa alasan tambahan' }}</div>
                             </td>
                             <td>
                                 <div class="font-monospace text-gray-800">{{ $log->akreditasi?->uuid ? \Illuminate\Support\Str::limit($log->akreditasi->uuid, 16, '...') : '—' }}</div>

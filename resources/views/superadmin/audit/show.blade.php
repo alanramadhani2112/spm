@@ -20,6 +20,7 @@
                 <div>
                     <h2 class="fw-bold text-gray-900 mb-1">Rincian Log Audit #{{ $log->id }}</h2>
                     <div class="fs-7 text-muted">Jejak aktivitas ini membantu melacak siapa melakukan apa, kapan, dan pada objek akreditasi mana.</div>
+                    <div class="fs-8 mt-2 text-gray-700">Gunakan halaman ini untuk membaca alasan perubahan, context akreditasi, dan metadata bukti tanpa harus menelusuri tabel audit satu per satu.</div>
                 </div>
             </div>
             @if($log->akreditasi_id)
@@ -83,7 +84,10 @@
                             <div class="fs-8 text-muted mt-1">{{ $log->from_status ?? '—' }} → {{ $log->to_status ?? '—' }}</div>
                         @endif
                         @if($log->reason)
-                            <div class="rounded bg-light p-3 fs-8 text-gray-700 mt-3">{{ $log->reason }}</div>
+                            <div class="rounded bg-light p-3 fs-8 text-gray-700 mt-3">
+                                <div class="fw-bold text-gray-900 mb-1">Alasan Tercatat</div>
+                                <div>{{ $log->reason }}</div>
+                            </div>
                         @endif
                     </div>
                 </div>

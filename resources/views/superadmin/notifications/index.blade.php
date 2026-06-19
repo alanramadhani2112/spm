@@ -16,9 +16,14 @@
 
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
-    <div>
+    <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Pusat Notifikasi Super Admin</h2>
-        <p class="fs-7 text-muted mb-0">Pantau notifikasi sistem, SLA breach, banding, SK pending, dan kegagalan pengiriman.</p>
+        <p class="fs-7 text-muted mb-3">Pantau notifikasi sistem, SLA breach, banding, SK pending, dan kegagalan pengiriman.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge badge-light-warning">{{ $unreadCount }} belum dibaca</span>
+            <span class="badge badge-light-danger">{{ $pendingBandingCount }} banding pending</span>
+            <span class="badge badge-light-success">{{ $pendingSkCount }} SK pending</span>
+        </div>
     </div>
     <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light">
         <i class="ki-outline ki-category fs-3"></i>Dashboard
@@ -68,8 +73,12 @@
                                             @if(! $notification->is_read)
                                                 <span class="badge badge-light-warning">Baru</span>
                                             @endif
+                                            @if($notification->akreditasi_id)
+                                                <span class="badge badge-light-info">Actionable</span>
+                                            @endif
                                         </div>
                                         <div class="fw-semibold text-gray-900">{{ $notification->message }}</div>
+                                        <div class="fs-8 mt-1 {{ $notification->is_read ? 'text-muted' : 'text-gray-700 fw-semibold' }}">{{ $notification->is_read ? 'Sudah dibaca, tetap tersedia untuk penelusuran.' : 'Belum dibaca dan masih perlu ditinjau.' }}</div>
                                         <div class="fs-8 text-muted mt-1">
                                             {{ $notification->created_at?->format('d M Y H:i') }}
                                             @if($pesantrenName)
@@ -104,7 +113,14 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-12 text-muted border rounded bg-light">Belum ada notifikasi untuk filter ini.</div>
+                        <div class="text-center py-12 text-muted border rounded bg-light">
+                            <div class="fw-bold text-gray-900 mb-2">Belum ada notifikasi untuk filter ini.</div>
+                            <div class="fs-7 text-muted">Coba ubah filter, tandai semua sudah dibaca, atau kembali ke dashboard untuk melihat queue yang masih aktif.</div>
+                            <div class="mt-4 d-flex flex-wrap justify-content-center gap-2">
+                                <a href="{{ route('superadmin.notifications.index', ['filter' => 'all']) }}" class="btn btn-sm btn-light">Lihat Semua</a>
+                                <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light-primary">Kembali ke Dashboard</a>
+                            </div>
+                        </div>
                     @endforelse
                 </div>
 

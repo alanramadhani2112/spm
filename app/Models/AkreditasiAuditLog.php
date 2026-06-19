@@ -26,8 +26,9 @@ class AkreditasiAuditLog extends Model
         return $this->belongsTo(User::class);
     }
 
-    public static function getActionTypeLabel(string $actionType): string
+    public static function getActionTypeLabel(?string $actionType): string
     {
+        $actionType ??= 'status_changed';
         return match ($actionType) {
             'status_changed' => 'Status Berubah',
             'asesor_assigned' => 'Asesor Ditugaskan',
