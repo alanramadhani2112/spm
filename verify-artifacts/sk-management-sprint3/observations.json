@@ -1,0 +1,95 @@
+{
+  "screenshots": {
+    "sk-management-main": "C:\\laragon\\www\\sistem-pesantrenmu\\verify-artifacts\\sk-management-sprint3\\sk-management-main.png",
+    "sk-management-ready-filter": "C:\\laragon\\www\\sistem-pesantrenmu\\verify-artifacts\\sk-management-sprint3\\sk-management-ready-filter.png",
+    "sk-management-empty-probe": "C:\\laragon\\www\\sistem-pesantrenmu\\verify-artifacts\\sk-management-sprint3\\sk-management-empty-probe.png"
+  },
+  "consoleMessages": [],
+  "httpIssues": [],
+  "pages": {
+    "main": {
+      "url": "http://127.0.0.1:8010/superadmin/sk",
+      "title": "Super Admin — SK Management — Laravel",
+      "heading": "SK Management",
+      "hasCommandCenter": true,
+      "hasFocusCta": true,
+      "hasReadyHint": true,
+      "hasMissingCertificateHint": true,
+      "hasEmptyState": false,
+      "rowCount": 4,
+      "rows": [
+        "Pesantren Demo SK demo.sk@pesantrenmu.id VERIFY-SK-READY-001 Final Disetujui Terbitkan SK sekarang Belum diterbitkan Nomor dibuat saat publish SK 92.00 Peringkat: A Mulai — Akhir: — Belum tersedia Dapat diunggah saat publish SK.",
+        "Pesantren Demo SK demo.sk@pesantrenmu.id DEMO-SA-009 Selesai Dokumen SK lengkap 1234567890 Nomor SK sudah terdokumentasi 88.00 Peringkat: A Mulai 03 Dec 2026 Akhir: 02 Dec 2031 Tersedia Unduh Sertifikat",
+        "Pesantren Demo SK demo.sk@pesantrenmu.id VERIFY-SK-MISSING-CERT-001 Selesai Segera berakhir SK/VERIFY/001 Nomor SK sudah terdokumentasi 89.00 Peringkat: A Mulai 19 May 2026 Akhir: 19 Jul 2026 · ≤ 60 hari Belum tersedia Lengkapi sertifikat digital.",
+        "Pesantren Demo Selesai demo.selesai@pesantrenmu.id DEMO-SA-011 Selesai Dokumen SK lengkap SK-DEMO/2026/001 Nomor SK sudah terdokumentasi 88.00 Peringkat: A Mulai 18 May 2026 Akhir: 18 May 2031 Tersedia Unduh Sertifikat"
+      ],
+      "badges": [
+        "Command Center SK",
+        "4 item ditampilkan",
+        "1 siap terbit",
+        "0 kedaluwarsa",
+        "1 sertifikat belum lengkap",
+        "Tanpa filter aktif",
+        "Final Disetujui",
+        "Belum tersedia",
+        "Selesai",
+        "Tersedia",
+        "Selesai",
+        "Belum tersedia",
+        "Selesai",
+        "Tersedia"
+      ],
+      "excerpt": "S\nPM\nPesantrenMu\nMONITORING\nDashboard\nWorkload Asesor\nNotification Center\nAKREDITASI\nSemua Akreditasi\nPengajuan Baru\nMASTER DATA\nReferensi Sistem\nPENGATURAN\nAkreditasi\nAUDIT\nAudit Log\nLogout\nSK Management\nWorkflow Console\nExport CSV\nCommand Center SK\n4 item ditampilkan\nSK Management\n\nPantau antrean penerbitan SK, kelengkapan sertifikat digital, dan masa berlaku akreditasi dari satu pusat kendali.\n\nFokus Siap Terbit\nStatus SK selalu dipasangkan dengan langkah berikutnya agar penerbitan, sertifikat, dan masa berlaku tidak luput dari pemantauan.\n1 siap terbit\n0 kedaluwarsa\n1 sertifikat belum lengkap\n1\nSiap Terbit\nPerlu penerbitan SK\n3\nSK Terbit\nSelesai dipublikasikan\n1\nBelum Ada Sertifikat\nSK terbit tanpa sertifikat digital\n0\nKedaluwarsa\n1 segera berakhir\nCommand Center SK\nTanpa filter aktif\nAntrian siap terbit perlu tindakan\n1 pengajuan sudah final approved dan menunggu nomor SK, masa berlaku, serta sertifikat digital bila tersedia.\nFokus Siap Terbit\nFilter aktif\nCari berdasarkan UUID, nomor SK, nama pesantren, NSP, atau email.\nPeriode\nSemua Periode\n2026\nStatus SK\nSemua Status SK\nSiap Terbit\nSudah Terbit\nSertifikat\nSemua Sertifikat\nAda Sertifikat\nBelum Ada Sertifikat\nCari\nTerapkan\nReset\nPesantren\tStatus & Langkah\tNomor SK\tNilai\tMasa Berlaku\tSertifikat\tAksi\n\nPesantren Demo SK\ndemo.sk@pesantrenmu.id\nVERIFY-SK-READY-001\n\t\nFinal Disetujui\nTerbitkan SK sekarang\n\t\nBelum diterbitkan\nNomor dibuat saat publish SK\n\t\n92.00\nPeringkat: A\n\t\nMulai\n—\nAkhir: —\n\tBelum tersedia\nDapat diunggah saat publish SK.\n\t\n\n\nPesantren Demo SK\ndemo.sk@pesantrenmu.id\nDEMO-SA-009\n\t\nSelesai\nDokumen SK lengkap\n\t\n1234567890\nNomor SK sudah terdokumentasi\n\t\n88.00\nPeringkat: A\n\t\nMulai\n03 Dec 2026\nAkhir: 02 Dec 2031\n\tTersedia\nUnduh Sertifikat\n\t\n\n\nPesantren Demo SK\ndemo.sk@pesantrenmu.id\nVERIFY-SK-MISSING-CERT-00"
+    },
+    "ready_filter": {
+      "url": "http://127.0.0.1:8010/superadmin/sk?status=ready",
+      "title": "Super Admin — SK Management — Laravel",
+      "heading": "SK Management",
+      "hasCommandCenter": true,
+      "hasFocusCta": true,
+      "hasReadyHint": true,
+      "hasMissingCertificateHint": false,
+      "hasEmptyState": false,
+      "rowCount": 1,
+      "rows": [
+        "Pesantren Demo SK demo.sk@pesantrenmu.id VERIFY-SK-READY-001 Final Disetujui Terbitkan SK sekarang Belum diterbitkan Nomor dibuat saat publish SK 92.00 Peringkat: A Mulai — Akhir: — Belum tersedia Dapat diunggah saat publish SK."
+      ],
+      "badges": [
+        "Command Center SK",
+        "1 item ditampilkan",
+        "1 siap terbit",
+        "0 kedaluwarsa",
+        "1 sertifikat belum lengkap",
+        "1 filter aktif",
+        "Status: Siap Terbit",
+        "Final Disetujui",
+        "Belum tersedia"
+      ],
+      "excerpt": "S\nPM\nPesantrenMu\nMONITORING\nDashboard\nWorkload Asesor\nNotification Center\nAKREDITASI\nSemua Akreditasi\nPengajuan Baru\nMASTER DATA\nReferensi Sistem\nPENGATURAN\nAkreditasi\nAUDIT\nAudit Log\nLogout\nSK Management\nWorkflow Console\nExport CSV\nCommand Center SK\n1 item ditampilkan\nSK Management\n\nPantau antrean penerbitan SK, kelengkapan sertifikat digital, dan masa berlaku akreditasi dari satu pusat kendali.\n\nFokus Siap Terbit\nStatus SK selalu dipasangkan dengan langkah berikutnya agar penerbitan, sertifikat, dan masa berlaku tidak luput dari pemantauan.\n1 siap terbit\n0 kedaluwarsa\n1 sertifikat belum lengkap\n1\nSiap Terbit\nPerlu penerbitan SK\n3\nSK Terbit\nSelesai dipublikasikan\n1\nBelum Ada Sertifikat\nSK terbit tanpa sertifikat digital\n0\nKedaluwarsa\n1 segera berakhir\nCommand Center SK\n1 filter aktif\nStatus: Siap Terbit\nAntrian siap terbit perlu tindakan\n1 pengajuan sudah final approved dan menunggu nomor SK, masa berlaku, serta sertifikat digital bila tersedia.\nFokus Siap Terbit\nFilter aktif\nCari berdasarkan UUID, nomor SK, nama pesantren, NSP, atau email.\nReset Semua Filter\nPeriode\nSemua Periode\n2026\nStatus SK\nSemua Status SK\nSiap Terbit\nSudah Terbit\nSertifikat\nSemua Sertifikat\nAda Sertifikat\nBelum Ada Sertifikat\nCari\nTerapkan\nReset\nPesantren\tStatus & Langkah\tNomor SK\tNilai\tMasa Berlaku\tSertifikat\tAksi\n\nPesantren Demo SK\ndemo.sk@pesantrenmu.id\nVERIFY-SK-READY-001\n\t\nFinal Disetujui\nTerbitkan SK sekarang\n\t\nBelum diterbitkan\nNomor dibuat saat publish SK\n\t\n92.00\nPeringkat: A\n\t\nMulai\n—\nAkhir: —\n\tBelum tersedia\nDapat diunggah saat publish SK.\n\t\n2026© PesantrenMu"
+    },
+    "empty_probe": {
+      "url": "http://127.0.0.1:8010/superadmin/sk?q=NO-SUCH-SK-VISUAL",
+      "title": "Super Admin — SK Management — Laravel",
+      "heading": "SK Management",
+      "hasCommandCenter": true,
+      "hasFocusCta": true,
+      "hasReadyHint": false,
+      "hasMissingCertificateHint": false,
+      "hasEmptyState": true,
+      "rowCount": 1,
+      "rows": [
+        "Tidak ada data SK yang sesuai dengan filter saat ini. Reset filter, fokus ke antrean siap terbit, atau buka workflow console untuk menemukan pengajuan final approved. Reset Filter Lihat Siap Terbit Buka Workflow Console"
+      ],
+      "badges": [
+        "Command Center SK",
+        "0 item ditampilkan",
+        "1 siap terbit",
+        "0 kedaluwarsa",
+        "1 sertifikat belum lengkap",
+        "1 filter aktif",
+        "Cari: NO-SUCH-SK-VISUAL"
+      ],
+      "excerpt": "S\nPM\nPesantrenMu\nMONITORING\nDashboard\nWorkload Asesor\nNotification Center\nAKREDITASI\nSemua Akreditasi\nPengajuan Baru\nMASTER DATA\nReferensi Sistem\nPENGATURAN\nAkreditasi\nAUDIT\nAudit Log\nLogout\nSK Management\nWorkflow Console\nExport CSV\nCommand Center SK\n0 item ditampilkan\nSK Management\n\nPantau antrean penerbitan SK, kelengkapan sertifikat digital, dan masa berlaku akreditasi dari satu pusat kendali.\n\nFokus Siap Terbit\nStatus SK selalu dipasangkan dengan langkah berikutnya agar penerbitan, sertifikat, dan masa berlaku tidak luput dari pemantauan.\n1 siap terbit\n0 kedaluwarsa\n1 sertifikat belum lengkap\n1\nSiap Terbit\nPerlu penerbitan SK\n3\nSK Terbit\nSelesai dipublikasikan\n1\nBelum Ada Sertifikat\nSK terbit tanpa sertifikat digital\n0\nKedaluwarsa\n1 segera berakhir\nCommand Center SK\n1 filter aktif\nCari: NO-SUCH-SK-VISUAL\nAntrian siap terbit perlu tindakan\n1 pengajuan sudah final approved dan menunggu nomor SK, masa berlaku, serta sertifikat digital bila tersedia.\nFokus Siap Terbit\nFilter aktif\nCari berdasarkan UUID, nomor SK, nama pesantren, NSP, atau email.\nReset Semua Filter\nPeriode\nSemua Periode\n2026\nStatus SK\nSemua Status SK\nSiap Terbit\nSudah Terbit\nSertifikat\nSemua Sertifikat\nAda Sertifikat\nBelum Ada Sertifikat\nCari\nTerapkan\nReset\nPesantren\tStatus & Langkah\tNomor SK\tNilai\tMasa Berlaku\tSertifikat\tAksi\n\nTidak ada data SK yang sesuai dengan filter saat ini.\nReset filter, fokus ke antrean siap terbit, atau buka workflow console untuk menemukan pengajuan final approved.\nReset Filter\nLihat Siap Terbit\nBuka Workflow Console\n2026© PesantrenMu"
+    }
+  }
+}

@@ -66,6 +66,8 @@
     </div>
 </div>
 
+<x-superadmin.akreditasi-pipeline :steps="$pipelineSteps" :currentIndex="$pipelineActiveIndex" :period="$period ?? 'all'" />
+
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
     <div class="card-body p-7">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-5">
@@ -175,6 +177,8 @@
         </div>
     </div>
 </div>
+
+<x-superadmin.akreditasi-pipeline :steps="$pipelineSteps" :currentIndex="$pipelineActiveIndex" />
 
 <div class="row g-5 g-xl-8 mb-8">
     <div class="col-xl-7">

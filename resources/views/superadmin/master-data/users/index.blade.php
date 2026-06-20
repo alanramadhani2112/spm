@@ -26,6 +26,8 @@
 @endsection
 
 @section('content')
+@include('superadmin._glossary-help')
+
 @php
     $roleColorMap = [
         'super_admin' => 'danger',
@@ -48,7 +50,7 @@
                     <span class="symbol-label bg-primary"><i class="ki-outline ki-profile-user fs-2 text-white"></i></span>
                 </span>
                 <div>
-                    <h2 class="fw-bold text-gray-900 mb-1">Control Center Akses Pengguna</h2>
+                    <h2 class="fw-bold text-gray-900 mb-1">Akun Pengguna</h2>
                     <div class="fs-7 text-muted">Pantau akun, role aktif, dan status akses sebelum pengguna masuk ke workflow akreditasi melalui Muhammadiyah ID.</div>
                 </div>
             </div>

@@ -28,6 +28,8 @@
     ])->filter()->count();
 @endphp
 
+<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'SK Management', 'active' => true]]" />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div class="mw-lg-650px">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-3">

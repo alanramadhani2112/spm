@@ -1,10 +1,11 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Pengaturan Nilai Visitasi (NV)')
-@section('pageTitle', 'Pengaturan Nilai Visitasi (NV)')
+@section('title', 'Super Admin — Nilai Visitasi (NV)')
+@section('pageTitle', 'Super Admin — Nilai Visitasi (NV)')
 
 @section('content')
 @include('superadmin.settings._nav')
+@include('superadmin._glossary-help')
 
 @php
     $settingCards = [

@@ -4,6 +4,10 @@
 @section('pageTitle', 'Master EDPM / IPR')
 
 @section('content')
+@include('superadmin._glossary-help')
+
+<x-superadmin.breadcrumb :items="[['label' => 'Kembali', 'route' => 'superadmin.master-data.index'], ['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Master EDPM', 'active' => true]]" />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div>
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Kelola Struktur Instrumen EDPM</h2>
@@ -130,7 +134,11 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="4" class="text-center text-muted py-10">Belum ada komponen. Tambahkan komponen pertama dari form di sebelah kiri.</td></tr>
+                            <tr><td colspan="4" class="text-center py-12 text-muted border rounded bg-light">
+                                <i class="ki-outline ki-category fs-2x text-gray-400 mb-3"></i>
+                                <div class="fw-semibold text-gray-800 mb-1">Belum ada komponen.</div>
+                                <div class="fs-7">Tambahkan komponen pertama dari form di sebelah kiri.</div>
+                            </td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -249,7 +257,10 @@
                                 </x-metronic.modal>
                             </div>
                         @empty
-                            <div class="border-top py-5 text-muted fs-7">Belum ada butir untuk komponen ini.</div>
+                            <div class="border-top py-6 text-muted fs-7 text-center">
+                                <i class="ki-outline ki-notepad-edit fs-2 text-gray-400 mb-2"></i>
+                                <div>Belum ada butir untuk komponen ini.</div>
+                            </div>
                         @endforelse
                     </div>
                 @empty

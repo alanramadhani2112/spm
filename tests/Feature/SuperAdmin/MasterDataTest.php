@@ -188,7 +188,7 @@ class MasterDataTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.master-data.users.index'))
             ->assertOk()
-            ->assertSeeText('Control Center Akses Pengguna')
+            ->assertSeeText('Akun Pengguna')
             ->assertSeeText('Filter Akun')
             ->assertSeeText('Tambah / Undang Pengguna')
             ->assertSeeText('Import CSV')
@@ -280,7 +280,7 @@ class MasterDataTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.master-data.pesantren.index'))
             ->assertOk()
-            ->assertSeeText('Control Center Data Pesantren')
+            ->assertSeeText('Data Pesantren')
             ->assertSeeText('Pesantren Ready')
             ->assertSeeText('Assessment Ready')
             ->assertSeeText('Terkunci');

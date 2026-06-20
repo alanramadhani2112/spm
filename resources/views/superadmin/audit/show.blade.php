@@ -104,7 +104,7 @@
             @if($log->metadata)
                 <pre class="overflow-auto rounded bg-light p-5 fs-7 text-gray-700 font-monospace whitespace-pre-wrap mb-0">{{ json_encode($log->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
             @else
-                <div class="text-center py-10 text-muted border rounded bg-light">
+                <div class="text-center py-12 text-muted border rounded bg-light">
                     Tidak ada metadata tambahan untuk log ini.
                 </div>
             @endif

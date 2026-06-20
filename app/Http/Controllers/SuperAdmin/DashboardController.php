@@ -55,11 +55,16 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        $pipelineSteps = $this->pipelineSteps($baseQuery);
+        $pipelineActiveIndex = $this->pipelineActiveIndex($pipelineSteps);
+        $stats = $byStatus;
+
         return view('superadmin.dashboard.index', compact(
             'totalAkreditasi',
             'activeAkreditasi',
             'completedAkreditasi',
             'byStatus',
+            'stats',
             'overdueCount',
             'period',
             'periodOptions',
@@ -70,6 +75,8 @@ class DashboardController extends Controller
             'assessorWorkloads',
             'urgentAkreditasis',
             'recentAkreditasis',
+            'pipelineSteps',
+            'pipelineActiveIndex',
         ));
     }
 
@@ -632,6 +639,156 @@ class DashboardController extends Controller
             ['label' => 'Lap. A2', 'done' => filled($akreditasi->laporan_visitasi_asesor2)],
             ['label' => 'Lap. Kelompok', 'done' => filled($akreditasi->laporan_visitasi_kelompok)],
         ];
+    }
+
+    private function pipelineSteps($baseQuery): array
+    {
+        $counts = (clone $baseQuery)
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        return [
+            [
+                'id' => 1,
+                'label' => 'Pengajuan',
+                'icon' => 'ki-add-files',
+                'color' => 'primary',
+                'statusFilters' => [
+                    Akreditasi::STATUS_DRAFT_PROFILE,
+                    Akreditasi::STATUS_INITIAL_SUBMITTED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_DRAFT_PROFILE] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_INITIAL_SUBMITTED] ?? 0),
+            ],
+            [
+                'id' => 2,
+                'label' => 'Review Awal',
+                'icon' => 'ki-magnifier',
+                'color' => 'info',
+                'statusFilters' => [
+                    Akreditasi::STATUS_INITIAL_REJECTED,
+                    Akreditasi::STATUS_ASSESSMENT_OPEN,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_INITIAL_REJECTED] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ASSESSMENT_OPEN] ?? 0),
+            ],
+            [
+                'id' => 3,
+                'label' => 'Assessment',
+                'icon' => 'ki-notepad-edit',
+                'color' => 'warning',
+                'statusFilters' => [
+                    Akreditasi::STATUS_ASSESSMENT_OPEN,
+                ],
+                'count' => (clone $baseQuery)
+                    ->where('status', Akreditasi::STATUS_ASSESSMENT_OPEN)
+                    ->whereNotNull('assessment_deadline')
+                    ->where('assessment_deadline', '>=', now())
+                    ->count(),
+            ],
+            [
+                'id' => 4,
+                'label' => 'Review Tahap 1',
+                'icon' => 'ki-verify',
+                'color' => 'primary',
+                'statusFilters' => [
+                    Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
+                    Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION,
+                    Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW] ?? 0),
+            ],
+            [
+                'id' => 5,
+                'label' => 'Assign Asesor',
+                'icon' => 'ki-people',
+                'color' => 'info',
+                'statusFilters' => [
+                    Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_ASSESSOR_ASSIGNMENT] ?? 0),
+            ],
+            [
+                'id' => 6,
+                'label' => 'Visitasi',
+                'icon' => 'ki-geolocation',
+                'color' => 'success',
+                'statusFilters' => [
+                    Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+                    Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION,
+                    Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
+                    Akreditasi::STATUS_VISITASI_SCHEDULED,
+                    Akreditasi::STATUS_VISITASI_COMPLETED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_VISITASI_SCHEDULED] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_VISITASI_COMPLETED] ?? 0),
+            ],
+            [
+                'id' => 7,
+                'label' => 'Scoring',
+                'icon' => 'ki-chart-line',
+                'color' => 'warning',
+                'statusFilters' => [
+                    Akreditasi::STATUS_POST_VISITASI_SCORING,
+                    Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_POST_VISITASI_SCORING] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED] ?? 0),
+            ],
+            [
+                'id' => 8,
+                'label' => 'Validasi Akhir',
+                'icon' => 'ki-shield-tick',
+                'color' => 'danger',
+                'statusFilters' => [
+                    Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
+                    Akreditasi::STATUS_ADMINISTRATIVE_REJECTED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_ADMIN_FINAL_VALIDATION] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_ADMINISTRATIVE_REJECTED] ?? 0),
+            ],
+            [
+                'id' => 9,
+                'label' => 'SK',
+                'icon' => 'ki-medal-star',
+                'color' => 'success',
+                'statusFilters' => [
+                    Akreditasi::STATUS_FINAL_APPROVED,
+                    Akreditasi::STATUS_FINAL_REJECTED,
+                    Akreditasi::STATUS_APPEAL_SUBMITTED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_FINAL_APPROVED] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_FINAL_REJECTED] ?? 0)
+                    + (int) ($counts[Akreditasi::STATUS_APPEAL_SUBMITTED] ?? 0),
+            ],
+            [
+                'id' => 10,
+                'label' => 'Selesai',
+                'icon' => 'ki-double-check',
+                'color' => 'success',
+                'statusFilters' => [
+                    Akreditasi::STATUS_COMPLETED,
+                ],
+                'count' => (int) ($counts[Akreditasi::STATUS_COMPLETED] ?? 0),
+            ],
+        ];
+    }
+
+    private function pipelineActiveIndex(array $pipelineSteps): ?int
+    {
+        foreach ($pipelineSteps as $i => $step) {
+            if (($step['count'] ?? 0) > 0) {
+                return $i;
+            }
+        }
+
+        return null;
     }
 
     private function visitasiActions(Akreditasi $akreditasi): array

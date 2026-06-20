@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Pengaturan Super Admin')
-@section('pageTitle', 'Pengaturan Super Admin')
+@section('title', 'Super Admin — Pengaturan')
+@section('pageTitle', 'Super Admin — Pengaturan')
 
 @section('content')
 @include('superadmin.settings._nav')
@@ -26,13 +26,18 @@
                     <span class="symbol-label bg-primary"><i class="ki-outline ki-setting-2 fs-2 text-white"></i></span>
                 </div>
                 <div>
-                    <h2 class="fw-bold text-gray-900 mb-1">Control Center Pengaturan</h2>
+                    <h2 class="fw-bold text-gray-900 mb-1">Pengaturan</h2>
                     <div class="fs-7 text-muted">Kelola parameter workflow yang memengaruhi deadline, koreksi, dokumen, nilai, notifikasi, dan banding.</div>
                 </div>
             </div>
             <span class="badge badge-light-primary">{{ $totalSettings }} parameter</span>
         </div>
     </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ route('superadmin.master-data.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-document fs-4"></i>Master Data</a>
+    <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-home fs-4"></i>Dashboard</a>
 </div>
 
 <div class="row g-5 g-xl-8">

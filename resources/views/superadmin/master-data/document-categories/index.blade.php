@@ -4,6 +4,8 @@
 @section('pageTitle', 'Aturan Dokumen Akreditasi')
 
 @section('content')
+<x-superadmin.breadcrumb :items="[['label' => 'Kembali', 'route' => 'superadmin.master-data.index'], ['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Kategori Dokumen', 'active' => true]]" />
+
 <div class="d-flex justify-content-between align-items-center mb-6">
     <div>
         <h2 class="fs-3 fw-bold text-gray-900 mb-1">Atur Kategori, Template, dan Akses Dokumen</h2>

@@ -15,6 +15,8 @@
 @endsection
 
 @section('content')
+<x-superadmin.breadcrumb :items="[['label' => 'Kembali', 'route' => 'superadmin.master-data.index'], ['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Data Pesantren', 'active' => true]]" />
+
 <div class="card card-flush bg-light-info border border-info border-dashed mb-8">
     <div class="card-body p-7">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-5">
@@ -23,7 +25,7 @@
                     <span class="symbol-label bg-info"><i class="ki-outline ki-home fs-2 text-white"></i></span>
                 </span>
                 <div>
-                    <h2 class="fw-bold text-gray-900 mb-1">Control Center Data Pesantren</h2>
+                    <h2 class="fw-bold text-gray-900 mb-1">Data Pesantren</h2>
                     <div class="fs-7 text-muted">Pantau kesiapan profil, data assessment, dan status lock sebelum atau sesudah pengajuan akreditasi.</div>
                 </div>
             </div>

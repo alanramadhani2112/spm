@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Master Data')
-@section('pageTitle', 'Master Data')
+@section('title', 'Super Admin — Master Data')
+@section('pageTitle', 'Super Admin — Master Data')
 
 @section('content')
 @php
@@ -33,10 +33,15 @@
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div>
-        <h2 class="fs-2 fw-bold text-gray-900 mb-2">Control Center Master Data</h2>
+        <h2 class="fs-2 fw-bold text-gray-900 mb-2">Master Data</h2>
         <p class="fs-7 text-muted mb-0">Kelola instrumen, dokumen, role, dan akun yang menjadi fondasi workflow akreditasi.</p>
     </div>
     <span class="badge badge-light-primary">{{ $totalMaster }} entri master</span>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ route('superadmin.settings.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-setting-2 fs-4"></i>Pengaturan</a>
+    <a href="{{ route('superadmin.dashboard') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-home fs-4"></i>Dashboard</a>
 </div>
 
 <div class="row g-5 g-xl-8 mb-8">
