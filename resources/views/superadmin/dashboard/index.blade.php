@@ -234,7 +234,7 @@
                             @empty
                                 <tr>
                                     <td colspan="4">
-                                        <div class="text-center py-10 text-muted border rounded bg-light">Tidak ada antrian prioritas untuk periode ini.</div>
+                                        <div class="text-center py-12 text-muted border rounded bg-light">Tidak ada antrian prioritas untuk periode ini.</div>
                                     </td>
                                 </tr>
                             @endforelse
@@ -276,7 +276,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-10 text-muted border rounded bg-light">Belum ada assignment asesor aktif.</div>
+                        <div class="text-center py-12 text-muted border rounded bg-light">Belum ada assignment asesor aktif.</div>
                     @endforelse
                 </div>
             </div>
@@ -389,7 +389,7 @@
                             </a>
                         </div>
                     @empty
-                        <div class="text-center py-10 text-muted border rounded bg-light">Belum ada aktivitas akreditasi untuk periode ini.</div>
+                        <div class="text-center py-12 text-muted border rounded bg-light">Belum ada aktivitas akreditasi untuk periode ini.</div>
                     @endforelse
                 </div>
             </div>

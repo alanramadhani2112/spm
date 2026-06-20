@@ -11,7 +11,7 @@
         <div class="d-flex flex-wrap gap-2">
             <span class="badge badge-light-primary">{{ $logs->total() }} log</span>
             @if($hasFilters)
-                <span class="badge badge-light-warning">Filter investigasi aktif</span>
+                <span class="badge badge-light-warning">Filter aktif</span>
             @endif
             <span class="badge badge-light-info">{{ $stats['action_types'] ?? 0 }} tipe aksi</span>
         </div>

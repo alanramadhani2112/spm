@@ -97,7 +97,7 @@
 
         <x-metronic.card title="Audit Terbaru" class="mb-8">
             @if($auditLogs->isEmpty())
-                <div class="text-muted fs-7">Belum ada audit log terkait user ini.</div>
+                <div class="text-center py-12 text-muted border rounded bg-light"><i class="ki-outline ki-time fs-2x text-gray-400 mb-3"></i><div class="fw-semibold text-gray-700 mb-1">Belum ada audit log terkait user ini.</div></div>
             @else
                 <div class="timeline-label">
                     @foreach($auditLogs as $log)

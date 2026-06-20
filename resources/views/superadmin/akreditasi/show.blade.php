@@ -324,7 +324,7 @@
                     <span class="badge badge-light-info">{{ strtoupper($assessment->tipe) }}</span>
                 </div>
             @empty
-                <div class="text-center py-8 text-muted border rounded bg-light">Belum ada asesor ditugaskan.</div>
+                <div class="text-center py-12 text-muted border rounded bg-light">Belum ada asesor ditugaskan.</div>
             @endforelse
 
             @if($assignmentHistory->isNotEmpty())
@@ -470,7 +470,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="col-12 text-center py-8 text-muted border rounded bg-light">Belum ada dokumen profil pesantren.</div>
+                        <div class="col-12 text-center py-12 text-muted border rounded bg-light">Belum ada dokumen profil pesantren.</div>
                     @endforelse
 
                     @foreach($documents as $document)
@@ -528,7 +528,7 @@
                         @endif
                     </div>
                 @empty
-                    <div class="text-center py-10 text-muted border rounded bg-light">Belum ada banding.</div>
+                    <div class="text-center py-12 text-muted border rounded bg-light">Belum ada banding.</div>
                 @endforelse
             </x-metronic.card>
         </div>
@@ -553,7 +553,7 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-10 text-muted border rounded bg-light">Belum ada audit log.</div>
+                        <div class="text-center py-12 text-muted border rounded bg-light">Belum ada audit log.</div>
                     @endforelse
                 </div>
             </x-metronic.card>
