@@ -235,7 +235,7 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.pengajuan'))
             ->assertOk()
-            ->assertSee('Pilih Pesantren');
+            ->assertSee('Prasyarat Pengajuan');
     }
 
     public function test_super_admin_can_submit_pengajuan_for_complete_pesantren(): void
@@ -322,12 +322,49 @@ class AkreditasiConsoleTest extends TestCase
         $this->assertSame($akreditasi->id, Akreditasi::where('uuid', $akreditasi->uuid)->firstOrFail()->id);
     }
 
-    public function test_super_admin_without_export_permission_cannot_export_akreditasi_console(): void
+    public function test_super_admin_without_akreditasi_export_permission_cannot_export_akreditasi_console(): void
     {
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.akreditasi.export');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.export'))
+            ->assertForbidden();
+    }
+
+    public function test_super_admin_without_scores_export_permission_cannot_export_scores(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.akreditasi_scores.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-scores'))
+            ->assertForbidden();
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-documents'))
+            ->assertOk()
+            ->assertDownload('dokumen-status-superadmin.csv');
+    }
+
+    public function test_super_admin_without_document_export_permission_cannot_export_document_status(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.akreditasi_documents.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-documents'))
+            ->assertForbidden();
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.akreditasi.export-scores'))
+            ->assertOk()
+            ->assertDownload('nilai-peringkat-superadmin.csv');
+    }
+
+    public function test_super_admin_without_sk_export_permission_cannot_export_sk_management(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.sk.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.sk.export'))
             ->assertForbidden();
     }
 
@@ -1184,9 +1221,9 @@ class AkreditasiConsoleTest extends TestCase
         $this->assertSame(1, $auditLog->metadata['rows_exported']);
     }
 
-    public function test_super_admin_without_export_permission_cannot_export_sk_management(): void
+    public function test_super_admin_without_sk_export_permission_cannot_export_sk_management_from_filtered_view(): void
     {
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.sk.export');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.sk.export'))

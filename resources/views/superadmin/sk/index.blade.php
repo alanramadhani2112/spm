@@ -8,9 +8,11 @@
     <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">
         <i class="ki-outline ki-document fs-2"></i>Workflow Console
     </a>
-    <a href="{{ route('superadmin.sk.export', array_filter(['period' => $period, 'status' => $status, 'certificate' => $certificate, 'q' => $search], fn($value) => filled($value))) }}" class="btn btn-sm btn-light-primary">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
-    </a>
+    @if(auth()->user()?->hasPermission('superadmin.sk.export'))
+        <a href="{{ route('superadmin.sk.export', array_filter(['period' => $period, 'status' => $status, 'certificate' => $certificate, 'q' => $search], fn($value) => filled($value))) }}" class="btn btn-sm btn-light-primary">
+            <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
+        </a>
+    @endif
 </div>
 @endsection
 

@@ -65,7 +65,7 @@ class AuditExportTest extends TestCase
     public function test_super_admin_without_export_permission_cannot_export_audit_trail(): void
     {
         $superAdmin = User::factory()->create(['role_id' => 4]);
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.audit.export');
 
         $this->actingAs($superAdmin)
             ->get(route('superadmin.audit.export'))

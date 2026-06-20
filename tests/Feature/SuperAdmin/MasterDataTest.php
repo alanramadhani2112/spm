@@ -227,9 +227,9 @@ class MasterDataTest extends TestCase
         $this->assertSame(['roles_permissions', 'users'], $exportTypes);
     }
 
-    public function test_super_admin_without_export_permission_cannot_export_master_data(): void
+    public function test_super_admin_without_users_export_permission_cannot_export_users(): void
     {
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.users.export');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.master-data.users.export'))
@@ -237,7 +237,22 @@ class MasterDataTest extends TestCase
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.master-data.roles.export'))
+            ->assertOk()
+            ->assertDownload('roles-permissions-superadmin.csv');
+    }
+
+    public function test_super_admin_without_roles_export_permission_cannot_export_roles(): void
+    {
+        $this->revokeSuperAdminPermission('superadmin.roles.export');
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.roles.export'))
             ->assertForbidden();
+
+        $this->actingAs($this->superAdmin)
+            ->get(route('superadmin.master-data.users.export'))
+            ->assertOk()
+            ->assertDownload('users-superadmin.csv');
     }
 
     public function test_pesantren_data_control_page_displays_readiness_and_lock_state(): void

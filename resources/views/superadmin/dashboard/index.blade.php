@@ -11,9 +11,11 @@
             <option value="{{ $value }}" @selected(($period ?? 'all') == $value)>{{ $label }}</option>
         @endforeach
     </select>
-    <a href="{{ route('superadmin.dashboard.export', ['period' => $period ?? 'all']) }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
-    </a>
+    @if(auth()->user()?->hasPermission('superadmin.dashboard.export'))
+        <a href="{{ route('superadmin.dashboard.export', ['period' => $period ?? 'all']) }}" class="btn btn-sm btn-light">
+            <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
+        </a>
+    @endif
 </form>
 @endsection
 

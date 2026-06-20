@@ -120,11 +120,11 @@ use App\Http\Controllers\SuperAdmin\SettingsController;
 Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/export', [DashboardController::class, 'export'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.dashboard.export')
         ->name('dashboard.export');
     Route::get('/asesor-workload', [AssessorWorkloadController::class, 'index'])->name('asesor-workload.index');
     Route::get('/asesor-workload/export', [AssessorWorkloadController::class, 'export'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.assessor_workload.export')
         ->name('asesor-workload.export');
     Route::get('/asesor-workload/{asesor}', [AssessorWorkloadController::class, 'show'])->name('asesor-workload.show');
     Route::get('/visitasi', [DashboardController::class, 'visitasiOverview'])
@@ -132,19 +132,19 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
         ->name('visitasi.index');
     Route::get('/sk', [SuperAdminAkreditasiController::class, 'skIndex'])->name('sk.index');
     Route::get('/sk/export', [SuperAdminAkreditasiController::class, 'skExport'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.sk.export')
         ->name('sk.export');
 
     // Akreditasi — superadmin dapat semua akses operasional
     Route::get('/akreditasi', [SuperAdminAkreditasiController::class, 'index'])->name('akreditasi.index');
     Route::get('/akreditasi/export', [SuperAdminAkreditasiController::class, 'export'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.akreditasi.export')
         ->name('akreditasi.export');
     Route::get('/akreditasi/export-scores', [SuperAdminAkreditasiController::class, 'exportScores'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.akreditasi_scores.export')
         ->name('akreditasi.export-scores');
     Route::get('/akreditasi/export-documents', [SuperAdminAkreditasiController::class, 'exportDocumentStatus'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.akreditasi_documents.export')
         ->name('akreditasi.export-documents');
     Route::get('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
     Route::post('/akreditasi/pengajuan', [SuperAdminAkreditasiController::class, 'submitPengajuan'])->name('akreditasi.submit-pengajuan');
@@ -271,14 +271,14 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
             ->name('pesantren.documents.update');
         Route::get('/roles', [MasterDataController::class, 'roles'])->name('roles.index');
         Route::get('/roles/export', [MasterDataController::class, 'exportRoles'])
-            ->middleware('permission:superadmin.export')
+            ->middleware('permission:superadmin.roles.export')
             ->name('roles.export');
         Route::put('/roles/{role}/permissions', [MasterDataController::class, 'updateRolePermissions'])
             ->middleware('permission:role.permissions.update')
             ->name('roles.permissions.update');
         Route::get('/users', [MasterDataController::class, 'users'])->name('users.index');
         Route::get('/users/export', [MasterDataController::class, 'exportUsers'])
-            ->middleware('permission:superadmin.export')
+            ->middleware('permission:superadmin.users.export')
             ->name('users.export');
         Route::post('/users', [MasterDataController::class, 'storeUser'])
             ->middleware('permission:user.access.update')
@@ -324,7 +324,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
 
     Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
     Route::get('/audit/export', [AuditController::class, 'export'])
-        ->middleware('permission:superadmin.export')
+        ->middleware('permission:superadmin.audit.export')
         ->name('audit.export');
     Route::get('/audit/{id}', [AuditController::class, 'show'])->name('audit.show');
 });

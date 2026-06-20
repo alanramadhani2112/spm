@@ -57,6 +57,10 @@ class PesantrenService
             'assessmentReady' => $assessmentReady,
             'missingFields' => $missingFields,
             'locked' => (bool) $pesantren->is_locked,
+            'hasUnits' => $hasUnits,
+            'hasIpm' => $hasIpm,
+            'hasEdpm' => $hasEdpm,
+            'hasSdm' => $hasSdm,
         ];
     }
 

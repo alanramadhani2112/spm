@@ -54,7 +54,7 @@ class DashboardExportTest extends TestCase
     public function test_super_admin_without_export_permission_cannot_export_dashboard(): void
     {
         $superAdmin = User::factory()->create(['role_id' => 4]);
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.dashboard.export');
 
         $this->actingAs($superAdmin)
             ->get(route('superadmin.dashboard.export'))

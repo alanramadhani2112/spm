@@ -17,9 +17,11 @@
             <option value="{{ $value }}" @selected($load === $value)>{{ $label }}</option>
         @endforeach
     </select>
-    <a href="{{ route('superadmin.asesor-workload.export', ['period' => $period, 'load' => $load]) }}" class="btn btn-sm btn-light-primary">
-        <i class="ki-outline ki-file-down fs-2"></i>Export CSV
-    </a>
+    @if(auth()->user()?->hasPermission('superadmin.assessor_workload.export'))
+        <a href="{{ route('superadmin.asesor-workload.export', ['period' => $period, 'load' => $load]) }}" class="btn btn-sm btn-light-primary">
+            <i class="ki-outline ki-file-down fs-2"></i>Export CSV
+        </a>
+    @endif
     <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="btn btn-sm btn-primary">
         <i class="ki-outline ki-user-tick fs-2"></i>Queue Assign
     </a>

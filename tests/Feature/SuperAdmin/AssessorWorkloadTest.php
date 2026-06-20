@@ -265,7 +265,7 @@ class AssessorWorkloadTest extends TestCase
 
     public function test_super_admin_without_export_permission_cannot_export_assessor_workload(): void
     {
-        $this->revokeSuperAdminPermission('superadmin.export');
+        $this->revokeSuperAdminPermission('superadmin.assessor_workload.export');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.export'))

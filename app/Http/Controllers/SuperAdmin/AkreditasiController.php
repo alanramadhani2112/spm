@@ -18,6 +18,7 @@ use App\Services\AkreditasiWorkflowService;
 use App\Services\AssessorWorkloadService;
 use App\Services\AuditTrailService;
 use App\Services\BandingService;
+use App\Services\PesantrenService;
 use App\Services\ScoringService;
 use App\Support\SuperAdminSettings;
 use Exception;
@@ -42,6 +43,7 @@ class AkreditasiController extends Controller
         private ScoringService $scoringService,
         private AuditTrailService $auditTrail,
         private AssessorWorkloadService $assessorWorkloadService,
+        private PesantrenService $pesantrenService,
     ) {}
 
     // ============================================================
@@ -305,9 +307,52 @@ class AkreditasiController extends Controller
 
     public function pengajuanForm()
     {
-        $pesantren = User::whereHas('role', fn ($query) => $query->where('parameter', 'pesantren'))->get();
+        $pesantrenUsers = User::whereHas('role', fn ($query) => $query->where('parameter', 'pesantren'))
+            ->with('pesantren')
+            ->get();
 
-        return view('superadmin.akreditasi.pengajuan', compact('pesantren'));
+        $eligible = [];
+        $pendingPrerequisites = [];
+        $hasActiveAkreditasi = [];
+
+        foreach ($pesantrenUsers as $user) {
+            $completeness = $this->pesantrenService->checkDataCompleteness($user->id);
+            $activeAkreditasi = Akreditasi::where('user_id', $user->id)
+                ->whereNotIn('status', Akreditasi::TERMINAL_STATUSES)
+                ->latest()
+                ->first();
+
+            $entry = [
+                'id' => $user->id,
+                'name' => $user->pesantren?->nama_pesantren ?? $user->name,
+                'email' => $user->email,
+                'nsp' => $user->pesantren?->ns_pesantren ?? '-',
+                'completeness' => $completeness,
+                'active_akreditasi_status' => $activeAkreditasi?->status,
+                'active_akreditasi_uuid' => $activeAkreditasi?->uuid,
+                'active_akreditasi_label' => $activeAkreditasi ? Akreditasi::STATUS_LABELS[$activeAkreditasi->status] ?? $activeAkreditasi->status : null,
+                'active_akreditasi_id' => $activeAkreditasi?->id,
+            ];
+
+            if ($activeAkreditasi && $activeAkreditasi->status !== Akreditasi::STATUS_DRAFT_PROFILE) {
+                $hasActiveAkreditasi[] = $entry;
+            } elseif (! $completeness['assessmentReady']) {
+                $pendingPrerequisites[] = $entry;
+            } else {
+                $eligible[] = $entry;
+            }
+        }
+
+        $prerequisiteFields = $this->pesantrenService->getRequiredProfileFields();
+        $prerequisiteModules = ['units' => 'Unit Pesantren', 'ipm' => 'Data IPM', 'edpm' => 'Data EDPM', 'sdm' => 'Data SDM'];
+
+        return view('superadmin.akreditasi.pengajuan', compact(
+            'eligible',
+            'pendingPrerequisites',
+            'hasActiveAkreditasi',
+            'prerequisiteFields',
+            'prerequisiteModules',
+        ));
     }
 
     public function submitPengajuan(Request $request)

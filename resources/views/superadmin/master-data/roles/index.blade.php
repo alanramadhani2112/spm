@@ -8,9 +8,11 @@
     <a href="{{ route('superadmin.master-data.users.index') }}" class="btn btn-sm btn-light-primary">
         <i class="ki-outline ki-profile-user fs-3"></i>Akun Pengguna
     </a>
-    <a href="{{ route('superadmin.master-data.roles.export') }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-3"></i>Export Roles
-    </a>
+    @if(auth()->user()?->hasPermission('superadmin.roles.export'))
+        <a href="{{ route('superadmin.master-data.roles.export') }}" class="btn btn-sm btn-light">
+            <i class="ki-outline ki-exit-up fs-3"></i>Export Roles
+        </a>
+    @endif
     <a href="{{ route('superadmin.master-data.index') }}" class="btn btn-sm btn-light">
         <i class="ki-outline ki-left fs-4"></i>Kembali
     </a>

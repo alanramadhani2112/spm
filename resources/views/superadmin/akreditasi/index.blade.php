@@ -5,15 +5,21 @@
 
 @section('toolbar')
 <div class="d-flex flex-wrap align-items-center gap-2 gap-lg-3">
-    <a href="{{ route('superadmin.akreditasi.export', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
-    </a>
-    <a href="{{ route('superadmin.akreditasi.export-scores', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-chart-line fs-2"></i>Export Nilai
-    </a>
-    <a href="{{ route('superadmin.akreditasi.export-documents', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-document fs-2"></i>Export Dokumen
-    </a>
+    @if(auth()->user()?->hasPermission('superadmin.akreditasi.export'))
+        <a href="{{ route('superadmin.akreditasi.export', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+            <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
+        </a>
+    @endif
+    @if(auth()->user()?->hasPermission('superadmin.akreditasi_scores.export'))
+        <a href="{{ route('superadmin.akreditasi.export-scores', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+            <i class="ki-outline ki-chart-line fs-2"></i>Export Nilai
+        </a>
+    @endif
+    @if(auth()->user()?->hasPermission('superadmin.akreditasi_documents.export'))
+        <a href="{{ route('superadmin.akreditasi.export-documents', request()->only(['period', 'status', 'q'])) }}" class="btn btn-sm btn-light">
+            <i class="ki-outline ki-document fs-2"></i>Export Dokumen
+        </a>
+    @endif
     <a href="{{ route('superadmin.akreditasi.pengajuan') }}" class="btn btn-sm btn-primary">
         <i class="ki-outline ki-add-files fs-2"></i>Pengajuan Baru
     </a>

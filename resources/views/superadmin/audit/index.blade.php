@@ -17,9 +17,11 @@
         </div>
     </div>
     <div class="d-flex flex-wrap gap-2">
-        <a href="{{ route('superadmin.audit.export', request()->only(['actor', 'action', 'start_date', 'end_date'])) }}" class="btn btn-sm btn-light-success">
-            <i class="ki-outline ki-exit-down fs-3"></i>Export CSV
-        </a>
+        @if(auth()->user()?->hasPermission('superadmin.audit.export'))
+            <a href="{{ route('superadmin.audit.export', request()->only(['actor', 'action', 'start_date', 'end_date'])) }}" class="btn btn-sm btn-light-success">
+                <i class="ki-outline ki-exit-down fs-3"></i>Export CSV
+            </a>
+        @endif
         <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">
             <i class="ki-outline ki-document fs-3"></i>Workflow Console
         </a>
