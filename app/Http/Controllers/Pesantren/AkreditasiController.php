@@ -110,6 +110,12 @@ class AkreditasiController extends Controller
         }
     }
 
+        public function kartuKendaliForm($akreditasiId)
+    {
+        $akreditasi = Akreditasi::where('user_id', auth()->id())->findOrFail($akreditasiId);
+        return view('pesantren.akreditasi.kartu-kendali', compact('akreditasi'));
+    }
+
     public function uploadKartuKendali(Request $request, $akreditasiId)
     {
         try {
@@ -236,4 +242,5 @@ class AkreditasiController extends Controller
         return $payload;
     }
 }
+
 

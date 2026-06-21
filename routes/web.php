@@ -57,7 +57,8 @@ Route::middleware(['auth', 'role:pesantren,super_admin'])->prefix('pesantren')->
     Route::post('/akreditasi/{id}/assessment', [AkreditasiController::class, 'submitAssessment'])->name('akreditasi.submit-assessment');
     Route::get('/akreditasi/{id}/koreksi', [AkreditasiController::class, 'correctionForm'])->name('akreditasi.koreksi');
     Route::post('/akreditasi/{id}/koreksi', [AkreditasiController::class, 'submitCorrection'])->name('akreditasi.submit-koreksi');
-    Route::post('/akreditasi/{id}/kartu-kendali', [AkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
+    Route::get('/akreditasi/{id}/kartu-kendali', [AkreditasiController::class, 'kartuKendaliForm'])->name('akreditasi.kartu-kendali');
+        Route::post('/akreditasi/{id}/kartu-kendali', [AkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
     Route::get('/akreditasi/{id}/hasil', [AkreditasiController::class, 'hasilAkhir'])->name('akreditasi.hasil');
     Route::get('/akreditasi/{akreditasi}/sertifikat', [AkreditasiCertificateController::class, 'download'])->name('akreditasi.sertifikat.download');
     Route::post('/akreditasi/{id}/banding', [AkreditasiController::class, 'submitBanding'])->name('akreditasi.submit-banding');
@@ -352,3 +353,4 @@ Route::post('/logout', function () {
 
     return redirect('/');
 })->middleware('auth')->name('logout');
+
