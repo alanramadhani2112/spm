@@ -3,8 +3,12 @@
 @section('title', 'Pengaturan Deadline')
 @section('pageTitle', 'Pengaturan Deadline')
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'route' => 'superadmin.settings.index'], ['label' => 'Deadline', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @include('superadmin.settings._nav')
 

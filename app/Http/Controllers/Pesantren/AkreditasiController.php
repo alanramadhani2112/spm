@@ -142,6 +142,27 @@ class AkreditasiController extends Controller
         return view('pesantren.akreditasi.hasil', compact('akreditasi'));
     }
 
+    public function cancelPengajuan(Request $request, $akreditasiId)
+    {
+        $request->validate([
+            'alasan' => 'required|string|min:10|max:1000',
+        ]);
+
+        try {
+            app(AkreditasiWorkflowService::class)->pesantrenCancelPengajuan(
+                $akreditasiId,
+                auth()->id(),
+                $request->input('alasan')
+            );
+
+            session()->flash('success', 'Pengajuan akreditasi berhasil dibatalkan.');
+            return redirect()->route('pesantren.akreditasi.index');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+            return redirect()->back()->withInput();
+        }
+    }
+
     public function submitBanding(Request $request, $akreditasiId)
     {
         $request->validate([

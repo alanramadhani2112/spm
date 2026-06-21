@@ -3,8 +3,12 @@
 @section('title', 'Super Admin — Nilai Visitasi (NV)')
 @section('pageTitle', 'Super Admin — Nilai Visitasi (NV)')
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'route' => 'superadmin.settings.index'], ['label' => 'NV', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @include('superadmin.settings._nav')
 @include('superadmin._glossary-help')

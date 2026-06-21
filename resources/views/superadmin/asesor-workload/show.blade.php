@@ -28,8 +28,12 @@
 </div>
 @endsection
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Beban Kerja Asesor', 'route' => 'superadmin.asesor-workload.index'], ['label' => 'Detail Asesor', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @php
     $initials = collect(explode(' ', $asesor->name))->filter()->take(2)->map(fn ($part) => strtoupper(substr($part, 0, 1)))->implode('') ?: 'A';

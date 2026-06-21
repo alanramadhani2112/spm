@@ -145,6 +145,11 @@
                                                 @if(in_array($akreditasi->status, $correctionStatuses, true))
                                                     <a href="{{ route('pesantren.akreditasi.koreksi', $akreditasi->id) }}" class="btn btn-sm btn-light-warning flex-shrink-0">Koreksi</a>
                                                 @endif
+                                                
+                                                @if(!$akreditasi->kartu_kendali && in_array($akreditasi->status, [App\Models\Akreditasi::STATUS_VISITASI_COMPLETED, App\Models\Akreditasi::STATUS_POST_VISITASI_SCORING]))
+                                                    <a href="{{ route('pesantren.akreditasi.kartu-kendali', $akreditasi->id) }}" class="btn btn-sm btn-light-warning flex-shrink-0">Upload Kartu Kendali</a>
+                                                @endif
+
                                                 @if($akreditasi->kartu_kendali && $akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED)
                                                     <a href="{{ asset('storage/' . $akreditasi->kartu_kendali) }}" target="_blank" class="btn btn-sm btn-light-info flex-shrink-0">Kartu Kendali</a>
                                                 @endif

@@ -43,6 +43,8 @@ class SuperAdminSettings
 
     public const BANDING_ELIGIBILITY = 'banding_eligibility';
 
+    public const MAX_BANDING_COUNT = 'max_banding_count';
+
     public const CATEGORIES = [
         'deadline' => [
             self::REVIEW_AWAL_DEADLINE,
@@ -73,6 +75,7 @@ class SuperAdminSettings
         ],
         'banding' => [
             self::BANDING_ELIGIBILITY,
+            self::MAX_BANDING_COUNT,
         ],
     ];
 
@@ -95,6 +98,8 @@ class SuperAdminSettings
         self::REMINDER_DAYS => 7,
         self::ACTION_ON_LIMIT => 'reject',
         self::BANDING_ELIGIBILITY => 'all',
+        self::MAX_BANDING_COUNT => 1,
+        self::MAX_BANDING_COUNT => 1,
     ];
 
     public const DEADLINE_PHASE_KEYS = [

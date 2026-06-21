@@ -3,10 +3,14 @@
 @section('title', 'Master EDPM')
 @section('pageTitle', 'Master EDPM / IPR')
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Master EDPM', 'active' => true]]" />
+@endsection
+
 @section('content')
 @include('superadmin._glossary-help')
 
-<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Master EDPM', 'active' => true]]" />
+
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div>

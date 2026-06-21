@@ -16,14 +16,17 @@
 </div>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Manajemen SK', 'active' => true]]" />
+@endsection
+
 @section('content')
 @php use App\Models\Akreditasi; $activeFilterCount = collect([$period !== 'all', $status !== 'all', $certificate !== 'all', $search !== ''])->filter()->count(); @endphp
 
-<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Manajemen SK', 'active' => true]]" />
+
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-6">
     <div>
-        <h2 class="fs-2 fw-bold text-gray-900 mb-1">Manajemen SK</h2>
         <p class="fs-7 text-muted mb-0">{{ $stats['displayed'] ?? $skRows->count() }} SK ditampilkan · {{ $stats['ready'] }} siap terbit · {{ $stats['expired'] }} kedaluwarsa</p>
     </div>
 </div>

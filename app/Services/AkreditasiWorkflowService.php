@@ -169,6 +169,11 @@ class AkreditasiWorkflowService
         }
 
         $user = User::findOrFail($akreditasi->user_id);
+        $pesantren = Pesantren::where('user_id', $user->id)->first();
+
+        if ($pesantren) {
+            $this->pesantrenService->unlockProfile($pesantren->id);
+        }
 
         $akreditasi = $this->stateMachine->transition(
             $akreditasi,
@@ -177,11 +182,62 @@ class AkreditasiWorkflowService
             'Pesantren mengirim ulang pengajuan awal'
         );
 
+        if ($pesantren) {
+            $this->pesantrenService->lockProfile($pesantren->id);
+        }
+
         $this->auditTrailService->logTransition(
             Akreditasi::STATUS_INITIAL_REJECTED,
             Akreditasi::STATUS_INITIAL_SUBMITTED,
             $akreditasi->id,
             $user->id
+        );
+
+        return $akreditasi;
+    }
+
+    public function pesantrenCancelPengajuan(int $akreditasiId, int $pesantrenUserId, string $alasan): Akreditasi
+    {
+        $akreditasi = Akreditasi::findOrFail($akreditasiId);
+
+        if ($akreditasi->user_id !== $pesantrenUserId) {
+            throw new WorkflowException(
+                'Hanya pesantren pemilik akreditasi yang dapat membatalkan pengajuan.'
+            );
+        }
+
+        if ($akreditasi->status === Akreditasi::STATUS_COMPLETED) {
+            throw new WorkflowException(
+                'Akreditasi yang sudah selesai tidak dapat dibatalkan.'
+            );
+        }
+
+        if ($akreditasi->status === Akreditasi::STATUS_CANCELLED) {
+            throw new WorkflowException(
+                'Akreditasi sudah dibatalkan sebelumnya.'
+            );
+        }
+
+        $user = User::findOrFail($pesantrenUserId);
+        $pesantren = Pesantren::where('user_id', $user->id)->first();
+        $fromStatus = $akreditasi->status;
+
+        $akreditasi = $this->stateMachine->transition(
+            $akreditasi,
+            Akreditasi::STATUS_CANCELLED,
+            $user,
+            $alasan
+        );
+
+        if ($pesantren) {
+            $this->pesantrenService->unlockProfile($pesantren->id);
+        }
+
+        $this->auditTrailService->logTransition(
+            $fromStatus,
+            Akreditasi::STATUS_CANCELLED,
+            $akreditasi->id,
+            $pesantrenUserId
         );
 
         return $akreditasi;
@@ -656,6 +712,15 @@ class AkreditasiWorkflowService
             $reason ?? 'Ketua asesor menolak administratif tahap 2'
         );
 
+        $rejection = new AkreditasiRejection;
+        $rejection->forceFill([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => 'administrative',
+            'stage' => 'assessor_stage_2',
+            'reason' => $reason,
+            'rejected_by' => $ketuaUserId,
+        ])->save();
+
         $this->auditTrailService->logTransition(
             Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
             Akreditasi::STATUS_ADMINISTRATIVE_REJECTED,
@@ -716,6 +781,98 @@ class AkreditasiWorkflowService
             Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
             $akreditasi->id,
             $user->id
+        );
+
+        return $akreditasi;
+    }
+
+    public function ketuaHandleStage2Limit(int $akreditasiId, int $ketuaUserId, string $action = 'default', ?string $reason = null): Akreditasi
+    {
+        $akreditasi = Akreditasi::findOrFail($akreditasiId);
+        $ketua = User::findOrFail($ketuaUserId);
+
+        $validStatuses = [
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW,
+            Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
+        ];
+
+        if (! in_array($akreditasi->status, $validStatuses, true)) {
+            throw new WorkflowException(
+                'Penanganan batas koreksi tahap 2 hanya dapat dilakukan pada status review tahap 2 atau limit review.'
+            );
+        }
+
+        $isKetua = Assessment::where('akreditasi_id', $akreditasiId)
+            ->where('asesor_id', $ketuaUserId)
+            ->where('tipe', 'ketua')
+            ->exists();
+
+        if (! $isKetua) {
+            throw new WorkflowException(
+                'Hanya ketua asesor yang ditugaskan yang dapat menangani batas koreksi tahap 2.'
+            );
+        }
+
+        if ($action === 'default') {
+            $action = $this->defaultLimitAction();
+        }
+
+        if ($action === 'freeze') {
+            throw new WorkflowException(
+                'Pengajuan dibekukan karena batas siklus koreksi tahap 2 tercapai.'
+            );
+        }
+
+        $validActions = ['approve_by_exception', 'reject_administrative'];
+        if (! in_array($action, $validActions, true)) {
+            throw new WorkflowException(
+                "Aksi tidak valid: {$action}. Gunakan 'approve_by_exception', 'reject_administrative', atau 'default'."
+            );
+        }
+
+        if ($action === 'approve_by_exception') {
+            $fromStatus = $akreditasi->status;
+
+            $akreditasi = $this->stateMachine->transition(
+                $akreditasi,
+                Akreditasi::STATUS_VISITASI_SCHEDULED,
+                $ketua,
+                $reason ?? 'Ketua asesor menyetujui dengan pengecualian (batas koreksi tahap 2 tercapai)'
+            );
+
+            $this->auditTrailService->logTransition(
+                $fromStatus,
+                Akreditasi::STATUS_VISITASI_SCHEDULED,
+                $akreditasi->id,
+                $ketuaUserId
+            );
+
+            return $akreditasi;
+        }
+
+        $fromStatus = $akreditasi->status;
+
+        $akreditasi = $this->stateMachine->transition(
+            $akreditasi,
+            Akreditasi::STATUS_ADMINISTRATIVE_REJECTED,
+            $ketua,
+            $reason ?? 'Ketua asesor menolak administratif (batas koreksi tahap 2 tercapai)'
+        );
+
+        $rejection = new AkreditasiRejection;
+        $rejection->forceFill([
+            'akreditasi_id' => $akreditasi->id,
+            'type' => 'administrative',
+            'stage' => 'assessor_stage_2_limit',
+            'reason' => $reason,
+            'rejected_by' => $ketuaUserId,
+        ])->save();
+
+        $this->auditTrailService->logTransition(
+            $fromStatus,
+            Akreditasi::STATUS_ADMINISTRATIVE_REJECTED,
+            $akreditasi->id,
+            $ketuaUserId
         );
 
         return $akreditasi;
@@ -1084,6 +1241,29 @@ class AkreditasiWorkflowService
         ]);
 
         return $akreditasi;
+    }
+
+    
+    public function submitIPR(int $akreditasiId, int $ketuaUserId, array $butirValues, bool $setFinal = false): void
+    {
+        $akreditasi = Akreditasi::findOrFail($akreditasiId);
+
+        if ($akreditasi->status !== Akreditasi::STATUS_POST_VISITASI_SCORING) {
+            throw new \DomainException('IPR hanya dapat diinput pada status penilaian pasca visitasi.');
+        }
+
+        DB::transaction(function () use ($akreditasiId, $ketuaUserId, $butirValues, $setFinal) {
+            foreach ($butirValues as $butirId => $value) {
+                AkreditasiEdpm::updateOrCreate(
+                    ['akreditasi_id' => $akreditasiId, 'asesor_id' => $ketuaUserId, 'butir_id' => $butirId],
+                    ['value' => $value, 'type' => 'ipr']
+                );
+            }
+
+            if ($setFinal) {
+                Akreditasi::findOrFail($akreditasiId)->forceFill(['is_nv_final' => true])->save();
+            }
+        });
     }
 
     public function ketuaSubmitHasilVisitasi(int $akreditasiId, int $ketuaUserId): Akreditasi
@@ -1483,6 +1663,7 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
 
 
 

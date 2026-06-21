@@ -14,8 +14,12 @@
 </div>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Data Pesantren', 'active' => true]]" />
+@endsection
+
 @section('content')
-<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Data Pesantren', 'active' => true]]" />
+
 
 <div class="card card-flush bg-light-info border border-info border-dashed mb-8">
     <div class="card-body p-7">

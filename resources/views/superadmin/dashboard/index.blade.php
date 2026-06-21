@@ -19,8 +19,12 @@
 </form>
 @endsection
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @php
     $completionRate = $totalAkreditasi > 0 ? round(($completedAkreditasi / $totalAkreditasi) * 100) : 0;
@@ -202,6 +206,5 @@
     </div>
 </div>
 @endsection
-
 
 

@@ -3,8 +3,12 @@
 @section('title', 'Pengaturan Banding')
 @section('pageTitle', 'Pengaturan Banding')
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'route' => 'superadmin.settings.index'], ['label' => 'Banding', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @include('superadmin.settings._nav')
 

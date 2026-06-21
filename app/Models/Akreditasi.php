@@ -32,6 +32,7 @@ class Akreditasi extends Model
     public const STATUS_FINAL_REJECTED = 'final_rejected';
     public const STATUS_APPEAL_SUBMITTED = 'appeal_submitted';
     public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
 
     public const ACTIVE_STATUSES = [
         self::STATUS_DRAFT_PROFILE,
@@ -62,6 +63,7 @@ class Akreditasi extends Model
     public const TERMINAL_STATUSES = [
         self::STATUS_COMPLETED,
         self::STATUS_FINAL_APPROVED,
+        self::STATUS_CANCELLED,
     ];
 
     public const STATUS_LABELS = [

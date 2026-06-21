@@ -7,6 +7,10 @@
 <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-left fs-4"></i>Kembali</a>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'route' => 'superadmin.akreditasi.index'], ['label' => $akreditasi->uuid, 'active' => true]]" />
+@endsection
+
 @section('content')
 @php
     use App\Models\Akreditasi;
@@ -46,7 +50,7 @@
     if ($needsAttention && count($primaryAction ? [$primaryAction] : []) === 0) { $alerts[] = 'Status ini memerlukan perhatian — periksa detail berikutnya.'; }
 @endphp
 
-<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'route' => 'superadmin.akreditasi.index'], ['label' => $akreditasi->uuid, 'active' => true]]" />
+
 
 @if(count($alerts) > 0)
     <div class="alert alert-dismissible bg-light-warning border border-warning border-dashed d-flex align-items-center gap-3 p-4 mb-6">
@@ -268,5 +272,4 @@
     </div>
 </div>
 @endsection
-
 

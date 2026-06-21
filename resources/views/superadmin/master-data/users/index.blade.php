@@ -25,8 +25,12 @@
 </div>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Akun Pengguna', 'active' => true]]" />
+@endsection
+
 @section('content')
-<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Akun Pengguna', 'active' => true]]" />
+
 @include('superadmin._glossary-help')
 
 @php

@@ -87,6 +87,10 @@ class PesantrenService
     {
         Pesantren::where('id', $pesantrenId)->update(['is_locked' => true]);
     }
+    public function unlockProfile(int $pesantrenId): void
+    {
+        Pesantren::where('id', $pesantrenId)->update(['is_locked' => false]);
+    }
 
     public function getRequiredProfileFields(): array
     {

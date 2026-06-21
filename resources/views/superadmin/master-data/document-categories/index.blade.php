@@ -3,8 +3,12 @@
 @section('title', 'Aturan Dokumen')
 @section('pageTitle', 'Aturan Dokumen Akreditasi')
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Kategori Dokumen', 'active' => true]]" />
+@endsection
+
 @section('content')
-<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Kategori Dokumen', 'active' => true]]" />
+
 
 <div class="d-flex justify-content-between align-items-center mb-6">
     <div>

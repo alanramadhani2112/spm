@@ -9,8 +9,12 @@
 </a>
 @endsection
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Log Audit', 'route' => 'superadmin.audit.index'], ['label' => 'Detail', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
     <div class="card-body p-7">

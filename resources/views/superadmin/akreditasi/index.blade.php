@@ -37,14 +37,17 @@
 </div>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'active' => true]]" />
+@endsection
+
 @section('content')
 @php use App\Models\Akreditasi; @endphp
 
-<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'active' => true]]" />
+
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-6">
     <div>
-        <h2 class="fs-2 fw-bold text-gray-900 mb-1">Konsol Akreditasi</h2>
         <p class="fs-7 text-muted mb-0">{{ $akreditasis->count() }} pengajuan ditampilkan
             @if(($status ?? 'all') !== 'all') · Fokus: {{ $statusOptions[$status] ?? $status }} @endif
             @if(($search ?? '') !== '') · Pencarian: {{ $search }} @endif

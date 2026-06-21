@@ -3,8 +3,12 @@
 @section('title', 'Super Admin — Master Data')
 @section('pageTitle', 'Super Admin — Master Data')
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Master Data', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 @php
     $totalMaster = array_sum($stats ?? []);

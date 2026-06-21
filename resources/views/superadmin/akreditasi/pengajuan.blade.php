@@ -7,14 +7,17 @@
 <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light"><i class="ki-outline ki-left fs-4"></i>Kembali</a>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'route' => 'superadmin.akreditasi.index'], ['label' => 'Pengajuan Baru', 'active' => true]]" />
+@endsection
+
 @section('content')
 @php $totalEligible = count($eligible); $totalPending = count($pendingPrerequisites); $totalBlocked = count($hasActiveAkreditasi); $totalAll = $totalEligible + $totalPending + $totalBlocked; @endphp
 
-<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'route' => 'superadmin.akreditasi.index'], ['label' => 'Pengajuan Baru', 'active' => true]]" />
+
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-6">
     <div>
-        <h2 class="fs-2 fw-bold text-gray-900 mb-1">Pengajuan Akreditasi Baru</h2>
         <p class="fs-7 text-muted mb-0">{{ $totalAll }} pesantren terdaftar · {{ $totalEligible }} siap diajukan · {{ $totalPending }} belum lengkap · {{ $totalBlocked }} sudah aktif</p>
     </div>
 </div>

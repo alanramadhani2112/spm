@@ -228,6 +228,56 @@ class KetuaAsesorController extends Controller
         }
     }
 
+    
+    public function inputIPR(Request $request, $akreditasiId)
+    {
+        $akreditasi = Akreditasi::where('status', Akreditasi::STATUS_POST_VISITASI_SCORING)->findOrFail($akreditasiId);
+        $iprButirs = MasterEdpmButir::where('komponen_id', ScoringService::IPR_CONFIG['id'])->orderBy('id')->get();
+        $existingScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'ipr')->pluck('value', 'butir_id');
+
+        if ($request->isMethod('get')) {
+            return view('asesor.ketua.input-ipr', compact('akreditasi', 'iprButirs', 'existingScores'));
+        }
+
+        $validated = $request->validate([
+            'butir' => 'required|array|min:1',
+            'butir.*' => 'integer|between:1,4',
+            'set_final' => 'nullable|boolean',
+        ]);
+
+        try {
+            $this->workflowService->submitIPR($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
+            session()->flash('success', 'Nilai IPR berhasil disimpan.');
+            return redirect()->route('asesor.ketua.index');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+            return redirect()->back()->withInput();
+        }
+    }
+
+    public function handleLimitReview(Request $request, $akreditasiId)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:approve_by_exception,reject_administrative,default',
+            'reason' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $this->workflowService->ketuaHandleStage2Limit(
+                $akreditasiId,
+                auth()->id(),
+                $validated['action'] ?? 'default',
+                $validated['reason'] ?? null
+            );
+
+            session()->flash('success', 'Penanganan batas koreksi tahap 2 berhasil.');
+            return redirect()->route('asesor.ketua.index');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+            return redirect()->back()->withInput();
+        }
+    }
+
     public function submitHasilVisitasi($akreditasiId)
     {
         try {
@@ -244,5 +294,6 @@ class KetuaAsesorController extends Controller
         }
     }
 }
+
 
 

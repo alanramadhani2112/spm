@@ -32,73 +32,92 @@ class AkreditasiStateMachine
     public const STATUS_APPEAL_SUBMITTED = 'appeal_submitted';
     public const STATUS_FINAL_APPROVED = 'final_approved';
     public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
 
-    public const TRANSITIONS = [
+        public const TRANSITIONS = [
         self::STATUS_DRAFT_PROFILE => [
             self::STATUS_INITIAL_SUBMITTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_INITIAL_SUBMITTED => [
             self::STATUS_INITIAL_REJECTED,
             self::STATUS_ASSESSMENT_OPEN,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_INITIAL_REJECTED => [
             self::STATUS_INITIAL_SUBMITTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ASSESSMENT_OPEN => [
             self::STATUS_ADMIN_STAGE_1_REVIEW,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ADMIN_STAGE_1_REVIEW => [
             self::STATUS_ADMIN_STAGE_1_CORRECTION,
             self::STATUS_ASSESSOR_ASSIGNMENT,
             self::STATUS_ADMINISTRATIVE_REJECTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ADMIN_STAGE_1_CORRECTION => [
             self::STATUS_ADMIN_STAGE_1_REVIEW,
             self::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW => [
             self::STATUS_ASSESSOR_ASSIGNMENT,
             self::STATUS_ADMINISTRATIVE_REJECTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ASSESSOR_ASSIGNMENT => [
             self::STATUS_ASSESSOR_STAGE_2_REVIEW,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ASSESSOR_STAGE_2_REVIEW => [
             self::STATUS_ASSESSOR_STAGE_2_CORRECTION,
             self::STATUS_VISITASI_SCHEDULED,
             self::STATUS_ADMINISTRATIVE_REJECTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ASSESSOR_STAGE_2_CORRECTION => [
             self::STATUS_ASSESSOR_STAGE_2_REVIEW,
             self::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW => [
             self::STATUS_VISITASI_SCHEDULED,
             self::STATUS_ADMINISTRATIVE_REJECTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_VISITASI_SCHEDULED => [
             self::STATUS_VISITASI_COMPLETED,
             self::STATUS_ASSESSOR_STAGE_2_REVIEW,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_VISITASI_COMPLETED => [
             self::STATUS_POST_VISITASI_SCORING,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_POST_VISITASI_SCORING => [
             self::STATUS_VISITASI_RESULT_SUBMITTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_VISITASI_RESULT_SUBMITTED => [
             self::STATUS_ADMIN_FINAL_VALIDATION,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_ADMIN_FINAL_VALIDATION => [
             self::STATUS_FINAL_REJECTED,
             self::STATUS_FINAL_APPROVED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_FINAL_REJECTED => [
             self::STATUS_APPEAL_SUBMITTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_APPEAL_SUBMITTED => [
             self::STATUS_ADMIN_FINAL_VALIDATION,
             self::STATUS_FINAL_REJECTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_FINAL_APPROVED => [
             self::STATUS_COMPLETED,
@@ -107,12 +126,14 @@ class AkreditasiStateMachine
             self::STATUS_INITIAL_SUBMITTED,
             self::STATUS_FINAL_REJECTED,
             self::STATUS_APPEAL_SUBMITTED,
+            self::STATUS_CANCELLED,
         ],
         self::STATUS_COMPLETED => [],
+        self::STATUS_CANCELLED => [],
     ];
 
     public const TERMINAL_STATUSES = [
-        self::STATUS_COMPLETED,
+        self::STATUS_COMPLETED, self::STATUS_CANCELLED,
     ];
 
     public const CORRECTION_STATUSES = [

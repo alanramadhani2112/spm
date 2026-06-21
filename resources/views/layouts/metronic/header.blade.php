@@ -17,7 +17,18 @@
         </div>
 
         <div class="d-flex align-items-stretch justify-content-between flex-lg-grow-1" id="kt_app_header_wrapper">
-            <div class="app-header-menu app-header-mobile-drawer align-items-stretch"></div>
+            <div class="d-flex flex-column justify-content-center flex-lg-grow-1 py-1">
+                <style>
+                    #kt_app_header .page-title-header { margin-top: 0 !important; margin-bottom: 10px !important; }
+                    #kt_app_header .breadcrumb-dot { font-size: 12px !important; }
+                </style>
+                <h1 class="text-gray-900 fw-bold fs-3 page-title-header">@yield('pageTitle', 'Akreditasi')</h1>
+                @hasSection('breadcrumbs')
+                    <ol class="breadcrumb breadcrumb-dot text-muted fw-semibold my-0">
+                        @yield('breadcrumbs')
+                    </ol>
+                @endif
+            </div>
 
             <div class="app-navbar flex-flex-shrink-0">
                 <div class="app-navbar-item ms-1 ms-md-4">

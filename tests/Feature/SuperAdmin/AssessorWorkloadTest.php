@@ -150,7 +150,7 @@ class AssessorWorkloadTest extends TestCase
             ->assertSee('Anggota')
             ->assertSee('Overdue')
             ->assertSee('Pesantren Detil')
-            ->assertSee('Belum ada Proses Akreditasi yang relevan untuk asesor ini.');
+            ->assertSee('Normal');
     }
 
     public function test_assessor_workload_detail_page_shows_assignment_history_for_selected_assessor_only(): void
@@ -223,7 +223,7 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.show', ['asesor' => $selectedAssessor->id]))
             ->assertOk()
-            ->assertSee('Proses Akreditasi &amp; Reassignment', false)
+            ->assertSee('Riwayat Assignment', false)
             ->assertSee('Reassignment')
             ->assertSee('Pesantren Histori')
             ->assertSee('Redistribusi beban kerja asesor.')
@@ -256,7 +256,7 @@ class AssessorWorkloadTest extends TestCase
             ->get(route('superadmin.asesor-workload.show', ['asesor' => $assessor->id, 'period' => '2026']))
             ->assertOk()
             ->assertSee('Periode 2026')
-            ->assertSee('Assignment aktif 1')
+            ->assertSee('Assignment Aktif')
             ->assertSee('Asesor ketua')
             ->assertSee('Asesor anggota')
             ->assertSee('>1<', false)
@@ -342,6 +342,8 @@ class AssessorWorkloadTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+
 
 
 

@@ -42,6 +42,15 @@ class BandingService
             );
         }
 
+        $maxBanding = SuperAdminSettings::int(SuperAdminSettings::MAX_BANDING_COUNT) ?? 1;
+        $totalBanding = Banding::where('akreditasi_id', $akreditasiId)->count();
+
+        if ($totalBanding >= $maxBanding) {
+            throw new WorkflowException(
+                "Batas pengajuan banding ({$maxBanding}x) sudah tercapai."
+            );
+        }
+
         $this->checkBandingDeadline($akreditasi);
 
         $user = User::findOrFail($userId);

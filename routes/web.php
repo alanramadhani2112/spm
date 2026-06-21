@@ -61,6 +61,8 @@ Route::middleware(['auth', 'role:pesantren,super_admin'])->prefix('pesantren')->
         Route::post('/akreditasi/{id}/kartu-kendali', [AkreditasiController::class, 'uploadKartuKendali'])->name('akreditasi.upload-kk');
     Route::get('/akreditasi/{id}/hasil', [AkreditasiController::class, 'hasilAkhir'])->name('akreditasi.hasil');
     Route::get('/akreditasi/{akreditasi}/sertifikat', [AkreditasiCertificateController::class, 'download'])->name('akreditasi.sertifikat.download');
+        Route::post('/akreditasi/{id}/batal', [AkreditasiController::class, 'cancelPengajuan'])->name('akreditasi.batal');
+
     Route::post('/akreditasi/{id}/banding', [AkreditasiController::class, 'submitBanding'])->name('akreditasi.submit-banding');
 });
 
@@ -101,6 +103,7 @@ Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/ketua')->
     Route::match(['get', 'post'], '/akreditasi/{id}/input-na1', [KetuaAsesorController::class, 'inputNA1'])->name('input-na1');
     Route::match(['get', 'post'], '/akreditasi/{id}/input-nk', [KetuaAsesorController::class, 'inputNK'])->name('input-nk');
     Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan', [KetuaAsesorController::class, 'uploadLaporan'])->name('upload-laporan');
+        Route::post('/akreditasi/{id}/handle-limit-review', [KetuaAsesorController::class, 'handleLimitReview'])->name('handle-limit-review');
     Route::post('/akreditasi/{id}/submit-hasil-visitasi', [KetuaAsesorController::class, 'submitHasilVisitasi'])->name('submit-hasil-visitasi');
 });
 
@@ -203,6 +206,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan', [SuperAdminAkreditasiController::class, 'uploadLaporan'])
         ->middleware('permission:akreditasi.laporan.manage')
         ->name('akreditasi.upload-laporan');
+        Route::post('/akreditasi/{id}/handle-limit-review', [KetuaAsesorController::class, 'handleLimitReview'])->name('handle-limit-review');
     Route::post('/akreditasi/{id}/submit-hasil-visitasi', [SuperAdminAkreditasiController::class, 'submitHasilVisitasi'])
         ->middleware('permission:akreditasi.laporan.manage')
         ->name('akreditasi.submit-hasil-visitasi');
@@ -353,4 +357,5 @@ Route::post('/logout', function () {
 
     return redirect('/');
 })->middleware('auth')->name('logout');
+
 

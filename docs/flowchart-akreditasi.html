@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flowchart Proses Bisnis Akreditasi PesantrenMu</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; background: #f8fafc; }
+  h1 { text-align: center; color: #1e3a5f; font-size: 24px; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 24px; }
+  .mermaid { display: flex; justify-content: center; }
+  .legend { max-width: 900px; margin: 30px auto 0; background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .legend h3 { font-size: 16px; color: #1e3a5f; margin-top: 0; }
+  .legend-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; }
+  .legend-dot { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<h1>Flowchart Proses Bisnis Akreditasi PesantrenMu</h1>
+<p class="subtitle">State machine 20 status — 4 aktor: Pesantren, Admin, Asesor, Super Admin</p>
+
+<div class="mermaid">
+flowchart TB
+    %% --- FASE 1: PENGAJUAN ---
+    subgraph FASE1["🔵 FASE 1 — Pengajuan & Review Awal"]
+        DRAFT["📝 draft_profile<br/><small>Pesantren isi profil + data<br/>IPM, SDM, EDPM</small>"]
+        INIT_SUB["📤 initial_submitted<br/><small>Pesantren submit pengajuan<br/>Profil dikunci</small>"]
+        INIT_REJ["❌ initial_rejected<br/><small>Admin menolak pengajuan awal</small>"]
+    end
+
+    %% --- FASE 2: ASESMEN + REVIEW TAHAP 1 ---
+    subgraph FASE2["🟠 FASE 2 — Asesmen & Review Tahap 1 (Admin)"]
+        ASS_OPEN["🔓 assessment_open<br/><small>Admin menyetujui pengajuan<br/>Pesantren boleh kumpulkan data</small>"]
+        S1_REV["🔍 admin_stage_1_review<br/><small>Pesantren submit asesmen<br/>Admin review</small>"]
+        S1_CORR["✏️ admin_stage_1_correction<br/><small>Admin minta koreksi<br/>Pesantren perbaiki</small>"]
+        S1_LIMIT["⚠️ admin_stage_1_limit_review<br/><small>Batas siklus koreksi tercapai<br/>Admin harus putuskan</small>"]
+        ASSIGN["👥 assessor_assignment<br/><small>Admin assign ketua + anggota asesor</small>"]
+    end
+
+    %% --- FASE 3: REVIEW TAHAP 2 ---
+    subgraph FASE3["🟢 FASE 3 — Review Tahap 2 (Asesor)"]
+        S2_REV["🔍 assessor_stage_2_review<br/><small>Ketua asesor review data</small>"]
+        S2_CORR["✏️ assessor_stage_2_correction<br/><small>Ketua minta koreksi<br/>Pesantren perbaiki</small>"]
+        S2_LIMIT["⚠️ assessor_stage_2_limit_review<br/><small>Batas siklus koreksi tercapai<br/>Ketua harus putuskan</small>"]
+    end
+
+    %% --- FASE 4: VISITASI ---
+    subgraph FASE4["🟣 FASE 4 — Visitasi & Scoring"]
+        VIS_SCHED["📅 visitasi_scheduled<br/><small>Ketua jadwalkan visitasi</small>"]
+        VIS_COMP["✅ visitasi_completed<br/><small>Visitasi selesai</small>"]
+        POST_SCORE["📊 post_visitasi_scoring<br/><small>Input NA1 (ketua) + NA2 (anggota)<br/>Scoring otomatis</small>"]
+        VIS_RESULT["📤 visitasi_result_submitted<br/><small>Hasil visitasi disubmit<br/>ke admin</small>"]
+    end
+
+    %% --- FASE 5: VALIDASI AKHIR ---
+    subgraph FASE5["🔴 FASE 5 — Validasi Akhir & SK"]
+        ADM_FINAL["🔍 admin_final_validation<br/><small>Admin validasi hasil akhir</small>"]
+        ADM_REJ["🚫 administrative_rejected<br/><small>Ditolak administratif</small>"]
+        FINAL_APP["🏆 final_approved<br/><small>Admin setujui final</small>"]
+        FINAL_REJ["❌ final_rejected<br/><small>Admin tolak final</small>"]
+        APPEAL["🔄 appeal_submitted<br/><small>Pesantren ajukan banding</small>"]
+        COMPLETE["🎓 completed<br/><small>SK & Sertifikat diterbitkan<br/>Masa berlaku 5 tahun</small>"]
+    end
+
+    %% --- TRANSISI ---
+    DRAFT -->|"Pesantren: submit pengajuan"| INIT_SUB
+    INIT_SUB -->|"Admin: terima"| ASS_OPEN
+    INIT_SUB -->|"Admin: tolak"| INIT_REJ
+    INIT_REJ -->|"Pesantren: resubmit"| INIT_SUB
+
+    ASS_OPEN -->|"Pesantren: submit asesmen"| S1_REV
+    S1_REV -->|"Admin: approve"| ASSIGN
+    S1_REV -->|"Admin: minta koreksi"| S1_CORR
+    S1_REV -->|"Admin: tolak administratif"| ADM_REJ
+    S1_CORR -->|"Pesantren: kirim koreksi"| S1_REV
+    S1_CORR -->|"Admin: batas siklus tercapai"| S1_LIMIT
+    S1_LIMIT -->|"Admin: approve by exception"| ASSIGN
+    S1_LIMIT -->|"Admin: reject"| ADM_REJ
+
+    ASSIGN -->|"Auto: masuk review asesor"| S2_REV
+    S2_REV -->|"Ketua: layak visitasi"| VIS_SCHED
+    S2_REV -->|"Ketua: minta koreksi"| S2_CORR
+    S2_REV -->|"Ketua: tolak administratif"| ADM_REJ
+    S2_CORR -->|"Pesantren: kirim koreksi"| S2_REV
+    S2_CORR -->|"Ketua: batas siklus tercapai"| S2_LIMIT
+    S2_LIMIT -->|"Ketua: approve by exception"| VIS_SCHED
+    S2_LIMIT -->|"Ketua: reject"| ADM_REJ
+
+    VIS_SCHED -->|"Ketua: visitasi selesai"| VIS_COMP
+    VIS_SCHED -->|"Ketua: kembali ke review"| S2_REV
+    VIS_COMP -->|"Auto: masuk scoring"| POST_SCORE
+    POST_SCORE -->|"Ketua: submit hasil"| VIS_RESULT
+
+    VIS_RESULT -->|"Auto: ke validasi admin"| ADM_FINAL
+    ADM_FINAL -->|"Admin: approve final"| FINAL_APP
+    ADM_FINAL -->|"Admin: tolak final"| FINAL_REJ
+
+    FINAL_APP -->|"Admin: terbitkan SK"| COMPLETE
+    FINAL_REJ -->|"Pesantren: ajukan banding"| APPEAL
+    APPEAL -->|"Admin: terima banding"| ADM_FINAL
+    APPEAL -->|"Admin: tolak banding"| FINAL_REJ
+
+    ADM_REJ -->|"Pesantren: ajukan banding"| APPEAL
+    ADM_REJ -->|"Pesantren: resubmit dari awal"| INIT_SUB
+    ADM_REJ -->|"Admin: langsung final reject"| FINAL_REJ
+
+    %% --- STYLING ---
+    style DRAFT fill:#dbeafe,stroke:#1e3a5f,stroke-width:2px,color:#1e293b
+    style INIT_SUB fill:#dbeafe,stroke:#1e3a5f,stroke-width:2px,color:#1e293b
+    style INIT_REJ fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#1e293b
+    style ASS_OPEN fill:#dbeafe,stroke:#1e3a5f,stroke-width:2px,color:#1e293b
+    style S1_REV fill:#fed7aa,stroke:#c2410c,stroke-width:2px,color:#1e293b
+    style S1_CORR fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#1e293b
+    style S1_LIMIT fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#1e293b
+    style ASSIGN fill:#dbeafe,stroke:#1e3a5f,stroke-width:2px,color:#1e293b
+    style S2_REV fill:#a7f3d0,stroke:#047857,stroke-width:2px,color:#1e293b
+    style S2_CORR fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#1e293b
+    style S2_LIMIT fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#1e293b
+    style VIS_SCHED fill:#ddd6fe,stroke:#6d28d9,stroke-width:2px,color:#1e293b
+    style VIS_COMP fill:#ddd6fe,stroke:#6d28d9,stroke-width:2px,color:#1e293b
+    style POST_SCORE fill:#ddd6fe,stroke:#6d28d9,stroke-width:2px,color:#1e293b
+    style VIS_RESULT fill:#ddd6fe,stroke:#6d28d9,stroke-width:2px,color:#1e293b
+    style ADM_FINAL fill:#fed7aa,stroke:#c2410c,stroke-width:2px,color:#1e293b
+    style ADM_REJ fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#1e293b
+    style FINAL_APP fill:#a7f3d0,stroke:#047857,stroke-width:2px,color:#1e293b
+    style FINAL_REJ fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#1e293b
+    style APPEAL fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#1e293b
+    style COMPLETE fill:#a7f3d0,stroke:#047857,stroke-width:3px,color:#1e293b
+</div>
+
+<div class="legend">
+<h3>📋 Legenda Warna</h3>
+<div class="legend-grid">
+<div class="legend-item"><div class="legend-dot" style="background:#dbeafe;border-color:#1e3a5f"></div> Biru — Milik Pesantren</div>
+<div class="legend-item"><div class="legend-dot" style="background:#fed7aa;border-color:#c2410c"></div> Oranye — Review Admin</div>
+<div class="legend-item"><div class="legend-dot" style="background:#a7f3d0;border-color:#047857"></div> Hijau — Review Asesor</div>
+<div class="legend-item"><div class="legend-dot" style="background:#ddd6fe;border-color:#6d28d9"></div> Ungu — Visitasi</div>
+<div class="legend-item"><div class="legend-dot" style="background:#fef3c7;border-color:#b45309"></div> Kuning — Koreksi</div>
+<div class="legend-item"><div class="legend-dot" style="background:#fee2e2;border-color:#dc2626"></div> Merah — Penolakan</div>
+<div class="legend-item"><div class="legend-dot" style="background:#a7f3d0;border-color:#047857"></div> Hijau Tua — Terminal/Selesai</div>
+</div>
+</div>
+
+<script>mermaid.initialize({startOnLoad:true, theme:'base', themeVariables:{fontSize:'14px'}, flowchart:{useMaxWidth:true, htmlLabels:true, curve:'basis'}});</script>
+</body>
+</html>

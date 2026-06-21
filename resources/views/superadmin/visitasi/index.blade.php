@@ -7,14 +7,17 @@
 <a href="{{ route('superadmin.akreditasi.index', ['period' => $period]) }}" class="btn btn-sm btn-light"><i class="ki-outline ki-left fs-4"></i>Kembali</a>
 @endsection
 
+@section('breadcrumbs')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Visitasi', 'active' => true]]" />
+@endsection
+
 @section('content')
 @php use App\Models\Akreditasi; @endphp
 
-<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Visitasi', 'active' => true]]" />
+
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-6">
     <div>
-        <h2 class="fs-2 fw-bold text-gray-900 mb-1">Visitasi</h2>
         <p class="fs-7 text-muted mb-0">Pantau jadwal visitasi, item yang lewat jadwal, dan pengajuan yang siap divalidasi akhir.</p>
     </div>
 </div>

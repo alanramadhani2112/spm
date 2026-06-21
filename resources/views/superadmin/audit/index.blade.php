@@ -3,8 +3,12 @@
 @section('title', 'Log Audit')
 @section('pageTitle', 'Log Audit')
 
-@section('content')
+@section('breadcrumbs')
     <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Log Audit', 'active' => true]]" />
+@endsection
+
+@section('content')
+    
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div class="mw-lg-600px">
@@ -148,5 +152,4 @@
     @endif
 </x-metronic.card>
 @endsection
-
 
