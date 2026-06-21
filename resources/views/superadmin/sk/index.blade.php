@@ -64,7 +64,7 @@
             <thead><tr class="text-start text-gray-500 fw-bold fs-7 text-uppercase gs-0"><th>Pesantren</th><th>No. SK</th><th>Status</th><th>Nilai</th><th>Masa Berlaku</th><th>Sertifikat</th><th class="text-end">Aksi</th></tr></thead>
             <tbody class="text-gray-600 fw-semibold">
                 @forelse($skRows as $row)
-                    @php $akreditasi = $row['akreditasi']; $isReady = $row['is_ready'] ?? false; $isExpired = $row['is_expired'] ?? false; $isExpiringSoon = $row['is_expiring_soon'] ?? false; $expiryDate = $row['masa_berlaku'] ?? null; @endphp
+                    @php $akreditasi = $row; $isReady = ($row->status === \App\Models\Akreditasi::STATUS_FINAL_APPROVED) ?? false; $isExpired = ($row->masa_berlaku_akhir && \Carbon\Carbon::parse($row->masa_berlaku_akhir)->isPast()) ?? false; $isExpiringSoon = ($row->masa_berlaku_akhir && \Carbon\Carbon::parse($row->masa_berlaku_akhir)->diffInDays(now()) <= 60) ?? false; $expiryDate = $row['masa_berlaku'] ?? null; @endphp
                     <tr>
                         <td><div class="fw-semibold text-gray-900">{{ $akreditasi->user?->pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '—' }}</div><div class="fs-8 text-muted">{{ $akreditasi->uuid }}</div></td>
                         <td><span class="text-gray-900">{{ $row['nomor_sk'] ?? '—' }}</span></td>
@@ -88,3 +88,4 @@
     </div>
 </x-metronic.card>
 @endsection
+

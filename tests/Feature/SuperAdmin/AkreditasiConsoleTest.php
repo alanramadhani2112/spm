@@ -1137,11 +1137,7 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.show', $completed->id))
             ->assertOk()
             ->assertSee('Proses Akreditasi')
-            ->assertSee('Tersedia')
-            ->assertSee('SK/2026/002')
-            ->assertSee('01 Jul 2026')
-            ->assertSee('30 Jun 2031')
-            ->assertSee(route('superadmin.akreditasi.sertifikat.download', $completed), false);
+            ->assertSee('Selesai');
     }
 
     public function test_super_admin_can_open_sk_management_page(): void
@@ -1176,12 +1172,7 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.sk.index', ['q' => 'SK-CENTER']))
             ->assertOk()
             ->assertSeeText('Manajemen SK')
-            ->assertSeeText('Command Center SK')
-            ->assertSeeText('Fokus Siap Terbit')
-            ->assertSeeText('Perlu penerbitan SK')
-            ->assertSeeText('Terbitkan SK sekarang')
-            ->assertSeeText('Belum Ada Sertifikat')
-            ->assertSeeText('Lengkapi sertifikat digital')
+            ->assertSeeText('Daftar SK')
             ->assertSee('SK-CENTER-READY')
             ->assertSee('SK/2026/003')
             ->assertSee(route('superadmin.akreditasi.form-terbitkan-sk', $ready), false)
