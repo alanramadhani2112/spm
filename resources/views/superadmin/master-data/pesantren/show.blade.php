@@ -12,6 +12,8 @@
 @endsection
 
 @section('content')
+<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Data Pesantren', 'route' => 'superadmin.master-data.pesantren.index'], ['label' => $pesantren->nama_pesantren, 'active' => true]]" />
+
 @php
     $checks = [
         'profilMinimum' => ['label' => 'Profil Minimum', 'ok' => $completeness['profilMinimum'] ?? false],

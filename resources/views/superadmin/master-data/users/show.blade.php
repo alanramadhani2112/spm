@@ -12,6 +12,8 @@
 @endsection
 
 @section('content')
+<x-superadmin.breadcrumb :items="[['label' => 'Master Data', 'route' => 'superadmin.master-data.index'], ['label' => 'Akun Pengguna', 'route' => 'superadmin.master-data.users.index'], ['label' => $user->name, 'active' => true]]" />
+
 @php
     $roleColorMap = [
         'super_admin' => 'danger',

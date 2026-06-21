@@ -655,11 +655,9 @@ class DashboardController extends Controller
                 'icon' => 'ki-add-files',
                 'color' => 'primary',
                 'statusFilters' => [
-                    Akreditasi::STATUS_DRAFT_PROFILE,
                     Akreditasi::STATUS_INITIAL_SUBMITTED,
                 ],
-                'count' => (int) ($counts[Akreditasi::STATUS_DRAFT_PROFILE] ?? 0)
-                    + (int) ($counts[Akreditasi::STATUS_INITIAL_SUBMITTED] ?? 0),
+                'count' => (int) ($counts[Akreditasi::STATUS_INITIAL_SUBMITTED] ?? 0),
             ],
             [
                 'id' => 2,
