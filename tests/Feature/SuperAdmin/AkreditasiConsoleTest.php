@@ -1265,7 +1265,7 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.show', $akreditasi->id))
             ->assertOk()
             ->assertSee('Tindakan')
-            ->assertSee('Tidak ada aksi Super Admin untuk status ini.');
+            ->assertSee('Tidak ada tindakan untuk status ini.');
     }
 
     private function createAkreditasi(User $user, string $status): Akreditasi
@@ -1337,6 +1337,7 @@ class AkreditasiConsoleTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
 
 
 
