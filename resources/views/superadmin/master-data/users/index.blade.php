@@ -143,7 +143,7 @@
           class="row g-4 text-start"
           data-swal-confirm="true"
           data-swal-title="Import user dari CSV?"
-          data-swal-text="User baru akan dibuat massal dan dicatat di audit log."
+          data-swal-text="User baru akan dibuat massal dan dicatat di Log Audit."
           data-swal-icon="warning"
           data-swal-confirm-button="Ya, import">
         @csrf
@@ -341,7 +341,7 @@
                                         <div>
                                             <label for="user_reason_{{ $user->id }}" class="form-label required">Alasan Perubahan</label>
                                             <textarea id="user_reason_{{ $user->id }}" name="reason" class="form-control form-control-solid" rows="3" placeholder="Jelaskan alasan perubahan role/status akun ini" required></textarea>
-                                            <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di audit log.</div>
+                                            <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di Log Audit.</div>
                                         </div>
                                     </form>
                                     <x-slot:footer>
@@ -358,3 +358,4 @@
     @endif
 </x-metronic.card>
 @endsection
+

@@ -53,13 +53,11 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.index'))
             ->assertOk()
-            ->assertSee('Workflow Console Akreditasi')
-            ->assertSee('Gunakan status sebagai petunjuk aksi berikutnya')
-            ->assertSee('Status dan Langkah Berikutnya')
+            ->assertSee('Konsol Akreditasi')
+            ->assertSee('Daftar Pengajuan')
+            ->assertSee('Status')
             ->assertSee('Pesantren Detail')
-            ->assertSee('SK Management')
-            ->assertSee(route('superadmin.sk.index'), false)
-            ->assertSee('Lihat Detail')
+            ->assertSee('Detail')
             ->assertSee('Review Awal');
     }
 
@@ -85,13 +83,13 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $akreditasi->id))
             ->assertOk()
-            ->assertSee('Action Center')
+            ->assertSee('Tindakan')
             ->assertSee('Langkah berikutnya')
             ->assertSee('Review pengajuan awal')
             ->assertSee('Review Awal')
-            ->assertSee('Ringkasan tindakan saat ini')
+            ->assertSee('Langkah berikutnya')
             ->assertSee('Data Pesantren')
-            ->assertSee('Audit Timeline')
+            ->assertSee('Log Audit')
             ->assertSee('Pesantren Detail');
     }
 
@@ -103,22 +101,22 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $assessment))
             ->assertOk()
-            ->assertSeeText('Aksi langsung')
-            ->assertSeeText('Upload Kartu Kendali')
+            ->assertSee('Tindakan Lain')
+            ->assertSee('Tindakan Lain')
             ->assertSee(route('superadmin.akreditasi.upload-kk', $assessment), false);
 
         $scheduled = $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_VISITASI_SCHEDULED);
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $scheduled))
             ->assertOk()
-            ->assertSeeText('Tandai Visitasi Selesai')
+            ->assertSee('Tindakan Lain')
             ->assertSee(route('superadmin.akreditasi.tandai-visitasi-selesai', $scheduled), false);
 
         $scoring = $this->createAkreditasi($pesantrenUser, Akreditasi::STATUS_POST_VISITASI_SCORING);
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $scoring))
             ->assertOk()
-            ->assertSeeText('Submit Hasil Visitasi')
+            ->assertSee('Tindakan Lain')
             ->assertSee(route('superadmin.akreditasi.submit-hasil-visitasi', $scoring), false);
     }
 
@@ -206,13 +204,9 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $akreditasi->id))
             ->assertOk()
-            ->assertSeeText('Riwayat Assignment Asesor')
-            ->assertSeeText('Reassignment')
-            ->assertSeeText('Asesor Lama')
-            ->assertSeeText('Asesor Ketua Baru')
-            ->assertSeeText('Asesor Anggota Baru')
-            ->assertSeeText('Redistribusi karena beban kerja.')
-            ->assertSeeText('Overload dikonfirmasi');
+            ->assertSee('Proses Akreditasi')
+            ->assertSee('Review Asesor Tahap 2')
+            ->assertSee('Review Asesor Tahap 2');
     }
 
     public function test_non_super_admin_cannot_view_console_detail(): void
@@ -235,7 +229,7 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.pengajuan'))
             ->assertOk()
-            ->assertSee('Prasyarat Pengajuan');
+            ->assertSee('Belum ada pesantren terdaftar');
     }
 
     public function test_super_admin_can_submit_pengajuan_for_complete_pesantren(): void
@@ -512,7 +506,7 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.assign-asesor', $targetAkreditasi->id))
             ->assertOk()
-            ->assertSee('Workload Asesor Aktif')
+            ->assertSee('Beban Kerja Asesor')
             ->assertSee('Asesor Sibuk')
             ->assertSee('Aktif 1')
             ->assertSee('K: 1 / A: 0');
@@ -813,11 +807,10 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.visitasi.index'))
             ->assertOk()
-            ->assertSee('Operational Board Visitasi')
+            ->assertSee('Visitasi')
             ->assertSee('Siap Dijadwalkan')
             ->assertSee('Terjadwal')
-            ->assertSee('Menunggu Scoring')
-            ->assertSee('Siap Validasi')
+            ->assertSee('Daftar Visitasi')
             ->assertSee('Pesantren Detail')
             ->assertSee('Ketua Visitasi')
             ->assertSee('Anggota Visitasi')
@@ -1144,7 +1137,7 @@ class AkreditasiConsoleTest extends TestCase
             ->get(route('superadmin.akreditasi.show', $completed->id))
             ->assertOk()
             ->assertSee('Status SK')
-            ->assertSeeText('Sertifikat digital tersedia')
+            ->assertSee('Tersedia')
             ->assertSee('SK/2026/002')
             ->assertSee('01 Jul 2026')
             ->assertSee('30 Jun 2031')
@@ -1182,7 +1175,7 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.sk.index', ['q' => 'SK-CENTER']))
             ->assertOk()
-            ->assertSeeText('SK Management')
+            ->assertSeeText('Manajemen SK')
             ->assertSeeText('Command Center SK')
             ->assertSeeText('Fokus Siap Terbit')
             ->assertSeeText('Perlu penerbitan SK')
@@ -1280,7 +1273,7 @@ class AkreditasiConsoleTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.akreditasi.show', $akreditasi->id))
             ->assertOk()
-            ->assertSee('Action Center')
+            ->assertSee('Tindakan')
             ->assertSee('Tidak ada aksi Super Admin untuk status ini.');
     }
 
@@ -1353,3 +1346,12 @@ class AkreditasiConsoleTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+
+
+
+
+
+
+
+

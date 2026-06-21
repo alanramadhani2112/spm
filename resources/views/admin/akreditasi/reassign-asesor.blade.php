@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Reassign Asesor')
-@section('pageTitle', 'Reassign Asesor')
+@section('title', ($isSuperAdminView ?? false) ? 'Reassign Asesor — Super Admin' : 'Reassign Asesor')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Reassign Asesor — Super Admin' : 'Reassign Asesor')
 
 @section('content')
 @php
@@ -87,7 +87,7 @@
     @if($assessorWorkloads->isNotEmpty())
         <div class="rounded-3 bg-white shadow-sm mb-6">
             <div class="px-6 py-5">
-                <h2 class="fs-6 fw-semibold text-gray-900">Workload Asesor Aktif</h2>
+                <h2 class="fs-6 fw-semibold text-gray-900">Beban Kerja Asesor Aktif</h2>
                 <p class="mt-1 fs-7 text-muted">Gunakan beban aktif sebagai sinyal sebelum mengganti tim asesor.</p>
             </div>
             <div class="px-6 pb-5">
@@ -206,3 +206,5 @@
     </div>
 
 @endsection
+
+

@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Upload Laporan — Ketua Asesor')
-@section('pageTitle', 'Upload Laporan Visitasi')
+@section('title', ($isSuperAdminView ?? false) ? 'Upload Laporan — Super Admin' : 'Upload Laporan — Ketua Asesor')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Upload Laporan Visitasi — Super Admin' : 'Upload Laporan Visitasi')
 
 @section('content')
 @php
@@ -88,3 +88,4 @@
     </x-metronic.card>
 </div>
 @endsection
+

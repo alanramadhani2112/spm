@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Review Banding')
-@section('pageTitle', 'Review Banding')
+@section('title', ($isSuperAdminView ?? false) ? 'Review Banding — Super Admin' : 'Review Banding')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Review Banding — Super Admin' : 'Review Banding')
 
 @section('content')
 @php
@@ -149,3 +149,4 @@
     </div>
 
 @endsection
+

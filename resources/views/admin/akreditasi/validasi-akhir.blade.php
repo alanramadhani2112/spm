@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Validasi Akhir')
-@section('pageTitle', 'Validasi Akhir')
+@section('title', ($isSuperAdminView ?? false) ? 'Validasi Akhir — Super Admin' : 'Validasi Akhir')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Validasi Akhir — Super Admin' : 'Validasi Akhir')
 
 @section('content')
 @php
@@ -218,3 +218,4 @@
     </div>
 
 @endsection
+

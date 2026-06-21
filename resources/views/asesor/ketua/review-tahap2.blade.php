@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Review Tahap 2 — Ketua Asesor')
-@section('pageTitle', 'Review Dokumen Tahap 2')
+@section('title', ($isSuperAdminView ?? false) ? 'Review Tahap 2 — Super Admin' : 'Review Tahap 2 — Ketua Asesor')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Review Dokumen Tahap 2 — Super Admin' : 'Review Dokumen Tahap 2')
 
 @section('content')
 @php
@@ -128,3 +128,4 @@
     </a>
 </div>
 @endsection
+

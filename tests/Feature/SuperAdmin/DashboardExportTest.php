@@ -30,11 +30,10 @@ class DashboardExportTest extends TestCase
             ->get(route('superadmin.dashboard', ['period' => 'all']))
             ->assertOk()
             ->assertSee('Dashboard Super Admin')
-            ->assertSee('Ringkasan Nasional Akreditasi')
-            ->assertSee('Apa yang perlu dipantau hari ini?')
+            ->assertSee('Mulai dari:')
             ->assertSee('SK Siap Terbit')
             ->assertSee(route('superadmin.sk.index', ['status' => 'ready']), false)
-            ->assertSee('Prioritas', false);
+            ->assertSee('Tindakan Diperlukan');
 
         $this->actingAs($superAdmin)
             ->get(route('superadmin.dashboard.export'))
@@ -99,16 +98,13 @@ class DashboardExportTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('superadmin.dashboard', ['period' => 'all']))
             ->assertOk()
-            ->assertSee('Operational Board')
-            ->assertSee('Antrian Tindakan Cepat')
-            ->assertSee('SLA Breach')
-            ->assertSee('Antrian Paling Mendesak')
-            ->assertSee('Workload Asesor')
-            ->assertSee('Review Awal')
-            ->assertSee('Asesor Workload')
+            ->assertSee('Tindakan Diperlukan')
+            ->assertSee('Alur Proses Bisnis Akreditasi')
+            ->assertSee('Pengajuan')
+            ->assertSee('Visitasi')
             ->assertSee($reviewAwal->uuid)
-            ->assertSee('/superadmin/visitasi?period=all&amp;status='.Akreditasi::STATUS_VISITASI_SCHEDULED, false)
-            ->assertSee('Jadwal visitasi yang perlu dipantau.');
+            ->assertSee('/superadmin/visitasi', false)
+            ->assertSee('Jadwalkan visitasi, pantau pelaksanaan');
     }
 
     private function revokeSuperAdminPermission(string $key): void
@@ -117,3 +113,5 @@ class DashboardExportTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+

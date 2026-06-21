@@ -1,6 +1,6 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Detail Akreditasi')
+@section('title', 'Detail Akreditasi — Super Admin')
 @section('pageTitle', 'Detail Akreditasi')
 
 @section('toolbar')
@@ -14,550 +14,259 @@
     use Illuminate\Support\Str;
 
     $statusColor = $statusColors[$akreditasi->status] ?? 'secondary';
-    $profileDocs = collect($documentFields)->map(fn($label, $field) => [
-        'label' => $label,
-        'path' => $pesantren?->{$field},
-    ])->filter(fn($doc) => filled($doc['path']));
-    $dataItems = [
-        'Profil' => $dataCompleteness['profil'],
-        'Unit' => $dataCompleteness['unit'],
-        'IPM' => $dataCompleteness['ipm'],
-        'SDM' => $dataCompleteness['sdm'],
-        'EDPM/IPR' => $dataCompleteness['edpm'],
-    ];
-    $countDataItems = function ($value): int {
-        if (is_countable($value)) {
-            return count($value);
-        }
-
-        if (is_object($value)) {
-            return count(get_object_vars($value));
-        }
-
-        return filled($value) ? 1 : 0;
-    };
-    $instrumentItems = [
-        ['key' => 'ipm', 'label' => 'IPM', 'data' => $ipm?->data ?? [], 'available' => (bool) $ipm, 'color' => 'primary'],
-        ['key' => 'sdm', 'label' => 'SDM', 'data' => $sdm?->data ?? [], 'available' => (bool) $sdm, 'color' => 'info'],
-        ['key' => 'edpm', 'label' => 'EDPM/IPR', 'data' => $edpm?->data ?? [], 'available' => (bool) $edpm, 'color' => 'success'],
-    ];
     $workflowSteps = [
-        ['label' => 'Pengajuan', 'icon' => 'ki-add-files', 'statuses' => [Akreditasi::STATUS_DRAFT_PROFILE, Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_INITIAL_REJECTED]],
-        ['label' => 'Assessment', 'icon' => 'ki-document', 'statuses' => [Akreditasi::STATUS_ASSESSMENT_OPEN]],
-        ['label' => 'Review Admin', 'icon' => 'ki-search-list', 'statuses' => [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW]],
-        ['label' => 'Asesor & Visitasi', 'icon' => 'ki-profile-user', 'statuses' => [Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION, Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW, Akreditasi::STATUS_VISITASI_SCHEDULED, Akreditasi::STATUS_VISITASI_COMPLETED, Akreditasi::STATUS_POST_VISITASI_SCORING, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED]],
-        ['label' => 'Validasi', 'icon' => 'ki-shield-tick', 'statuses' => [Akreditasi::STATUS_ADMIN_FINAL_VALIDATION, Akreditasi::STATUS_ADMINISTRATIVE_REJECTED, Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_FINAL_REJECTED]],
-        ['label' => 'SK / Selesai', 'icon' => 'ki-medal-star', 'statuses' => [Akreditasi::STATUS_APPEAL_SUBMITTED, Akreditasi::STATUS_COMPLETED]],
+        ['label' => 'Pengajuan', 'statuses' => [Akreditasi::STATUS_DRAFT_PROFILE, Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_INITIAL_REJECTED]],
+        ['label' => 'Assessment', 'statuses' => [Akreditasi::STATUS_ASSESSMENT_OPEN]],
+        ['label' => 'Review & Asesor', 'statuses' => [Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW, Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, Akreditasi::STATUS_ASSESSOR_STAGE_2_REVIEW, Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION, Akreditasi::STATUS_ASSESSOR_STAGE_2_LIMIT_REVIEW]],
+        ['label' => 'Visitasi & Scoring', 'statuses' => [Akreditasi::STATUS_VISITASI_SCHEDULED, Akreditasi::STATUS_VISITASI_COMPLETED, Akreditasi::STATUS_POST_VISITASI_SCORING, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED]],
+        ['label' => 'Validasi & SK', 'statuses' => [Akreditasi::STATUS_ADMIN_FINAL_VALIDATION, Akreditasi::STATUS_ADMINISTRATIVE_REJECTED, Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_FINAL_REJECTED, Akreditasi::STATUS_APPEAL_SUBMITTED, Akreditasi::STATUS_COMPLETED]],
     ];
     $activeStep = collect($workflowSteps)->search(fn($step) => in_array($akreditasi->status, $step['statuses'], true));
     $activeStep = $activeStep === false ? 0 : $activeStep;
+    $hasBanding = $akreditasi->bandings->isNotEmpty();
     $tabs = [
         ['key' => 'ringkasan', 'label' => 'Ringkasan', 'icon' => 'ki-category'],
-        ['key' => 'pesantren', 'label' => 'Data Pesantren', 'icon' => 'ki-bank'],
         ['key' => 'dokumen', 'label' => 'Dokumen', 'icon' => 'ki-document'],
         ['key' => 'nilai', 'label' => 'Nilai', 'icon' => 'ki-chart-line'],
-        ['key' => 'banding', 'label' => 'Banding', 'icon' => 'ki-message-question'],
-        ['key' => 'audit', 'label' => 'Audit', 'icon' => 'ki-time'],
     ];
+    if ($hasBanding) { $tabs[] = ['key' => 'banding', 'label' => 'Banding', 'icon' => 'ki-message-question']; }
+    $tabs[] = ['key' => 'audit', 'label' => 'Audit', 'icon' => 'ki-time'];
+
     $showUploadKkAction = $akreditasi->status === Akreditasi::STATUS_ASSESSMENT_OPEN;
     $showMarkVisitasiDoneAction = $akreditasi->status === Akreditasi::STATUS_VISITASI_SCHEDULED;
     $showSubmitVisitasiResultAction = $akreditasi->status === Akreditasi::STATUS_POST_VISITASI_SCORING;
-    $criticalStatuses = [
-        Akreditasi::STATUS_INITIAL_SUBMITTED,
-        Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW,
-        Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW,
-        Akreditasi::STATUS_ASSESSOR_ASSIGNMENT,
-        Akreditasi::STATUS_POST_VISITASI_SCORING,
-        Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED,
-        Akreditasi::STATUS_ADMIN_FINAL_VALIDATION,
-        Akreditasi::STATUS_FINAL_APPROVED,
-        Akreditasi::STATUS_APPEAL_SUBMITTED,
-    ];
-    $needsAttention = in_array($akreditasi->status, $criticalStatuses, true);
-    $missingDataItems = collect($dataItems)->filter(fn ($ok) => ! $ok)->keys()->values();
-    $documentAlerts = collect();
-    if ($showUploadKkAction) {
-        $documentAlerts->push('Kartu kendali masih perlu diunggah sebelum alur bergerak lebih jauh.');
-    }
-    if ($showSubmitVisitasiResultAction) {
-        if (! $akreditasi->is_na1_final || ! $akreditasi->is_na2_final || ! $akreditasi->is_nk_final) {
-            $documentAlerts->push('Finalisasi NA1, NA2, dan NK sebelum submit hasil visitasi.');
-        }
-        if ($documents->where('type', \App\Services\DocumentService::TYPE_LAPORAN_ASESOR)->isEmpty()) {
-            $documentAlerts->push('Laporan visitasi belum tersedia untuk mendukung submit hasil visitasi.');
-        }
-    }
+    $needsAttention = in_array($akreditasi->status, [Akreditasi::STATUS_INITIAL_SUBMITTED, Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, Akreditasi::STATUS_ADMIN_STAGE_1_LIMIT_REVIEW, Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, Akreditasi::STATUS_POST_VISITASI_SCORING, Akreditasi::STATUS_VISITASI_RESULT_SUBMITTED, Akreditasi::STATUS_ADMIN_FINAL_VALIDATION, Akreditasi::STATUS_FINAL_APPROVED, Akreditasi::STATUS_APPEAL_SUBMITTED], true);
+
+    $profileDocs = collect($documentFields)->map(fn($label, $field) => ['label' => $label, 'path' => $pesantren?->{$field}])->filter(fn($doc) => filled($doc['path']));
+    $dataItems = ['Profil' => $dataCompleteness['profil'], 'Unit' => $dataCompleteness['unit'], 'IPM' => $dataCompleteness['ipm'], 'SDM' => $dataCompleteness['sdm'], 'EDPM/IPR' => $dataCompleteness['edpm']];
+
+    $alerts = [];
+    if ($showUploadKkAction) { $alerts[] = 'Kartu kendali perlu diunggah sebelum alur berlanjut.'; }
+    if ($showSubmitVisitasiResultAction && (! $akreditasi->is_na1_final || ! $akreditasi->is_na2_final || ! $akreditasi->is_nk_final)) { $alerts[] = 'Finalisasi NA1, NA2, dan NK sebelum submit hasil visitasi.'; }
+    if ($needsAttention && count($primaryAction ? [$primaryAction] : []) === 0) { $alerts[] = 'Status ini memerlukan perhatian — periksa detail berikutnya.'; }
 @endphp
 
-<div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
-    <div class="card-body p-8">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-6 mb-8">
-            <div>
-                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-                    <span class="badge badge-light-{{ $statusColor }} fs-7">{{ $akreditasi->getStatusLabel() }}</span>
-                    <span class="badge badge-light-secondary">Siklus {{ $akreditasi->correction_cycle ?? 0 }}</span>
-                </div>
-                <h2 class="fw-bold text-gray-900 mb-2">{{ $pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? 'Pesantren' }}</h2>
-                <div class="fs-7 text-muted">UUID: <span class="font-monospace">{{ $akreditasi->uuid }}</span></div>
-                <div class="fs-7 text-muted">Email: {{ $akreditasi->user?->email ?? '—' }}</div>
-            </div>
-            <div class="text-end">
-                <div class="fs-8 text-muted mb-1">Tanggal Pengajuan</div>
-                <div class="fw-bold text-gray-900">{{ $akreditasi->created_at->format('d M Y, H:i') }}</div>
-                <div class="fs-8 text-muted mt-3">Deadline Assessment</div>
-                <div class="fw-bold {{ $akreditasi->assessment_deadline?->isPast() ? 'text-danger' : 'text-gray-900' }}">{{ $akreditasi->assessment_deadline?->format('d M Y') ?? '—' }}</div>
-            </div>
-        </div>
+<x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Konsol Akreditasi', 'route' => 'superadmin.akreditasi.index'], ['label' => $akreditasi->uuid, 'active' => true]]" />
 
-        @if($needsAttention || $missingDataItems->isNotEmpty() || $documentAlerts->isNotEmpty())
-            <div class="rounded bg-white border border-{{ $needsAttention ? 'warning' : 'primary' }} border-dashed p-5 mb-6">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-4">
-                    <div class="mw-lg-550px">
-                        <div class="fw-bold text-gray-900 mb-1">Ringkasan tindakan saat ini</div>
-                        <div class="fs-7 text-gray-700">{{ $needsAttention ? 'Pengajuan ini berada pada status yang memerlukan keputusan atau tindak lanjut Super Admin.' : 'Pengajuan ini relatif stabil, tetapi masih ada item yang perlu dipantau.' }}</div>
-                    </div>
-                    <span class="badge badge-light-{{ $needsAttention ? 'warning' : 'primary' }}">{{ $needsAttention ? 'Perlu tindakan' : 'Perlu pemantauan' }}</span>
-                </div>
-                <div class="d-grid gap-2 mt-4">
-                    @if($missingDataItems->isNotEmpty())
-                        <div class="fs-8 text-gray-700">Data belum lengkap: <span class="fw-semibold">{{ $missingDataItems->implode(', ') }}</span></div>
-                    @endif
-                    @foreach($documentAlerts as $alert)
-                        <div class="fs-8 text-gray-700">{{ $alert }}</div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
-        <div class="row g-4">
-            @foreach($workflowSteps as $index => $step)
-                @php
-                    $isComplete = $index < $activeStep || $akreditasi->status === Akreditasi::STATUS_COMPLETED;
-                    $isActive = $index === $activeStep && $akreditasi->status !== Akreditasi::STATUS_COMPLETED;
-                    $stepColor = $isComplete ? 'success' : ($isActive ? $statusColor : 'secondary');
-                @endphp
-                <div class="col-xl-2 col-md-4 col-6">
-                    <div class="rounded border border-{{ $isActive ? $stepColor : 'gray-200' }} bg-white p-4 h-100">
-                        <div class="d-flex align-items-center gap-3 mb-2">
-                            <span class="symbol symbol-30px">
-                                <span class="symbol-label bg-light-{{ $stepColor }}"><i class="ki-outline {{ $step['icon'] }} fs-4 text-{{ $stepColor }}"></i></span>
-                            </span>
-                            <span class="badge badge-light-{{ $stepColor }}">{{ $isComplete ? 'Selesai' : ($isActive ? 'Aktif' : 'Menunggu') }}</span>
-                        </div>
-                        <div class="fw-bold text-gray-900 fs-8">{{ $step['label'] }}</div>
-                    </div>
-                </div>
-            @endforeach
+@if(count($alerts) > 0)
+    <div class="alert alert-dismissible bg-light-warning border border-warning border-dashed d-flex align-items-center gap-3 p-4 mb-6">
+        <i class="ki-outline ki-information-4 fs-2 text-warning"></i>
+        <div class="flex-grow-1">
+            <div class="fw-bold text-gray-900 mb-1">Perhatian</div>
+            @foreach($alerts as $alert)<div class="fs-8 text-gray-700">{{ $alert }}</div>@endforeach
         </div>
     </div>
-</div>
+@endif
 
-<div class="row g-5 g-xl-8 mb-8">
-    <div class="col-xl-3 col-md-6"><x-metronic.stat-card value="{{ $akreditasi->na1 ?? '—' }}" label="NA1" icon="ki-star" color="danger" /></div>
-    <div class="col-xl-3 col-md-6"><x-metronic.stat-card value="{{ $akreditasi->na2 ?? '—' }}" label="NA2" icon="ki-star" color="danger" /></div>
-    <div class="col-xl-3 col-md-6"><x-metronic.stat-card value="{{ $akreditasi->nilai ?? '—' }}" label="Nilai Akhir" icon="ki-chart" color="success" /></div>
-    <div class="col-xl-3 col-md-6"><x-metronic.stat-card value="{{ $akreditasi->peringkat ?? '—' }}" label="Peringkat" icon="ki-medal-star" color="primary" /></div>
-</div>
+<div class="row g-5 g-xl-8 mb-6">
+    <div class="col-xl-8">
+        <x-metronic.card title="Proses Akreditasi">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                @foreach($workflowSteps as $index => $step)
+                    @php $isComplete = $index < $activeStep || $akreditasi->status === Akreditasi::STATUS_COMPLETED; $isActive = $index === $activeStep && $akreditasi->status !== Akreditasi::STATUS_COMPLETED; @endphp
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge badge-light-{{ $isComplete ? 'success' : ($isActive ? $statusColor : 'secondary') }} px-3 py-2">{{ $index + 1 }}. {{ $step['label'] }}</span>
+                        @if($index < count($workflowSteps) - 1)<span class="text-muted mx-1">→</span>@endif
+                    </div>
+                @endforeach
+            </div>
+            <div class="mt-4 d-flex flex-wrap align-items-center gap-3">
+                <div class="fw-bold text-gray-900">Status saat ini:</div>
+                <span class="badge badge-light-{{ $statusColor }} fs-7 px-3 py-2">{{ $akreditasi->getStatusLabel() ?? $akreditasi->status }}</span>
+                <span class="fs-8 text-muted">UUID: {{ $akreditasi->uuid }}</span>
+            </div>
+            <div class="row g-3 mt-4">
+                <div class="col-md-3"><div class="border rounded p-3 text-center"><div class="fs-8 text-muted">NA1</div><div class="fw-bold text-gray-900">{{ $akreditasi->na1 ?? '—' }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3 text-center"><div class="fs-8 text-muted">NA2</div><div class="fw-bold text-gray-900">{{ $akreditasi->na2 ?? '—' }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3 text-center"><div class="fs-8 text-muted">NK</div><div class="fw-bold text-gray-900">{{ $akreditasi->nilai ?? '—' }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3 text-center"><div class="fs-8 text-muted">Peringkat</div><div class="fw-bold text-gray-900">{{ $akreditasi->peringkat ?? '—' }}</div></div></div>
+            </div>
+        </x-metronic.card>
+    </div>
 
-<div class="row g-5 g-xl-8">
     <div class="col-xl-4">
-        <x-metronic.card title="Action Center">
-            <x-slot:header>
-                @if(count($secondaryActions) > 0)
-                    <x-superadmin.action-menu label="Buka aksi tambahan untuk {{ $akreditasi->uuid }}">
-                        @foreach($secondaryActions as $action)
-                            <div class="menu-item px-3">
-                                <a href="{{ $action['route'] }}"
-                                   class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}"
-                                   data-swal-confirm="true"
-                                   data-swal-title="Buka aksi {{ $action['label'] }}?"
-                                   data-swal-text="Anda akan masuk ke halaman {{ $action['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
-                                   data-swal-icon="question"
-                                   data-swal-confirm-button="Ya, buka">
-                                    <i class="ki-outline ki-right-square fs-4"></i>
-                                    <span>{{ $action['label'] }}</span>
-                                </a>
-                            </div>
-                        @endforeach
-                    </x-superadmin.action-menu>
-                @endif
-            </x-slot:header>
-
+        <x-metronic.card title="Tindakan">
             @if(! $primaryAction)
-                <x-metronic.alert type="info" message="Tidak ada aksi Super Admin untuk status ini." />
-                <div class="rounded bg-light p-4 fs-7 text-gray-700 mt-4">
-                    Status ini tidak membutuhkan tindak lanjut langsung dari Super Admin. Gunakan tab detail untuk meninjau histori, data, atau hasil akhir pengajuan.
-                </div>
+                <div class="text-center py-6 text-muted">Tidak ada tindakan untuk status ini.</div>
             @else
                 <div class="rounded bg-light-primary p-4 mb-4">
                     <div class="fw-bold text-gray-900 mb-1">Langkah berikutnya</div>
                     <div class="fs-7 text-gray-700">{{ $nextStepLabel }}</div>
-                    <div class="fs-8 {{ $needsAttention ? 'text-danger fw-semibold' : 'text-muted' }} mt-2">{{ $needsAttention ? 'Selesaikan aksi utama terlebih dahulu agar workflow tidak tertahan.' : 'Pantau data pendukung sebelum melanjutkan aksi berikutnya.' }}</div>
                 </div>
                 <a href="{{ $primaryAction['route'] }}"
-                   class="btn btn-{{ $primaryAction['color'] === 'warning' ? 'warning' : ($primaryAction['color'] === 'danger' ? 'danger' : ($primaryAction['color'] === 'success' ? 'success' : 'primary')) }} w-100"
+                   class="btn btn-{{ $primaryAction['color'] === 'warning' ? 'warning' : ($primaryAction['color'] === 'danger' ? 'danger' : ($primaryAction['color'] === 'success' ? 'success' : 'primary')) }} w-100 mb-3"
                    data-swal-confirm="true"
-                   data-swal-title="Buka aksi {{ $primaryAction['label'] }}?"
-                   data-swal-text="Anda akan masuk ke halaman {{ $primaryAction['label'] }} untuk pengajuan {{ $akreditasi->uuid }}."
+                   data-swal-title="Buka {{ $primaryAction['label'] }}?"
+                   data-swal-text="Lanjutkan ke halaman {{ $primaryAction['label'] }} untuk {{ $akreditasi->uuid }}."
                    data-swal-icon="question"
                    data-swal-confirm-button="Ya, buka">
                     <i class="ki-outline ki-right-square fs-3"></i>{{ $primaryAction['label'] }}
                 </a>
+            @endif
 
-                @if($showUploadKkAction || $showMarkVisitasiDoneAction || $showSubmitVisitasiResultAction)
-                    <div class="separator separator-dashed my-5"></div>
-                    <div class="fw-bold text-gray-900 mb-3">Aksi langsung</div>
-
+            @if($showUploadKkAction || $showMarkVisitasiDoneAction || $showSubmitVisitasiResultAction || count($secondaryActions) > 0)
+                <x-superadmin.action-menu label="Tindakan Lain untuk {{ $akreditasi->uuid }}" buttonClass="btn-light w-100">
                     @if($showUploadKkAction)
-                        <form method="POST" action="{{ route('superadmin.akreditasi.upload-kk', $akreditasi) }}" enctype="multipart/form-data" class="d-grid gap-3 mb-4" data-swal-confirm="true" data-swal-title="Upload kartu kendali?" data-swal-text="Dokumen kartu kendali akan disimpan untuk pengajuan {{ $akreditasi->uuid }}." data-swal-icon="question" data-swal-confirm-button="Ya, upload" data-swal-confirm-class="btn btn-primary">
-                            @csrf
-                            <input type="file" name="file" class="form-control form-control-sm" required>
-                            <button type="submit" class="btn btn-sm btn-primary w-100">
-                                <i class="ki-outline ki-document-up fs-4"></i>Upload Kartu Kendali
-                            </button>
-                        </form>
+                        <div class="menu-item px-3">
+                            <form method="POST" action="{{ route('superadmin.akreditasi.upload-kk', $akreditasi) }}" enctype="multipart/form-data" class="px-3 py-2" data-swal-confirm="true" data-swal-title="Upload kartu kendali?" data-swal-text="Dokumen kartu kendali akan disimpan." data-swal-icon="question" data-swal-confirm-button="Ya, upload" data-swal-confirm-class="btn btn-primary">
+                                @csrf
+                                <div class="fw-bold fs-7 mb-2">Upload Kartu Kendali</div>
+                                <input type="file" name="file" class="form-control form-control-sm mb-2" required>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Upload</button>
+                            </form>
+                        </div>
                     @endif
-
                     @if($showMarkVisitasiDoneAction)
-                        <form method="POST" action="{{ route('superadmin.akreditasi.tandai-visitasi-selesai', $akreditasi) }}" class="mb-4" data-swal-confirm="true" data-swal-title="Tandai visitasi selesai?" data-swal-text="Status pengajuan akan masuk ke penilaian pasca visitasi." data-swal-icon="warning" data-swal-confirm-button="Ya, tandai selesai" data-swal-confirm-class="btn btn-warning">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-warning w-100">
-                                <i class="ki-outline ki-check-circle fs-4"></i>Tandai Visitasi Selesai
-                            </button>
-                        </form>
+                        <div class="menu-item px-3">
+                            <form method="POST" action="{{ route('superadmin.akreditasi.tandai-visitasi-selesai', $akreditasi) }}" class="px-3 py-2" data-swal-confirm="true" data-swal-title="Tandai visitasi selesai?" data-swal-text="Status akan masuk ke penilaian pasca visitasi." data-swal-icon="warning" data-swal-confirm-button="Ya, tandai selesai" data-swal-confirm-class="btn btn-warning">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-warning w-100">Tandai Visitasi Selesai</button>
+                            </form>
+                        </div>
                     @endif
-
                     @if($showSubmitVisitasiResultAction)
-                        <form method="POST" action="{{ route('superadmin.akreditasi.submit-hasil-visitasi', $akreditasi) }}" data-swal-confirm="true" data-swal-title="Submit hasil visitasi?" data-swal-text="Pastikan NA1, NA2, NK, dan dokumen laporan sudah final." data-swal-icon="warning" data-swal-confirm-button="Ya, submit" data-swal-confirm-class="btn btn-success">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-success w-100">
-                                <i class="ki-outline ki-send fs-4"></i>Submit Hasil Visitasi
-                            </button>
-                        </form>
+                        <div class="menu-item px-3">
+                            <form method="POST" action="{{ route('superadmin.akreditasi.submit-hasil-visitasi', $akreditasi) }}" class="px-3 py-2" data-swal-confirm="true" data-swal-title="Submit hasil visitasi?" data-swal-text="Pastikan nilai dan laporan sudah final." data-swal-icon="warning" data-swal-confirm-button="Ya, submit" data-swal-confirm-class="btn btn-success">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-success w-100">Submit Hasil Visitasi</button>
+                            </form>
+                        </div>
                     @endif
-                @endif
-
-                @if(count($secondaryActions) > 0)
-                    <div class="fs-8 text-muted mt-3">Aksi tambahan tersedia di menu kanan atas kartu ini.</div>
-                @endif
+                    @foreach($secondaryActions as $action)
+                        <div class="menu-item px-3">
+                            <a href="{{ $action['route'] }}" class="menu-link px-3 d-flex align-items-center gap-2 text-{{ $action['color'] }}" data-swal-confirm="true" data-swal-title="Buka {{ $action['label'] }}?" data-swal-text="Lanjutkan ke halaman {{ $action['label'] }}" data-swal-icon="question" data-swal-confirm-button="Ya, buka">
+                                <i class="ki-outline ki-right-square fs-4"></i><span>{{ $action['label'] }}</span>
+                            </a>
+                        </div>
+                    @endforeach
+                </x-superadmin.action-menu>
             @endif
         </x-metronic.card>
+    </div>
+</div>
 
-        <x-metronic.card title="Kelengkapan Data" class="mt-6">
-            <div class="d-grid gap-3">
-                @foreach($dataItems as $label => $ok)
-                    <div class="d-flex justify-content-between align-items-center rounded border border-gray-200 p-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <span class="symbol symbol-30px"><span class="symbol-label bg-light-{{ $ok ? 'success' : 'warning' }}"><i class="ki-outline {{ $ok ? 'ki-check' : 'ki-information-4' }} fs-4 text-{{ $ok ? 'success' : 'warning' }}"></i></span></span>
-                            <span class="fw-semibold text-gray-800">{{ $label }}</span>
-                        </div>
-                        <span class="badge badge-light-{{ $ok ? 'success' : 'warning' }}">{{ $ok ? 'Lengkap' : 'Belum' }}</span>
+<div x-data="{ activeTab: 'ringkasan' }">
+    <ul class="nav nav-tabs nav-line-tabs mb-5">
+        @foreach($tabs as $tab)
+            <li class="nav-item">
+                <a class="nav-link d-flex align-items-center gap-2" :class="{ active: activeTab === '{{ $tab['key'] }}' }" href="#" @click.prevent="activeTab = '{{ $tab['key'] }}'">
+                    <i class="ki-outline {{ $tab['icon'] }} fs-4"></i>{{ $tab['label'] }}
+                </a>
+            </li>
+        @endforeach
+    </ul>
+
+    <div x-show="activeTab === 'ringkasan'">
+        <div class="row g-5 g-xl-8">
+            <div class="col-xl-6">
+                <x-metronic.card title="Data Pesantren">
+                    <div class="fw-bold text-gray-900 mb-3">{{ $pesantren?->nama_pesantren ?? '—' }}</div>
+                    <div class="d-grid gap-2 fs-7">
+                        <div class="d-flex justify-content-between"><span class="text-muted">NSPP</span><span>{{ $pesantren?->nspp ?? '—' }}</span></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Alamat</span><span>{{ $pesantren?->alamat ?? '—' }}</span></div>
+                        <div class="d-flex justify-content-between"><span class="text-muted">Telepon</span><span>{{ $pesantren?->telepon ?? '—' }}</span></div>
                     </div>
+                    <div class="separator separator-dashed my-4"></div>
+                    <div class="fw-bold text-gray-900 mb-2">Kelengkapan Data</div>
+                    @foreach($dataItems as $label => $ok)
+                        <div class="d-flex justify-content-between align-items-center py-1">
+                            <span class="fs-7">{{ $label }}</span>
+                            <span class="badge badge-light-{{ $ok ? 'success' : 'warning' }}">{{ $ok ? 'Lengkap' : 'Belum' }}</span>
+                        </div>
+                    @endforeach
+                </x-metronic.card>
+            </div>
+            <div class="col-xl-6">
+                <x-metronic.card title="Dokumen Profil">
+                    @forelse($profileDocs as $doc)
+                        <div class="d-flex align-items-center gap-3 py-2">
+                            <i class="ki-outline ki-document fs-4 text-primary"></i>
+                            <div><div class="fw-semibold fs-7">{{ $doc['label'] }}</div><div class="fs-8 text-muted text-truncate" style="max-width:200px">{{ basename($doc['path']) }}</div></div>
+                        </div>
+                    @empty
+                        <div class="text-muted fs-7">Belum ada dokumen profil.</div>
+                    @endforelse
+                </x-metronic.card>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="activeTab === 'dokumen'" hidden>
+        <x-metronic.card title="Dokumen Akreditasi">
+            <div class="d-grid gap-4">
+                @forelse($documents as $document)
+                    <div class="d-flex justify-content-between align-items-start border rounded p-4">
+                        <div>
+                            <div class="fw-semibold text-gray-900">{{ $document->category?->name ?? 'Dokumen' }}</div>
+                            <div class="fs-8 text-muted">{{ basename($document->file_path ?? '') }}</div>
+                            <div class="fs-8 text-muted mt-1">{{ $document->uploader?->name ?? '—' }} · {{ $document->created_at?->format('d M Y') }}</div>
+                        </div>
+                        <span class="badge badge-light-{{ $document->status === 'approved' ? 'success' : 'warning' }}">{{ $document->status ?? 'menunggu' }}</span>
+                    </div>
+                @empty
+                    <x-metronic.empty-state icon="ki-document" title="Belum ada dokumen" description="Dokumen akan muncul setelah diunggah oleh pesantren atau asesor." />
+                @endforelse
+            </div>
+        </x-metronic.card>
+    </div>
+
+    <div x-show="activeTab === 'nilai'" hidden>
+        <x-metronic.card title="Nilai & Skor">
+            <div class="row g-4 mb-6">
+                @foreach(['na1' => 'NA1', 'na2' => 'NA2', 'nk' => 'NK', 'nv' => 'NV'] as $field => $label)
+                    <div class="col-md-3"><div class="border rounded p-4 text-center"><div class="fs-8 text-muted">{{ $label }}</div><div class="fs-4 fw-bold text-gray-900">{{ $akreditasi->{$field} ?? '—' }}</div></div></div>
                 @endforeach
             </div>
-        </x-metronic.card>
-
-        <x-metronic.card title="Status SK" class="mt-6">
-            @php
-                $hasCertificate = filled($akreditasi->sertifikat_path);
-                $isSkReady = $akreditasi->status === Akreditasi::STATUS_FINAL_APPROVED;
-                $isSkCompleted = $akreditasi->status === Akreditasi::STATUS_COMPLETED;
-                $skSignalColor = $isSkReady ? 'warning' : ($isSkCompleted && ! $hasCertificate ? 'danger' : ($hasCertificate ? 'success' : 'secondary'));
-                $skSignalLabel = $isSkReady
-                    ? 'Siap diterbitkan'
-                    : ($isSkCompleted
-                        ? ($hasCertificate ? 'Sertifikat digital tersedia' : 'Sertifikat digital belum tersedia')
-                        : 'Belum masuk tahap penerbitan SK');
-            @endphp
-            <div class="rounded border border-{{ $skSignalColor }} border-dashed bg-light-{{ $skSignalColor }} p-4 mb-5">
-                <div class="d-flex align-items-start gap-3">
-                    <span class="symbol symbol-35px flex-shrink-0">
-                        <span class="symbol-label bg-white"><i class="ki-outline ki-medal-star fs-3 text-{{ $skSignalColor }}"></i></span>
-                    </span>
-                    <div>
-                        <div class="fw-bold text-gray-900">{{ $skSignalLabel }}</div>
-                        <div class="fs-8 text-gray-700">{{ $isSkReady ? 'Terbitkan nomor SK dan masa berlaku agar pengajuan masuk status selesai.' : ($isSkCompleted && ! $hasCertificate ? 'Lengkapi sertifikat digital agar dokumen SK bisa diunduh dari sistem.' : 'Pantau nomor SK, masa berlaku, dan dokumen sertifikat dari panel ini.') }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="d-grid gap-3 fs-7">
-                <div class="d-flex justify-content-between gap-4">
-                    <span class="text-muted">Nomor SK</span>
-                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->nomor_sk ?: 'Belum diterbitkan' }}</span>
-                </div>
-                <div class="d-flex justify-content-between gap-4">
-                    <span class="text-muted">Mulai Berlaku</span>
-                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->masa_berlaku?->format('d M Y') ?? '—' }}</span>
-                </div>
-                <div class="d-flex justify-content-between gap-4">
-                    <span class="text-muted">Akhir Berlaku</span>
-                    <span class="fw-semibold text-gray-900 text-end">{{ $akreditasi->masa_berlaku_akhir?->format('d M Y') ?? '—' }}</span>
-                </div>
-                <div class="d-flex justify-content-between gap-4">
-                    <span class="text-muted">Sertifikat Digital</span>
-                    @if($akreditasi->sertifikat_path)
-                        <a href="{{ route('superadmin.akreditasi.sertifikat.download', $akreditasi) }}" class="fw-semibold text-primary text-end">Unduh Sertifikat</a>
-                    @else
-                        <span class="fw-semibold text-gray-900 text-end">Belum tersedia</span>
-                    @endif
-                </div>
-            </div>
-
-            @if($akreditasi->status === \App\Models\Akreditasi::STATUS_FINAL_APPROVED)
-                <div class="separator separator-dashed my-5"></div>
-                <a href="{{ route('superadmin.akreditasi.form-terbitkan-sk', $akreditasi) }}" class="btn btn-success w-100">
-                    <i class="ki-outline ki-medal-star fs-3"></i>Terbitkan SK Sekarang
-                </a>
-            @endif
-        </x-metronic.card>
-
-        <x-metronic.card title="Asesor" class="mt-6">
-            @forelse($akreditasi->assessments as $assessment)
-                <div class="d-flex align-items-center justify-content-between border rounded p-3 mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <span class="symbol symbol-35px"><span class="symbol-label bg-light-info text-info fw-bold">{{ strtoupper(substr($assessment->asesor?->name ?? '?', 0, 2)) }}</span></span>
-                        <div>
-                            <div class="fw-bold text-gray-900">{{ $assessment->asesor?->name ?? '—' }}</div>
-                            <div class="fs-8 text-muted">{{ $assessment->asesor?->email ?? '—' }}</div>
-                        </div>
-                    </div>
-                    <span class="badge badge-light-info">{{ strtoupper($assessment->tipe) }}</span>
-                </div>
-            @empty
-                <div class="text-center py-12 text-muted border rounded bg-light">Belum ada asesor ditugaskan.</div>
-            @endforelse
-
-            @if($assignmentHistory->isNotEmpty())
-                <div class="separator separator-dashed my-5"></div>
-                <div class="fw-bold text-gray-900 mb-3">Riwayat Assignment Asesor</div>
-                <div class="d-grid gap-3">
-                    @foreach($assignmentHistory as $history)
-                        @php $log = $history['log']; @endphp
-                        <div class="rounded border border-gray-200 p-3">
-                            <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-                                <span class="badge badge-light-{{ $history['label'] === 'Reassignment' ? 'warning' : 'primary' }}">{{ $history['label'] }}</span>
-                                <span class="fs-8 text-muted">{{ $log->created_at?->format('d M Y H:i') ?? '—' }}</span>
-                            </div>
-                            @if($history['previous']->isNotEmpty())
-                                <div class="fs-8 text-muted mb-2">Sebelumnya: {{ $history['previous']->map(fn($item) => ($item['name'] ?? 'Asesor').' ('.strtoupper($item['tipe'] ?? '-').')')->implode(', ') }}</div>
-                            @endif
-                            <div class="fs-8 text-gray-700">Ketua: <span class="fw-bold">{{ $history['ketua']?->name ?? '—' }}</span></div>
-                            <div class="fs-8 text-gray-700">Anggota: {{ $history['anggota']->pluck('name')->implode(', ') ?: '—' }}</div>
-                            @if($log->reason)
-                                <div class="rounded bg-light p-2 fs-8 text-gray-700 mt-2">{{ $log->reason }}</div>
-                            @endif
-                            @if($history['overload_warnings']->isNotEmpty())
-                                <div class="fs-8 text-danger mt-2">Overload dikonfirmasi untuk {{ $history['overload_warnings']->pluck('name')->implode(', ') }}.</div>
-                            @endif
-                        </div>
+            @if(!empty($edpmScores) && (is_array($edpmScores) || $edpmScores instanceof \Countable))
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($edpmScores as $type => $scores)
+                        <span class="badge badge-light-info">{{ strtoupper($type) }}: {{ $scores->count() }} butir</span>
                     @endforeach
                 </div>
             @endif
         </x-metronic.card>
     </div>
 
-    <div class="col-xl-8" x-data="{ activeTab: 'ringkasan' }">
-        <nav class="d-flex flex-wrap gap-2 mb-6" aria-label="Navigasi detail akreditasi">
-            @foreach($tabs as $tab)
-                <button type="button"
-                        @click="activeTab = '{{ $tab['key'] }}'"
-                        :class="activeTab === '{{ $tab['key'] }}' ? 'btn-primary text-white' : 'btn-light btn-color-gray-600 border-transparent'"
-                        class="btn btn-sm fw-semibold">
-                    <i class="ki-outline {{ $tab['icon'] }} fs-4"></i>{{ $tab['label'] }}
-                </button>
+    @if($hasBanding)
+    <div x-show="activeTab === 'banding'" hidden>
+        <x-metronic.card title="Banding">
+            @foreach($akreditasi->bandings as $banding)
+                <div class="border rounded p-4 mb-3">
+                    <div class="d-flex justify-content-between gap-4 mb-3">
+                        <span class="badge badge-light-{{ $banding->status === 'pending' ? 'warning' : ($banding->status === 'accepted' ? 'success' : 'danger') }}">{{ $banding->status }}</span>
+                        <span class="fs-8 text-muted">{{ $banding->created_at->format('d M Y') }}</span>
+                    </div>
+                    <div class="fw-semibold text-gray-900 mb-1">Alasan</div><div class="fs-7 text-muted mb-3">{{ $banding->reason ?? '—' }}</div>
+                    <div class="fw-semibold text-gray-900 mb-1">Respon</div><div class="fs-7 text-muted">{{ $banding->admin_response ?? 'Belum diproses' }}</div>
+                    @if($banding->processor)<div class="fs-8 text-muted mt-3">Diproses: {{ $banding->processor->name }}</div>@endif
+                </div>
             @endforeach
-        </nav>
+        </x-metronic.card>
+    </div>
+    @endif
 
-        <div x-show="activeTab === 'ringkasan'">
-            <x-metronic.card title="Ringkasan Pengajuan">
-                <div class="row g-5">
-                    <div class="col-md-6">
-                        <div class="rounded border border-gray-200 p-4 h-100">
-                            <div class="fs-8 text-muted mb-1">Pesantren</div>
-                            <div class="fw-bold text-gray-900">{{ $pesantren?->nama_pesantren ?? $akreditasi->user?->name ?? '—' }}</div>
-                            <div class="fs-8 text-muted mt-2">{{ $akreditasi->user?->email ?? '—' }}</div>
+    <div x-show="activeTab === 'audit'" hidden>
+        <x-metronic.card title="Log Audit">
+            <div class="timeline-label">
+                @forelse($akreditasi->auditLogs->sortByDesc('created_at') as $log)
+                    @php $actor = $log->user ?? $actorUsers->get($log->actor_user_id); @endphp
+                    <div class="timeline-item mb-6">
+                        <div class="timeline-label fw-bold text-gray-800 fs-8">{{ $log->created_at?->format('d M H:i') ?? '—' }}</div>
+                        <div class="timeline-badge"><i class="fa fa-genderless text-primary fs-1"></i></div>
+                        <div class="timeline-content fw-semibold text-gray-800 ps-3">
+                            <div>{{ AkreditasiAuditLog::getActionTypeLabel($log->action_type ?? 'status_changed') }}</div>
+                            @if($log->from_status || $log->to_status)<div class="fs-8 text-muted">{{ $log->from_status ?? '—' }} → {{ $log->to_status ?? '—' }}</div>@endif
+                            <div class="fs-8 text-muted">{{ $actor?->name ?? '—' }}</div>
+                            @if($log->reason)<div class="rounded bg-light p-3 fs-8 text-gray-700 mt-2">{{ $log->reason }}</div>@endif
                         </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="rounded border border-gray-200 p-4 h-100">
-                            <div class="fs-8 text-muted mb-1">Status Workflow</div>
-                            <span class="badge badge-light-{{ $statusColor }}">{{ $akreditasi->getStatusLabel() }}</span>
-                            <div class="fs-8 text-muted mt-2">Siklus koreksi: {{ $akreditasi->correction_cycle ?? 0 }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="rounded border border-gray-200 p-4 text-center h-100">
-                            <div class="fs-8 text-muted">Dokumen Profil</div>
-                            <div class="fs-4 fw-bold text-gray-900">{{ $profileDocs->count() }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="rounded border border-gray-200 p-4 text-center h-100">
-                            <div class="fs-8 text-muted">Dokumen Upload</div>
-                            <div class="fs-4 fw-bold text-gray-900">{{ $documents->count() }}</div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="rounded border border-gray-200 p-4 text-center h-100">
-                            <div class="fs-8 text-muted">Audit Log</div>
-                            <div class="fs-4 fw-bold text-gray-900">{{ $akreditasi->auditLogs->count() }}</div>
-                        </div>
-                    </div>
-                </div>
-            </x-metronic.card>
-        </div>
-
-        <div x-show="activeTab === 'pesantren'" hidden>
-            <x-metronic.card title="Data Pesantren">
-                <div class="row g-5">
-                    @foreach([
-                        'Nama Pesantren' => $pesantren?->nama_pesantren,
-                        'NS Pesantren' => $pesantren?->ns_pesantren,
-                        'Kontak' => $pesantren?->hp_wa ?? $pesantren?->telp_pesantren,
-                        'Email' => $akreditasi->user?->email,
-                    ] as $label => $value)
-                        <div class="col-md-6">
-                            <div class="fs-8 text-muted">{{ $label }}</div>
-                            <div class="fw-bold text-gray-900">{{ $value ?? '—' }}</div>
-                        </div>
-                    @endforeach
-                    <div class="col-md-12">
-                        <div class="fs-8 text-muted">Alamat</div>
-                        <div class="fw-semibold text-gray-800">{{ $pesantren?->alamat ?? '—' }}</div>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="fs-8 text-muted mb-2">Unit Pendidikan</div>
-                        <div class="d-flex flex-wrap gap-2">
-                            @forelse($pesantren?->units ?? [] as $unit)
-                                <span class="badge badge-light-primary">{{ $unit->layanan_satuan_pendidikan }} · {{ $unit->jumlah_rombel }} rombel</span>
-                            @empty
-                                <span class="text-muted fs-8">Belum ada unit.</span>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-            </x-metronic.card>
-
-            <div class="row g-5 mt-1">
-                @foreach($instrumentItems as $item)
-                    <div class="col-md-4">
-                        <x-metronic.card title="{{ $item['label'] }}">
-                            <div class="d-flex align-items-center justify-content-between mb-4">
-                                <span class="badge badge-light-{{ $item['available'] ? $item['color'] : 'secondary' }}">{{ $item['available'] ? 'Tersedia' : 'Belum ada' }}</span>
-                                <span class="fs-8 text-muted">{{ $countDataItems($item['data']) }} item</span>
-                            </div>
-                            <details>
-                                <summary class="cursor-pointer fs-8 fw-semibold text-primary">Lihat detail data</summary>
-                                <pre class="bg-light rounded p-4 fs-8 text-gray-700 mt-3 mb-0">{{ Str::limit(json_encode($item['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), 1600) }}</pre>
-                            </details>
-                        </x-metronic.card>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div x-show="activeTab === 'dokumen'" hidden>
-            <x-metronic.card title="Dokumen">
-                <div class="row g-4">
-                    @forelse($profileDocs as $doc)
-                        <div class="col-md-6">
-                            <div class="border rounded p-4 h-100">
-                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-                                    <div class="fw-semibold text-gray-900">{{ $doc['label'] }}</div>
-                                    <span class="badge badge-light-primary">Profil</span>
-                                </div>
-                                <div class="fs-8 text-muted font-monospace">{{ basename($doc['path']) }}</div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="col-12 text-center py-12 text-muted border rounded bg-light">Belum ada dokumen profil pesantren.</div>
-                    @endforelse
-
-                    @foreach($documents as $document)
-                        <div class="col-md-6">
-                            <div class="border rounded p-4 h-100 bg-light">
-                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
-                                    <div class="fw-semibold text-gray-900">{{ $document->category?->name ?? $document->type ?? 'Dokumen' }}</div>
-                                    <span class="badge badge-light-info">Upload</span>
-                                </div>
-                                <div class="fs-8 text-muted font-monospace">{{ basename($document->file_path ?? '') }}</div>
-                                <div class="fs-8 text-muted mt-2">Uploader: {{ $document->uploader?->name ?? '—' }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </x-metronic.card>
-        </div>
-
-        <div x-show="activeTab === 'nilai'" hidden>
-            <x-metronic.card title="Nilai & EDPM Scores">
-                <div class="row g-4 mb-6">
-                    @foreach(['na1' => 'NA1', 'na2' => 'NA2', 'nk' => 'NK', 'nv' => 'NV'] as $field => $label)
-                        <div class="col-md-3">
-                            <div class="border rounded p-4 text-center h-100">
-                                <div class="fs-8 text-muted">{{ $label }}</div>
-                                <div class="fs-4 fw-bold text-gray-900">{{ $akreditasi->{$field} ?? '—' }}</div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="d-flex flex-wrap gap-2">
-                    @forelse($edpmScores as $type => $scores)
-                        <span class="badge badge-light-info">{{ strtoupper($type ?: 'unknown') }}: {{ $scores->count() }} butir</span>
-                    @empty
-                        <span class="text-muted fs-7">Belum ada skor butir.</span>
-                    @endforelse
-                </div>
-            </x-metronic.card>
-        </div>
-
-        <div x-show="activeTab === 'banding'" hidden>
-            <x-metronic.card title="Banding">
-                @forelse($akreditasi->bandings as $banding)
-                    <div class="border rounded p-4 mb-3">
-                        <div class="d-flex justify-content-between gap-4 mb-3">
-                            <span class="badge badge-light-{{ $banding->status === 'pending' ? 'warning' : ($banding->status === 'accepted' ? 'success' : 'danger') }}">{{ $banding->status }}</span>
-                            <span class="fs-8 text-muted">{{ $banding->created_at->format('d M Y, H:i') }}</span>
-                        </div>
-                        <div class="fw-semibold text-gray-900 mb-1">Alasan</div>
-                        <div class="fs-7 text-muted mb-3">{{ $banding->reason ?? '—' }}</div>
-                        <div class="fw-semibold text-gray-900 mb-1">Respon</div>
-                        <div class="fs-7 text-muted">{{ $banding->admin_response ?? 'Belum diproses' }}</div>
-                        @if($banding->processor)
-                            <div class="fs-8 text-muted mt-3">Diproses oleh: {{ $banding->processor->name }}</div>
-                        @endif
                     </div>
                 @empty
-                    <div class="text-center py-12 text-muted border rounded bg-light">Belum ada banding.</div>
+                    <x-metronic.empty-state icon="ki-time" title="Belum ada log audit" description="Aktivitas akan tercatat di sini seiring berjalannya proses akreditasi." />
                 @endforelse
-            </x-metronic.card>
-        </div>
-
-        <div x-show="activeTab === 'audit'" hidden>
-            <x-metronic.card title="Audit Timeline">
-                <div class="timeline-label">
-                    @forelse($akreditasi->auditLogs->sortByDesc('created_at') as $log)
-                        @php $actor = $log->user ?? $actorUsers->get($log->actor_user_id); @endphp
-                        <div class="timeline-item mb-6">
-                            <div class="timeline-label fw-bold text-gray-800 fs-8">{{ $log->created_at?->format('d M H:i') ?? '—' }}</div>
-                            <div class="timeline-badge"><i class="fa fa-genderless text-primary fs-1"></i></div>
-                            <div class="timeline-content fw-semibold text-gray-800 ps-3">
-                                <div>{{ AkreditasiAuditLog::getActionTypeLabel($log->action_type ?? 'status_changed') }}</div>
-                                @if($log->from_status || $log->to_status)
-                                    <div class="fs-8 text-muted">{{ $log->from_status ?? '—' }} → {{ $log->to_status ?? '—' }}</div>
-                                @endif
-                                <div class="fs-8 text-muted">Aktor: {{ $actor?->name ?? '—' }}</div>
-                                @if($log->reason)
-                                    <div class="rounded bg-light p-3 fs-8 text-gray-700 mt-2">{{ $log->reason }}</div>
-                                @endif
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-12 text-muted border rounded bg-light">Belum ada audit log.</div>
-                    @endforelse
-                </div>
-            </x-metronic.card>
-        </div>
+            </div>
+        </x-metronic.card>
     </div>
 </div>
 @endsection
+
+

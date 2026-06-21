@@ -49,7 +49,7 @@
           class="d-grid gap-5"
           data-swal-confirm="true"
           data-swal-title="Simpan perubahan {{ $setting['label'] }}?"
-          data-swal-text="Setting ini akan diperbarui dan tercatat di audit log."
+          data-swal-text="Setting ini akan diperbarui dan tercatat di Log Audit."
           data-swal-icon="warning"
           data-swal-confirm-button="Ya, simpan"
           data-swal-confirm-class="btn btn-primary">
@@ -105,7 +105,7 @@
                    class="form-control form-control-solid"
                    placeholder="{{ $setting['reason_placeholder'] ?? 'Contoh: Menyesuaikan SLA review nasional...' }}"
                    required>
-            <div class="fs-8 text-muted mt-2">Wajib diisi karena perubahan tercatat di audit log.</div>
+            <div class="fs-8 text-muted mt-2">Wajib diisi karena perubahan tercatat di Log Audit.</div>
         </div>
     </form>
 
@@ -116,3 +116,4 @@
         </button>
     </x-slot:footer>
 </x-metronic.modal>
+

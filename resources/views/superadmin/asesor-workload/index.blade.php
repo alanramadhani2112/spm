@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Workload Asesor')
-@section('pageTitle', 'Workload Asesor')
+@section('title', 'Beban Kerja Asesor')
+@section('pageTitle', 'Beban Kerja Asesor')
 
 @section('toolbar')
 <form method="GET" action="{{ route('superadmin.asesor-workload.index') }}" class="d-flex flex-wrap align-items-center gap-2 gap-lg-3">
@@ -19,7 +19,7 @@
     </select>
     @if(auth()->user()?->hasPermission('superadmin.assessor_workload.export'))
         <a href="{{ route('superadmin.asesor-workload.export', ['period' => $period, 'load' => $load]) }}" class="btn btn-sm btn-light-primary">
-            <i class="ki-outline ki-file-down fs-2"></i>Export CSV
+            <i class="ki-outline ki-file-down fs-2"></i>Ekspor CSV
         </a>
     @endif
     <a href="{{ route('superadmin.akreditasi.index', ['status' => \App\Models\Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, 'period' => $period]) }}" class="btn btn-sm btn-primary">
@@ -31,7 +31,7 @@
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div class="mw-lg-600px">
-        <h2 class="fs-2 fw-bold text-gray-900 mb-2">Pusat Workload Asesor</h2>
+        <h2 class="fs-2 fw-bold text-gray-900 mb-2">Pusat Beban Kerja Asesor</h2>
         <p class="fs-7 text-muted mb-3">Distribusi assignment aktif, peran ketua/anggota, status berjalan, dan sinyal overload.</p>
         <div class="d-flex flex-wrap gap-2">
             <span class="badge badge-light-primary">{{ $filteredRows->count() }} asesor ditampilkan</span>
@@ -173,7 +173,7 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <x-superadmin.action-menu label="Buka aksi workload asesor {{ $row['name'] }}">
+                                <x-superadmin.action-menu label="Buka aksi Beban Kerja Asesor {{ $row['name'] }}">
                                     <div class="menu-item px-3">
                                         <a href="{{ route('superadmin.asesor-workload.show', ['asesor' => $row['id'], 'period' => $period, 'load' => $load]) }}" class="menu-link px-3 d-flex align-items-center gap-2">
                                             <i class="ki-outline ki-chart-line fs-4"></i>
@@ -211,3 +211,5 @@
     </div>
 </div>
 @endsection
+
+

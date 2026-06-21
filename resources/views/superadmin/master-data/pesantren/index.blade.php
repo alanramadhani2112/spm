@@ -164,7 +164,7 @@
                                           class="d-grid gap-4 text-start"
                                           data-swal-confirm="true"
                                           data-swal-title="{{ $pesantren->is_locked ? 'Buka lock data?' : 'Kunci data pesantren?' }}"
-                                          data-swal-text="Perubahan lock akan tercatat di audit log."
+                                          data-swal-text="Perubahan lock akan tercatat di Log Audit."
                                           data-swal-icon="warning"
                                           data-swal-confirm-button="Ya, lanjutkan"
                                           data-swal-confirm-class="btn btn-primary">
@@ -177,7 +177,7 @@
                                         <div>
                                             <label for="lock_reason_{{ $pesantren->id }}" class="form-label required">Alasan</label>
                                             <textarea id="lock_reason_{{ $pesantren->id }}" name="reason" class="form-control form-control-solid" rows="3" required placeholder="Jelaskan alasan lock/unlock data pesantren"></textarea>
-                                            <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di audit log.</div>
+                                            <div class="fs-8 text-muted mt-1">Alasan akan tersimpan di Log Audit.</div>
                                         </div>
                                     </form>
                                     <x-slot:footer>
@@ -194,3 +194,4 @@
     @endif
 </x-metronic.card>
 @endsection
+

@@ -26,7 +26,7 @@
 
     <div class="rounded bg-light-primary p-5 mb-6">
         <div class="fw-bold text-primary mb-1">SLA Workflow Akreditasi</div>
-        <div class="fs-7 text-muted">Atur batas hari setiap tahapan. Setiap perubahan wajib memiliki alasan dan akan tercatat di audit log.</div>
+        <div class="fs-7 text-muted">Atur batas hari setiap tahapan. Setiap perubahan wajib memiliki alasan dan akan tercatat di Log Audit.</div>
     </div>
 
     <div class="d-grid gap-5">
@@ -36,3 +36,4 @@
     </div>
 </x-metronic.card>
 @endsection
+

@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Penugasan Asesor')
-@section('pageTitle', 'Penugasan Asesor')
+@section('title', ($isSuperAdminView ?? false) ? 'Penugasan Asesor — Super Admin' : 'Penugasan Asesor')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Penugasan Asesor — Super Admin' : 'Penugasan Asesor')
 
 @section('content')
 @php
@@ -72,7 +72,7 @@
     @if($assessorWorkloads->isNotEmpty())
         <div class="rounded-3 bg-white shadow-sm mb-6">
             <div class="px-6 py-5">
-                <h2 class="fs-6 fw-semibold text-gray-900">Workload Asesor Aktif</h2>
+                <h2 class="fs-6 fw-semibold text-gray-900">Beban Kerja Asesor Aktif</h2>
                 <p class="mt-1 fs-7 text-muted">Beban dihitung dari assignment pada akreditasi yang belum selesai.</p>
             </div>
             <div class="px-6 pb-5">
@@ -199,3 +199,5 @@
     </div>
 
 @endsection
+
+

@@ -37,7 +37,7 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.index'))
             ->assertOk()
-            ->assertSee('Pusat Workload Asesor')
+            ->assertSee('Beban Kerja Asesor')
             ->assertSee('Asesor Sibuk')
             ->assertSee('Aktif 5')
             ->assertSee('Overload')
@@ -106,7 +106,7 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.index', ['load' => 'high']))
             ->assertOk()
-            ->assertSee('Export CSV');
+            ->assertSee('Ekspor CSV');
 
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.export', ['load' => 'high']))
@@ -142,7 +142,7 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.show', ['asesor' => $assessor->id, 'period' => 'all']))
             ->assertOk()
-            ->assertSee('Detail Workload Asesor')
+            ->assertSee('Detail Beban Kerja')
             ->assertSee('Asesor Detail')
             ->assertSee('detail@test.com')
             ->assertSee('Assignment Aktif')
@@ -150,7 +150,7 @@ class AssessorWorkloadTest extends TestCase
             ->assertSee('Anggota')
             ->assertSee('Overdue')
             ->assertSee('Pesantren Detil')
-            ->assertSee('Belum ada riwayat assignment yang relevan untuk asesor ini.');
+            ->assertSee('Belum ada Proses Akreditasi yang relevan untuk asesor ini.');
     }
 
     public function test_assessor_workload_detail_page_shows_assignment_history_for_selected_assessor_only(): void
@@ -223,7 +223,7 @@ class AssessorWorkloadTest extends TestCase
         $this->actingAs($this->superAdmin)
             ->get(route('superadmin.asesor-workload.show', ['asesor' => $selectedAssessor->id]))
             ->assertOk()
-            ->assertSee('Riwayat Assignment &amp; Reassignment', false)
+            ->assertSee('Proses Akreditasi &amp; Reassignment', false)
             ->assertSee('Reassignment')
             ->assertSee('Pesantren Histori')
             ->assertSee('Redistribusi beban kerja asesor.')
@@ -342,3 +342,6 @@ class AssessorWorkloadTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+
+

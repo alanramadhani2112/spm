@@ -13,8 +13,8 @@
 <div class="card card-flush mb-8">
     <div class="card-header align-items-center py-5">
         <div class="card-title d-flex flex-column">
-            <h3 class="fw-bold text-gray-900 m-0">Alur Akreditasi</h3>
-            <span class="text-muted fs-7 mt-1">Pantau posisi pengajuan di setiap tahap pipeline akreditasi.</span>
+            <h3 class="fw-bold text-gray-900 m-0">Alur Proses Bisnis Akreditasi</h3>
+            <span class="text-muted fs-7 mt-1">Proses end-to-end dari pengajuan hingga penerbitan SK — klik tahap untuk lihat detail.</span>
         </div>
         <div class="card-toolbar">
             <span class="badge badge-light-primary fs-7 me-2">{{ $totalAll }} dalam pipeline</span>
@@ -49,9 +49,11 @@
                                 <span class="symbol symbol-35px">
                                     <span class="symbol-label bg-{{ $markerBg }}">
                                         @if($isComplete)
-                                            <i class="ki-solid ki-check fs-4 text-white"></i>
+                                            <i class="ki-solid ki-check fs-6 text-white"></i>
+                                        @elseif($count > 0)
+                                            <span class="fw-bold fs-7 text-white">{{ $index + 1 }}</span>
                                         @else
-                                            <i class="ki-outline {{ $step['icon'] }} fs-4 {{ $isActive ? 'text-white' : 'text-'.$stepColor }}"></i>
+                                            <span class="fw-bold fs-7 text-gray-600">{{ $index + 1 }}</span>
                                         @endif
                                     </span>
                                 </span>
@@ -234,3 +236,5 @@
     }
 </style>
 @endpush
+
+

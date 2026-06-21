@@ -11,7 +11,7 @@
         @endforeach
     </select>
     <a href="{{ route('admin.akreditasi.export', ['period' => $period ?? 'all', 'tab' => request('tab', 'semua')]) }}" class="btn btn-sm btn-light">
-        <i class="ki-outline ki-exit-up fs-2"></i>Export CSV
+        <i class="ki-outline ki-exit-up fs-2"></i>Ekspor CSV
     </a>
 </form>
 @endsection
@@ -172,3 +172,4 @@
     </div>
 </div>
 @endsection
+

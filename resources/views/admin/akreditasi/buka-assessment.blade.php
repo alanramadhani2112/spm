@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Buka Assessment')
-@section('pageTitle', 'Buka Assessment')
+@section('title', ($isSuperAdminView ?? false) ? 'Buka Assessment — Super Admin' : 'Buka Assessment')
+@section('pageTitle', ($isSuperAdminView ?? false) ? 'Buka Assessment — Super Admin' : 'Buka Assessment')
 
 @section('content')
 @php
@@ -95,3 +95,4 @@
     </div>
 
 @endsection
+

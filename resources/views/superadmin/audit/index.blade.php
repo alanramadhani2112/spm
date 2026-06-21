@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Audit Log')
-@section('pageTitle', 'Audit Log')
+@section('title', 'Log Audit')
+@section('pageTitle', 'Log Audit')
 
 @section('content')
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
@@ -19,7 +19,7 @@
     <div class="d-flex flex-wrap gap-2">
         @if(auth()->user()?->hasPermission('superadmin.audit.export'))
             <a href="{{ route('superadmin.audit.export', request()->only(['actor', 'action', 'start_date', 'end_date'])) }}" class="btn btn-sm btn-light-success">
-                <i class="ki-outline ki-exit-down fs-3"></i>Export CSV
+                <i class="ki-outline ki-exit-down fs-3"></i>Ekspor CSV
             </a>
         @endif
         <a href="{{ route('superadmin.akreditasi.index') }}" class="btn btn-sm btn-light">
@@ -117,7 +117,7 @@
                                 <div class="fs-8 text-muted">ID: {{ $log->akreditasi_id ?? '—' }}</div>
                             </td>
                             <td class="text-end pe-4">
-                                <x-superadmin.action-menu label="Buka aksi audit log {{ $log->id }}">
+                                <x-superadmin.action-menu label="Buka aksi Log Audit {{ $log->id }}">
                                     <div class="menu-item px-3">
                                         <a href="{{ route('superadmin.audit.show', $log->id) }}" class="menu-link px-3 d-flex align-items-center gap-2">
                                             <i class="ki-outline ki-eye fs-4"></i>
@@ -146,3 +146,4 @@
     @endif
 </x-metronic.card>
 @endsection
+

@@ -1,6 +1,6 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Terbitkan SK')
+@section('title', ($isSuperAdminView ?? false) ? 'Terbitkan SK — Super Admin' : 'Terbitkan SK')
 @section('pageTitle', 'Terbitkan SK Akreditasi')
 
 @section('content')
@@ -136,3 +136,4 @@
     </div>
 
 @endsection
+

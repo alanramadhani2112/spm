@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Detail Audit Log')
-@section('pageTitle', 'Detail Audit Log')
+@section('title', 'Detail Log Audit')
+@section('pageTitle', 'Detail Log Audit')
 
 @section('toolbar')
 <a href="{{ route('superadmin.audit.index') }}" class="btn btn-sm btn-light">
@@ -112,3 +112,4 @@
     </div>
 </div>
 @endsection
+

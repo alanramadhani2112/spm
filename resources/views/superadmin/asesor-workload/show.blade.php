@@ -1,7 +1,7 @@
 @extends('layouts.metronic.app')
 
-@section('title', 'Detail Workload Asesor')
-@section('pageTitle', 'Detail Workload Asesor')
+@section('title', 'Detail Beban Kerja Asesor')
+@section('pageTitle', 'Detail Beban Kerja Asesor')
 
 @section('toolbar')
 @php
@@ -15,7 +15,7 @@
         <i class="ki-outline ki-left fs-4"></i>Kembali
     </a>
     <form method="GET" action="{{ route('superadmin.asesor-workload.show', $asesor) }}" class="d-flex flex-wrap align-items-center gap-2">
-        <label for="detail_workload_period" class="visually-hidden">Periode workload asesor</label>
+        <label for="detail_workload_period" class="visually-hidden">Periode Beban Kerja Asesor</label>
         <select id="detail_workload_period" name="period" class="form-select form-select-solid form-select-sm w-auto" onchange="this.form.submit()">
             @foreach($periodOptions as $value => $label)
                 <option value="{{ $value }}" @selected($period === $value)>{{ $label }}</option>
@@ -256,3 +256,4 @@
     @endif
 </x-metronic.card>
 @endsection
+

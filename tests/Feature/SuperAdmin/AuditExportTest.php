@@ -46,7 +46,7 @@ class AuditExportTest extends TestCase
         $this->actingAs($superAdmin)
             ->get(route('superadmin.audit.index', ['action' => 'status_changed']))
             ->assertOk()
-            ->assertSee('Export CSV');
+            ->assertSee('Ekspor CSV');
 
         $this->actingAs($superAdmin)
             ->get(route('superadmin.audit.export', ['action' => 'status_changed']))
@@ -78,3 +78,6 @@ class AuditExportTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+
+

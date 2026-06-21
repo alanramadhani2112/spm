@@ -117,7 +117,7 @@
             <button type="submit" class="btn btn-light-primary"
                     data-swal-confirm="true"
                     data-swal-title="Simpan override dokumen?"
-                    data-swal-text="Dokumen yang diupload akan mengganti dokumen lama dan tercatat di audit log."
+                    data-swal-text="Dokumen yang diupload akan mengganti dokumen lama dan tercatat di Log Audit."
                     data-swal-icon="warning"
                     data-swal-confirm-button="Ya, simpan">
                 Simpan Dokumen
@@ -144,7 +144,7 @@
                     <button type="submit" class="btn btn-light-primary"
                             data-swal-confirm="true"
                             data-swal-title="Simpan override {{ strtoupper($key) }}?"
-                            data-swal-text="Perubahan akan tercatat di audit log."
+                            data-swal-text="Perubahan akan tercatat di Log Audit."
                             data-swal-icon="warning"
                             data-swal-confirm-button="Ya, simpan">
                         Simpan {{ strtoupper($key) }}
@@ -267,7 +267,7 @@
             <button type="submit" class="btn btn-primary"
                     data-swal-confirm="true"
                     data-swal-title="Simpan override profil?"
-                    data-swal-text="Perubahan akan tercatat di audit log."
+                    data-swal-text="Perubahan akan tercatat di Log Audit."
                     data-swal-icon="warning"
                     data-swal-confirm-button="Ya, simpan">
                 Simpan Override
@@ -276,3 +276,4 @@
     </form>
 </x-metronic.card>
 @endsection
+
