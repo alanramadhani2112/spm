@@ -112,14 +112,14 @@ class AkreditasiController extends Controller
 
         public function kartuKendaliForm($akreditasiId)
     {
-        $akreditasi = Akreditasi::where('user_id', auth()->id())->findOrFail($akreditasiId);
+        $akreditasi = Akreditasi::where('user_id', auth()->id())->whereIn('status', [Akreditasi::STATUS_VISITASI_COMPLETED, Akreditasi::STATUS_POST_VISITASI_SCORING])->findOrFail($akreditasiId);
         return view('pesantren.akreditasi.kartu-kendali', compact('akreditasi'));
     }
 
     public function uploadKartuKendali(Request $request, $akreditasiId)
     {
         try {
-            $akreditasi = Akreditasi::where('user_id', auth()->id())->findOrFail($akreditasiId);
+            $akreditasi = Akreditasi::where('user_id', auth()->id())->whereIn('status', [Akreditasi::STATUS_VISITASI_COMPLETED, Akreditasi::STATUS_POST_VISITASI_SCORING])->findOrFail($akreditasiId);
 
             app(AkreditasiWorkflowService::class)->pesantrenUploadKartuKendali(
                 $akreditasiId,
@@ -242,5 +242,9 @@ class AkreditasiController extends Controller
         return $payload;
     }
 }
+
+
+
+
 
 
