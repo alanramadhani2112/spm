@@ -17,6 +17,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\ScoringService;
 
 class AkreditasiWorkflowService
 {
@@ -1145,6 +1146,27 @@ class AkreditasiWorkflowService
 
         $this->notificationService->notifyEvent('visitasi_result_submitted', $akreditasi->id);
 
+        // Hitung final score dan peringkat
+        $butirScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)
+            ->where('type', 'na1')
+            ->get()
+            ->map(fn($s) => ['komponen_id' => $s->butir->komponen_id ?? 0, 'isian' => $s->value])
+            ->toArray();
+
+        $iprScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)
+            ->where('type', 'ipr')
+            ->pluck('value')
+            ->toArray();
+
+        if (empty($iprScores)) {
+            $iprScores = array_fill(0, ScoringService::IPR_CONFIG['butir_count'], 2);
+        }
+
+        $result = $this->scoringService->calculateAll($butirScores, $iprScores);
+        $akreditasi->forceFill([
+            'nilai' => $result['final_score'],
+            'peringkat' => $result['peringkat'],
+        ])->save();
         return $akreditasi;
     }
 
@@ -1461,3 +1483,6 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
+
+
