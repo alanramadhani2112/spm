@@ -103,11 +103,15 @@ class DataController extends Controller
     public function updateIpm(Request $request)
     {
         $validated = $request->validate([
-            'ipm.santri_mukim' => ['required', 'integer', 'min:0'],
-            'ipm.santri_non_mukim' => ['nullable', 'integer', 'min:0'],
+            'ipm.santri_mukim'             => ['required', 'integer', 'min:0'],
+            'ipm.santri_non_mukim'         => ['nullable', 'integer', 'min:0'],
             'ipm.jumlah_rombongan_belajar' => ['nullable', 'integer', 'min:0'],
-            'ipm.kurikulum_utama' => ['nullable', 'string', 'max:255'],
-            'ipm.catatan_mutu' => ['nullable', 'string'],
+            'ipm.kurikulum_utama'          => ['nullable', 'string', 'max:255'],
+            'ipm.catatan_mutu'             => ['nullable', 'string'],
+            'ipm.butir_1'                  => ['nullable', 'in:sesuai,tidak_sesuai'],
+            'ipm.butir_2'                  => ['nullable', 'in:sesuai,tidak_sesuai'],
+            'ipm.butir_3'                  => ['nullable', 'in:sesuai,tidak_sesuai'],
+            'ipm.butir_4'                  => ['nullable', 'in:sesuai,tidak_sesuai'],
         ]);
 
         Ipm::updateOrCreate(
@@ -190,5 +194,6 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 

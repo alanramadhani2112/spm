@@ -20,16 +20,23 @@ class PesantrenService
         'tahun_pendirian',
     ];
 
+    public const IPM_BUTIRS = [
+        'butir_1' => 'Pesantren memiliki legalitas (akta pendirian, izin operasional)',
+        'butir_2' => 'Pesantren memiliki kurikulum pesantren secara tertulis',
+        'butir_3' => 'Pesantren memiliki sistem penilaian santri secara tertulis',
+        'butir_4' => 'Pesantren memiliki mudir/pimpinan yang definitif',
+    ];
+
     public function checkDataCompleteness(int $userId): array
     {
         $pesantren = Pesantren::where('user_id', $userId)->first();
 
         if (! $pesantren) {
             return [
-                'profilMinimum' => false,
+                'profilMinimum'   => false,
                 'assessmentReady' => false,
-                'missingFields' => self::REQUIRED_PROFILE_FIELDS,
-                'locked' => false,
+                'missingFields'   => self::REQUIRED_PROFILE_FIELDS,
+                'locked'          => false,
             ];
         }
 
@@ -46,21 +53,32 @@ class PesantrenService
         $profilMinimum = empty($missingFields);
 
         $hasUnits = PesantrenUnit::where('pesantren_id', $pesantren->id)->exists();
-        $hasIpm = Ipm::where('user_id', $userId)->exists();
-        $hasEdpm = Edpm::where('user_id', $userId)->exists();
-        $hasSdm = SdmPesantren::where('user_id', $userId)->exists();
 
-        $assessmentReady = $profilMinimum && $hasUnits && $hasIpm && $hasEdpm && $hasSdm;
+        $ipm     = Ipm::where('user_id', $userId)->first();
+        $ipmData = $ipm?->data ?? [];
+        $hasIpm  = $ipm !== null;
+
+        // D.2: assessmentReady = IPM 4 butir semua "sesuai"
+        $ipmAllSesuai = $hasIpm && count(array_filter(
+            array_intersect_key($ipmData, self::IPM_BUTIRS),
+            fn($v) => $v === 'sesuai'
+        )) >= 4;
+
+        $hasEdpm = Edpm::where('user_id', $userId)->exists();
+        $hasSdm  = SdmPesantren::where('user_id', $userId)->exists();
+
+        $assessmentReady = $profilMinimum && $hasUnits && $ipmAllSesuai && $hasEdpm && $hasSdm;
 
         return [
-            'profilMinimum' => $profilMinimum,
+            'profilMinimum'   => $profilMinimum,
             'assessmentReady' => $assessmentReady,
-            'missingFields' => $missingFields,
-            'locked' => (bool) $pesantren->is_locked,
-            'hasUnits' => $hasUnits,
-            'hasIpm' => $hasIpm,
-            'hasEdpm' => $hasEdpm,
-            'hasSdm' => $hasSdm,
+            'missingFields'   => $missingFields,
+            'locked'          => (bool) $pesantren->is_locked,
+            'hasUnits'        => $hasUnits,
+            'hasIpm'          => $hasIpm,
+            'ipmAllSesuai'    => $ipmAllSesuai,
+            'hasEdpm'         => $hasEdpm,
+            'hasSdm'          => $hasSdm,
         ];
     }
 
@@ -87,6 +105,7 @@ class PesantrenService
     {
         Pesantren::where('id', $pesantrenId)->update(['is_locked' => true]);
     }
+
     public function unlockProfile(int $pesantrenId): void
     {
         Pesantren::where('id', $pesantrenId)->update(['is_locked' => false]);

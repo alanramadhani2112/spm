@@ -1295,7 +1295,7 @@ class AkreditasiConsoleTest extends TestCase
             'jumlah_rombel' => 6,
         ]);
 
-        Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100]]);
+        Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
         SdmPesantren::create(['user_id' => $user->id, 'data' => ['ustaz_tetap' => 12]]);
         Edpm::create(['user_id' => $user->id, 'data' => ['self_assessment' => 'lengkap']]);
     }
@@ -1337,6 +1337,7 @@ class AkreditasiConsoleTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
 
 
 

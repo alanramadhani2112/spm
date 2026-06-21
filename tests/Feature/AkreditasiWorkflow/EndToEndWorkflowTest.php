@@ -44,12 +44,12 @@ class EndToEndWorkflowTest extends TestCase
         $this->assertSame(Akreditasi::STATUS_ASSESSMENT_OPEN, $akreditasi->status);
 
         $akreditasi = $workflow->pesantrenSubmitAssessment($akreditasi->id, [
-            'ipm' => ['santri_mukim' => 120],
+            'ipm' => ['santri_mukim' => 120, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai'],
             'sdm' => ['ustaz_tetap' => 14],
             'edpm' => ['self_assessment' => 'lengkap'],
         ]);
         $this->assertSame(Akreditasi::STATUS_ADMIN_STAGE_1_REVIEW, $akreditasi->status);
-        $this->assertSame(['santri_mukim' => 120], Ipm::where('user_id', $pesantrenUser->id)->first()->data);
+        $this->assertSame(['santri_mukim' => 120, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai'], Ipm::where('user_id', $pesantrenUser->id)->first()->data);
 
         $akreditasi = $workflow->adminStage1Review($akreditasi->id, $admin->id, 'approve');
         $this->assertSame(Akreditasi::STATUS_ASSESSOR_ASSIGNMENT, $akreditasi->status);
@@ -157,7 +157,7 @@ class EndToEndWorkflowTest extends TestCase
             'jumlah_rombel' => 6,
         ]);
 
-        Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100]]);
+        Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
         SdmPesantren::create(['user_id' => $user->id, 'data' => ['ustaz_tetap' => 12]]);
         Edpm::create(['user_id' => $user->id, 'data' => ['status' => 'lengkap']]);
     }
@@ -175,3 +175,4 @@ class EndToEndWorkflowTest extends TestCase
             ->all();
     }
 }
+

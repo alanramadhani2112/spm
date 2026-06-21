@@ -126,7 +126,7 @@ class SettingsTest extends TestCase
         $workflow = app(AkreditasiWorkflowService::class);
 
         $workflow->adminStage1Review($akreditasi->id, $this->admin->id, 'correction', ['ipm'], 'Perbaiki IPM.');
-        $workflow->pesantrenSubmitStage1Correction($akreditasi->id, ['ipm' => ['santri_mukim' => 100]]);
+        $workflow->pesantrenSubmitStage1Correction($akreditasi->id, ['ipm' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
 
         $this->expectException(WorkflowException::class);
         $this->expectExceptionMessage('Batas siklus koreksi tahap 1 telah tercapai (1x).');
@@ -460,6 +460,7 @@ class SettingsTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
 
 
 

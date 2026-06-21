@@ -273,7 +273,7 @@ class MasterDataTest extends TestCase
             'layanan_satuan_pendidikan' => 'MTs',
             'jumlah_rombel' => 6,
         ]);
-        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100]]);
+        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
         SdmPesantren::create(['user_id' => $pesantrenUser->id, 'data' => ['ustaz_tetap' => 12]]);
         Edpm::create(['user_id' => $pesantrenUser->id, 'data' => ['status' => 'lengkap']]);
 
@@ -492,7 +492,7 @@ class MasterDataTest extends TestCase
             'user_id' => $pesantrenUser->id,
             'nama_pesantren' => 'Pesantren Dataset',
         ]);
-        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100]]);
+        Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
 
         $this->actingAs($this->superAdmin)
             ->patch(route('superadmin.master-data.pesantren.ipm.update', $pesantren), [
@@ -951,4 +951,5 @@ class MasterDataTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
 

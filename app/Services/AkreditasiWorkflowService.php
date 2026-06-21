@@ -56,9 +56,9 @@ class AkreditasiWorkflowService
     {
         $completeness = $this->pesantrenService->checkDataCompleteness($userId);
 
-        if (! $completeness['assessmentReady']) {
+        if (! $completeness['profilMinimum']) {
             throw new WorkflowException(
-                'Data belum lengkap. Pastikan profil pesantren dan data IPM, SDM, EDPM telah diisi.'
+                'Profil pesantren belum lengkap. Pastikan data identitas dan dokumen utama telah diisi.'
             );
         }
 
@@ -1663,6 +1663,7 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
 
 
 

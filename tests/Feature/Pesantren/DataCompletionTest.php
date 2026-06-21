@@ -40,7 +40,7 @@ class DataCompletionTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('pesantren.data.ipm'), [
-                'ipm' => ['santri_mukim' => 120, 'santri_non_mukim' => 30],
+                'ipm' => ['santri_mukim' => 120, 'santri_non_mukim' => 30, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai'],
             ])
             ->assertRedirect(route('pesantren.data.index'));
 
@@ -92,3 +92,4 @@ class DataCompletionTest extends TestCase
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Terkunci']);
     }
 }
+

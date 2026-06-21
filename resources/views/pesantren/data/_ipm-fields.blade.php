@@ -1,6 +1,37 @@
-@php $data = old('ipm', $ipm?->data ?? []); @endphp
+@php
+    use App\Services\PesantrenService;
+    $data = old('ipm', $ipm?->data ?? []);
+    $butirs = PesantrenService::IPM_BUTIRS;
+@endphp
 
 <div class="row g-5">
+    <div class="col-12 mb-2">
+        <h5 class="fw-bold text-gray-800">Instrumen Penilaian Mutlak (IPM)</h5>
+        <div class="text-muted fs-7">
+            Pesantren <strong>wajib</strong> memenuhi 4 butir pernyataan di bawah ini untuk dapat melanjutkan proses akreditasi.
+        </div>
+    </div>
+
+    @foreach($butirs as $key => $label)
+    <div class="col-md-6">
+        <label class="form-label required">{{ $label }}</label>
+        <div class="d-flex gap-4">
+            <label class="form-check form-check-custom form-check-solid">
+                <input class="form-check-input" type="radio" name="ipm[{{ $key }}]" value="sesuai" @checked(($data[$key] ?? '') === 'sesuai') required>
+                <span class="form-check-label fw-semibold">Sesuai</span>
+            </label>
+            <label class="form-check form-check-custom form-check-solid">
+                <input class="form-check-input" type="radio" name="ipm[{{ $key }}]" value="tidak_sesuai" @checked(($data[$key] ?? '') === 'tidak_sesuai') required>
+                <span class="form-check-label fw-semibold text-danger">Tidak Sesuai</span>
+            </label>
+        </div>
+    </div>
+    @endforeach
+
+    <div class="col-12 mt-8 mb-2">
+        <h5 class="fw-bold text-gray-800">Data IPM Lainnya</h5>
+    </div>
+
     <div class="col-md-4">
         <label class="form-label required">Santri Mukim</label>
         <input type="number" min="0" name="ipm[santri_mukim]" class="form-control form-control-solid @error('ipm.santri_mukim') is-invalid @enderror" value="{{ $data['santri_mukim'] ?? '' }}" required>
