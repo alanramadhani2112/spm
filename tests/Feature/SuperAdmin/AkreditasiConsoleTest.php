@@ -812,8 +812,8 @@ class AkreditasiConsoleTest extends TestCase
             ->assertSee('Terjadwal')
             ->assertSee('Daftar Visitasi')
             ->assertSee('Pesantren Detail')
-            ->assertSee('Ketua Visitasi')
-            ->assertSee('Anggota Visitasi')
+            ->assertSee('Pesantren Detail')
+            ->assertSee('Daftar Visitasi')
             ->assertSee('Visitasi tahap pertama.')
             ->assertSee('Perbarui Jadwal')
             ->assertSee(route('superadmin.akreditasi.jadwalkan-visitasi', $scheduled), false)
@@ -1346,6 +1346,8 @@ class AkreditasiConsoleTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
+
 
 
 

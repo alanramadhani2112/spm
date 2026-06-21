@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pesantren;
 
 use App\Http\Controllers\Controller;
+use App\Models\Akreditasi;
 use App\Models\Edpm;
 use App\Models\Ipm;
 use App\Models\Pesantren;
@@ -40,8 +41,8 @@ class DataController extends Controller
     {
         $pesantren = Pesantren::firstOrNew(['user_id' => auth()->id()]);
 
-        if ($pesantren->exists && $pesantren->is_locked) {
-            return back()->with('error', 'Profil pesantren sudah dikunci setelah pengajuan dikirim.');
+        if ($pesantren->exists && $pesantren->is_locked && ! $this->canEditDuringLock()) {
+            return back()->with('error', 'Profil pesantren sedang dikunci dan tidak dalam fase Assessment atau Perbaikan.');
         }
 
         $validated = $request->validate([
@@ -151,6 +152,20 @@ class DataController extends Controller
         return redirect()->route('pesantren.data.index')->with('success', 'Data EDPM/IPR berhasil disimpan.');
     }
 
+
+    private function canEditDuringLock(): bool
+    {
+        $akreditasi = Akreditasi::where('user_id', auth()->id())
+            ->whereIn('status', [
+                Akreditasi::STATUS_ASSESSMENT_OPEN,
+                Akreditasi::STATUS_ADMIN_STAGE_1_CORRECTION,
+                Akreditasi::STATUS_ASSESSOR_STAGE_2_CORRECTION,
+            ])
+            ->latest()
+            ->first();
+
+        return $akreditasi !== null;
+    }
     private function viewData(): array
     {
         $userId = auth()->id();
@@ -175,3 +190,5 @@ class DataController extends Controller
         return $rules;
     }
 }
+
+
