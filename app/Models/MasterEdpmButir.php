@@ -13,6 +13,8 @@ class MasterEdpmButir extends Model
         'name',
         'nama',
         'deskripsi',
+        'sub_komponen',
+        'no_sk',
     ];
 
     public function komponen(): BelongsTo
