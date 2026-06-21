@@ -20,6 +20,8 @@
 @endsection
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'active' => true]]" />
+
 @php
     $completionRate = $totalAkreditasi > 0 ? round(($completedAkreditasi / $totalAkreditasi) * 100) : 0;
     $stepActions = [
@@ -200,5 +202,6 @@
     </div>
 </div>
 @endsection
+
 
 

@@ -4,6 +4,8 @@
 @section('pageTitle', 'Super Admin — Master Data')
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Master Data', 'active' => true]]" />
+
 @php
     $totalMaster = array_sum($stats ?? []);
     $insightCards = [
@@ -105,3 +107,4 @@
     @endforeach
 </div>
 @endsection
+

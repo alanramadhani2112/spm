@@ -4,6 +4,8 @@
 @section('pageTitle', 'Log Audit')
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Log Audit', 'active' => true]]" />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Jejak Aktivitas Super Admin</h2>
@@ -146,4 +148,5 @@
     @endif
 </x-metronic.card>
 @endsection
+
 

@@ -29,6 +29,8 @@
 @endsection
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Beban Kerja Asesor', 'active' => true]]" />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-4 mb-8">
     <div class="mw-lg-600px">
         <h2 class="fs-2 fw-bold text-gray-900 mb-2">Pusat Beban Kerja Asesor</h2>
@@ -211,5 +213,6 @@
     </div>
 </div>
 @endsection
+
 
 

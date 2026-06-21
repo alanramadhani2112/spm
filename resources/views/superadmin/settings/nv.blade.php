@@ -4,6 +4,8 @@
 @section('pageTitle', 'Super Admin — Nilai Visitasi (NV)')
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'route' => 'superadmin.settings.index'], ['label' => 'NV', 'active' => true]]" />
+
 @include('superadmin.settings._nav')
 @include('superadmin._glossary-help')
 
@@ -31,3 +33,4 @@
     </div>
 </x-metronic.card>
 @endsection
+

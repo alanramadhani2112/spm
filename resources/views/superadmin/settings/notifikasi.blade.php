@@ -4,6 +4,8 @@
 @section('pageTitle', 'Pengaturan Notifikasi')
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'route' => 'superadmin.settings.index'], ['label' => 'Notifikasi', 'active' => true]]" />
+
 @include('superadmin.settings._nav')
 
 @php
@@ -30,3 +32,4 @@
     </div>
 </x-metronic.card>
 @endsection
+

@@ -10,6 +10,8 @@
 @endsection
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Log Audit', 'route' => 'superadmin.audit.index'], ['label' => 'Detail', 'active' => true]]" />
+
 <div class="card card-flush bg-light-primary border border-primary border-dashed mb-8">
     <div class="card-body p-7">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-5">
@@ -112,4 +114,5 @@
     </div>
 </div>
 @endsection
+
 

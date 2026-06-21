@@ -4,6 +4,8 @@
 @section('pageTitle', 'Super Admin — Pengaturan')
 
 @section('content')
+    <x-superadmin.breadcrumb :items="[['label' => 'Dashboard', 'route' => 'superadmin.dashboard'], ['label' => 'Pengaturan', 'active' => true]]" />
+
 @include('superadmin.settings._nav')
 
 @php
@@ -60,3 +62,4 @@
     @endforeach
 </div>
 @endsection
+
