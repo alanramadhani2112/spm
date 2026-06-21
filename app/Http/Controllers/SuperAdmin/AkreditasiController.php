@@ -859,6 +859,36 @@ class AkreditasiController extends Controller
         }
     }
 
+
+    public function inputIPR(Request $request, $akreditasiId)
+    {
+        $akreditasi = Akreditasi::findOrFail($akreditasiId);
+        $iprButirs = MasterEdpmButir::where('komponen_id', ScoringService::IPR_CONFIG['id'])->orderBy('id')->get();
+        $existingScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'ipr')->pluck('value', 'butir_id');
+
+        if ($request->isMethod('get')) {
+            return view('asesor.ketua.input-ipr', $this->superadminViewData(compact('akreditasi', 'iprButirs', 'existingScores'), [
+                'inputRouteName' => 'superadmin.akreditasi.input-ipr',
+            ]));
+        }
+
+        $validated = $request->validate([
+            'butir'     => 'required|array',
+            'butir.*'   => 'integer|min:1|max:4',
+            'set_final' => 'nullable|boolean',
+        ]);
+
+        try {
+            $this->workflowService->submitIPR($akreditasiId, auth()->id(), $validated['butir'], (bool) ($validated['set_final'] ?? false));
+            session()->flash('success', 'Nilai IPR berhasil disimpan.');
+
+            return redirect()->route('superadmin.akreditasi.index');
+        } catch (Exception $e) {
+            session()->flash('error', $e->getMessage());
+
+            return redirect()->back()->withInput();
+        }
+    }
     public function uploadLaporan(Request $request, $akreditasiId)
     {
         $akreditasi = Akreditasi::findOrFail($akreditasiId);
@@ -1314,3 +1344,4 @@ class AkreditasiController extends Controller
         return $metadata;
     }
 }
+

@@ -101,6 +101,7 @@ Route::middleware(['auth', 'role:asesor,super_admin'])->prefix('asesor/ketua')->
     Route::match(['get', 'post'], '/akreditasi/{id}/jadwalkan-visitasi', [KetuaAsesorController::class, 'jadwalkanVisitasi'])->name('jadwalkan-visitasi');
     Route::post('/akreditasi/{id}/tandai-visitasi-selesai', [KetuaAsesorController::class, 'tandaiVisitasiSelesai'])->name('tandai-visitasi-selesai');
     Route::match(['get', 'post'], '/akreditasi/{id}/input-na1', [KetuaAsesorController::class, 'inputNA1'])->name('input-na1');
+    Route::match(['get', 'post'], '/akreditasi/{id}/input-ipr', [KetuaAsesorController::class, 'inputIPR'])->name('input-ipr');
     Route::match(['get', 'post'], '/akreditasi/{id}/input-nk', [KetuaAsesorController::class, 'inputNK'])->name('input-nk');
     Route::match(['get', 'post'], '/akreditasi/{id}/upload-laporan', [KetuaAsesorController::class, 'uploadLaporan'])->name('upload-laporan');
         Route::post('/akreditasi/{id}/handle-limit-review', [KetuaAsesorController::class, 'handleLimitReview'])->name('handle-limit-review');
@@ -200,6 +201,9 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('superadmin')->name('sup
     Route::match(['get', 'post'], '/akreditasi/{id}/input-na2', [SuperAdminAkreditasiController::class, 'inputNA2'])
         ->middleware('permission:akreditasi.scoring.manage')
         ->name('akreditasi.input-na2');
+    Route::match(['get', 'post'], '/akreditasi/{id}/input-ipr', [SuperAdminAkreditasiController::class, 'inputIPR'])
+        ->middleware('permission:akreditasi.scoring.manage')
+        ->name('akreditasi.input-ipr');
     Route::match(['get', 'post'], '/akreditasi/{id}/input-nk', [SuperAdminAkreditasiController::class, 'inputNK'])
         ->middleware('permission:akreditasi.scoring.manage')
         ->name('akreditasi.input-nk');
