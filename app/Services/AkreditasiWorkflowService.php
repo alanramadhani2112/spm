@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Services\ScoringService;
+use App\Models\MasterEdpmButir;
 
 class AkreditasiWorkflowService
 {
@@ -1338,13 +1339,33 @@ class AkreditasiWorkflowService
 
         $this->notificationService->notifyEvent('visitasi_result_submitted', $akreditasi->id);
 
-        // Hitung final score dan peringkat
-        $butirScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)
-            ->where('type', 'na1')
-            ->get()
-            ->map(fn($s) => ['komponen_id' => $s->butir->komponen_id ?? 0, 'isian' => $s->value])
-            ->toArray();
+        // Hitung preliminary score dari NK + IPR
+        $nkByKomponen = [];
+        $nkEntries = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)
+            ->where('type', 'nk')
+            ->get();
 
+        foreach ($nkEntries as $entry) {
+            $butir = MasterEdpmButir::with('komponen')->find($entry->butir_id);
+            if ($butir && $butir->komponen_id >= 1 && $butir->komponen_id <= 4) {
+                $nkByKomponen[$butir->komponen_id][] = (float) $entry->value;
+            }
+        }
+
+        // IK: weighted average per komponen
+        $ik = 0;
+        $totalBobot = 0;
+        foreach (ScoringService::KOMPONEN_CONFIG as $komponen) {
+            $kid = $komponen['id'];
+            if (! empty($nkByKomponen[$kid])) {
+                $avg = array_sum($nkByKomponen[$kid]) / count($nkByKomponen[$kid]);
+                $ik += $avg * $komponen['bobot'];
+                $totalBobot += $komponen['bobot'];
+            }
+        }
+        $ik = $totalBobot > 0 ? $ik / $totalBobot : 0;
+
+        // IPR: average 22 butir
         $iprScores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)
             ->where('type', 'ipr')
             ->pluck('value')
@@ -1353,11 +1374,15 @@ class AkreditasiWorkflowService
         if (empty($iprScores)) {
             $iprScores = array_fill(0, ScoringService::IPR_CONFIG['butir_count'], 2);
         }
+        $ipr = count($iprScores) > 0 ? array_sum($iprScores) / count($iprScores) : 0;
 
-        $result = $this->scoringService->calculateAll($butirScores, $iprScores);
+        // NA = (0.7 * IK + 0.3 * IPR) * 25
+        $nilaiAkhir = round(max(0, min(100, (0.7 * $ik + 0.3 * $ipr) * ScoringService::SCALE_MULTIPLIER)), 2);
+        $peringkatAkhir = $this->peringkatFromFinalScore($nilaiAkhir);
+
         $akreditasi->forceFill([
-            'nilai' => $result['final_score'],
-            'peringkat' => $result['peringkat'],
+            'nilai' => $nilaiAkhir,
+            'peringkat' => $peringkatAkhir,
         ])->save();
         return $akreditasi;
     }
@@ -1475,16 +1500,53 @@ class AkreditasiWorkflowService
             );
         }
 
-        $computedNv = $nkEntries->count() > 0
-            ? AkreditasiEdpm::where('akreditasi_id', $akreditasi->id)
-                ->where('type', 'nv')
-                ->avg('value') ?? 0
-            : 0;
+        // Hitung final score dari NV + IPR sesuai formula Excel
+        // IK = weighted avg 4 komponen dari NV (bobot: 35/29/18/18)
+        // IPR = avg 22 butir IPR
+        // NA = (0.7 * IK + 0.3 * IPR) * 25
+
+        $nvEntries = AkreditasiEdpm::where('akreditasi_id', $akreditasi->id)
+            ->where('type', 'nv')
+            ->get();
+
+        $nvAvg = $nvEntries->count() > 0 ? $nvEntries->avg('value') : 0;
+
+        // IK: weighted average per komponen dari butir NV
+        $nvByKomponen = [];
+        foreach ($nvEntries as $entry) {
+            $butir = MasterEdpmButir::with('komponen')->find($entry->butir_id);
+            if ($butir && $butir->komponen_id >= 1 && $butir->komponen_id <= 4) {
+                $nvByKomponen[$butir->komponen_id][] = (float) $entry->value;
+            }
+        }
+
+        $ik = 0;
+        $totalBobot = 0;
+        foreach (ScoringService::KOMPONEN_CONFIG as $komponen) {
+            $kid = $komponen['id'];
+            if (! empty($nvByKomponen[$kid])) {
+                $avg = array_sum($nvByKomponen[$kid]) / count($nvByKomponen[$kid]);
+                $ik += $avg * $komponen['bobot'];
+                $totalBobot += $komponen['bobot'];
+            }
+        }
+        $ik = $totalBobot > 0 ? $ik / $totalBobot : 0;
+
+        // IPR: average 22 butir
+        $iprScores = AkreditasiEdpm::where('akreditasi_id', $akreditasi->id)
+            ->where('type', 'ipr')
+            ->pluck('value');
+
+        $ipr = $iprScores->count() > 0 ? $iprScores->avg() : 2;
+
+        // NA = (0.7 * IK + 0.3 * IPR) * 25
+        $nilaiAkhir = round(max(0, min(100, (0.7 * $ik + 0.3 * $ipr) * ScoringService::SCALE_MULTIPLIER)), 2);
+        $peringkatAkhir = $this->peringkatFromFinalScore($nilaiAkhir);
 
         $akreditasi->forceFill([
-            'nv' => $computedNv,
-            'nilai' => $this->finalScoreFromAverage((float) $computedNv),
-            'peringkat' => $this->peringkatFromFinalScore($this->finalScoreFromAverage((float) $computedNv)),
+            'nv' => round($nvAvg, 2),
+            'nilai' => $nilaiAkhir,
+            'peringkat' => $peringkatAkhir,
             'is_nv_final' => true,
             'nv_override' => $hasOverride,
             'nv_override_reason' => $hasOverride
@@ -1675,6 +1737,10 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
+
+
+
 
 
 

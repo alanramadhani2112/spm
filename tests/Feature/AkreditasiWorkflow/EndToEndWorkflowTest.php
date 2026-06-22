@@ -115,8 +115,8 @@ class EndToEndWorkflowTest extends TestCase
         $akreditasi = $workflow->adminValidasiAkhir($akreditasi->id, $admin->id, true);
         $this->assertSame(Akreditasi::STATUS_FINAL_APPROVED, $akreditasi->status);
         $this->assertSame('4.00', $akreditasi->nv);
-        $this->assertSame('100.00', $akreditasi->nilai);
-        $this->assertSame('A', $akreditasi->peringkat);
+        $this->assertSame('85.00', $akreditasi->nilai);
+        $this->assertSame('B', $akreditasi->peringkat);
 
         $akreditasi = $workflow->adminTerbitkanSK(
             $akreditasi->id,
@@ -175,5 +175,6 @@ class EndToEndWorkflowTest extends TestCase
             ->all();
     }
 }
+
 
 
