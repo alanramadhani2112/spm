@@ -68,38 +68,42 @@
                     </div>
 
                     @if($k->butirs->isNotEmpty())
-                        <div class="d-grid gap-3">
-                            @foreach($k->butirs as $butir)
-                                <div class="border border-gray-300 rounded p-4">
-                                    <div class="d-flex align-items-start justify-content-between gap-4">
-                                        <div class="flex-grow-1 min-w-0">
-                                            <p class="fs-7 fw-semibold text-gray-900 mb-1">
-                                                @if($butir->kode ?? false)
-                                                    <span class="fs-8 text-muted">{{ $butir->kode }}</span>
-                                                @endif
-                                                {{ $butir->nama ?? 'Butir ' . $butir->id }}
-                                            </p>
-                                            @if($butir->deskripsi ?? false)
-                                                <p class="fs-8 text-muted mb-0">{{ $butir->deskripsi }}</p>
-                                            @endif
+                        @php $grouped = $k->butirs->groupBy('sub_komponen'); @endphp
+                        @foreach($grouped as $subKode => $butirs)
+                            @php $subLabel = $butirs->first()?->subKomponen?->nama ?? ($subKode ?: 'Tanpa Sub Komponen'); @endphp
+                            <div class="px-3 py-2 bg-light rounded mt-2 mb-3">
+                                <span class="fs-8 fw-bold text-gray-600 text-uppercase">{{ $subLabel }}</span>
+                            </div>
+                            <div class="d-grid gap-3">
+                                @foreach($butirs as $butir)
+                                    <div class="border border-gray-300 rounded p-4">
+                                        <div class="d-flex align-items-start justify-content-between gap-4">
+                                            <div class="flex-grow-1 min-w-0">
+                                                <p class="fs-7 fw-semibold text-gray-900 mb-1">
+                                                    @if($butir->kode ?? false)
+                                                        <span class="badge badge-light-primary fs-8 me-1">{{ $butir->kode }}</span>
+                                                    @endif
+                                                    {{ $butir->deskripsi }}
+                                                </p>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                                @foreach($skala as $nilai)
+                                                    <label class="d-flex align-items-center gap-1 cursor-pointer">
+                                                        <input type="radio" name="butir[{{ $butir->id }}]" value="{{ $nilai }}"
+                                                               class="form-check-input"
+                                                               @checked(old("butir.{$butir->id}") == $nilai)>
+                                                        <span class="fs-8 fw-medium text-gray-600">{{ $nilai }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                                            @foreach($skala as $nilai)
-                                                <label class="d-flex align-items-center gap-1 cursor-pointer">
-                                                    <input type="radio" name="butir[{{ $butir->id }}]" value="{{ $nilai }}"
-                                                           class="form-check-input"
-                                                           @checked(old("butir.{$butir->id}") == $nilai)>
-                                                    <span class="fs-8 fw-medium text-gray-600">{{ $nilai }}</span>
-                                                </label>
-                                            @endforeach
-                                        </div>
+                                        @error("butir.{$butir->id}")
+                                            <p class="mt-2 fs-8 text-danger">{{ $message }}</p>
+                                        @enderror
                                     </div>
-                                    @error("butir.{$butir->id}")
-                                        <p class="mt-2 fs-8 text-danger">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            @endforeach
-                        </div>
+                                @endforeach
+                            </div>
+                        @endforeach
                     @else
                         <p class="fs-7 text-muted fst-italic">Belum ada butir penilaian untuk komponen ini.</p>
                     @endif
@@ -130,4 +134,5 @@
     </x-metronic.card>
 </div>
 @endsection
+
 
