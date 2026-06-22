@@ -4,6 +4,7 @@ namespace Tests\Feature\Pesantren;
 
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\Ipr;
 use App\Models\Pesantren;
 use App\Models\SdmPesantren;
 use App\Models\User;
@@ -56,10 +57,18 @@ class DataCompletionTest extends TestCase
             ])
             ->assertRedirect(route('pesantren.data.index'));
 
+        // IPR 22 butir — create langsung di DB
+        $iprButirs = [];
+        for ($i = 1; $i <= 22; $i++) {
+            $iprButirs[$i] = ['file' => 'ipr-documents/test_butir_' . $i . '.pdf'];
+        }
+        Ipr::create(['user_id' => $user->id, 'data' => ['butirs' => $iprButirs]]);
+
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Pesantren Lengkap']);
         $this->assertSame(120, Ipm::where('user_id', $user->id)->first()->data['santri_mukim']);
         $this->assertNotNull(SdmPesantren::where('user_id', $user->id)->first()->data['butirs']);
         $this->assertNotNull(Edpm::where('user_id', $user->id)->first()->data);
+        $this->assertNotNull(Ipr::where('user_id', $user->id)->first()->data);
         $this->assertTrue(app(PesantrenService::class)->checkDataCompleteness($user->id)['assessmentReady']);
     }
 
@@ -92,6 +101,7 @@ class DataCompletionTest extends TestCase
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Terkunci']);
     }
 }
+
 
 
 

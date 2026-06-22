@@ -58,6 +58,17 @@
     </div>
     <div class="col-md-6">
         <x-metronic.form-input name="luas_bangunan" label="Luas Bangunan" :value="$pesantren?->luas_bangunan" placeholder="Contoh: 1.200 m2" />
+    <div class="col-md-4">
+        <label class="form-label">Status Kepemilikan Tanah</label>
+        <select name="status_kepemilikan_tanah" class="form-select form-select-solid">
+            @php $skt = $pesantren?->status_kepemilikan_tanah ?? ""; @endphp
+            <option value="">Pilih status</option>
+            <option value="milik_sendiri" @selected($skt === "milik_sendiri")>Milik Sendiri</option>
+            <option value="wakaf" @selected($skt === "wakaf")>Wakaf</option>
+            <option value="sewa" @selected($skt === "sewa")>Sewa</option>
+            <option value="pinjam_pakai" @selected($skt === "pinjam_pakai")>Pinjam Pakai</option>
+        </select>
+    </div>
     </div>
     <div class="col-md-12">
         <x-metronic.form-input name="visi" label="Visi" type="textarea" :value="$pesantren?->visi" :rows="2" />

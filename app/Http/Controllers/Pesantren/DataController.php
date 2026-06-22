@@ -66,6 +66,7 @@ class DataController extends Controller
             'misi' => ['nullable', 'string'],
             'luas_tanah' => ['nullable', 'string', 'max:100'],
             'luas_bangunan' => ['nullable', 'string', 'max:100'],
+            'status_kepemilikan_tanah' => ['nullable', 'string', 'max:50'],
             'layanan_satuan_pendidikan' => ['required', 'array', 'min:1'],
             'layanan_satuan_pendidikan.*' => ['string', 'max:100'],
             'units' => ['required', 'array', 'min:1'],
@@ -238,6 +239,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 

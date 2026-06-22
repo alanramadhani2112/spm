@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Akreditasi;
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\Ipr;
 use App\Models\Pesantren;
 use App\Models\PesantrenUnit;
 use App\Models\SdmPesantren;
@@ -67,7 +68,14 @@ class PesantrenService
         $hasEdpm = Edpm::where('user_id', $userId)->exists();
         $hasSdm  = SdmPesantren::where('user_id', $userId)->exists();
 
-        $assessmentReady = $profilMinimum && $hasUnits && $ipmAllSesuai && $hasEdpm && $hasSdm;
+        // IPR: cek minimal 22 butir sudah di-upload dokumen
+        $ipr = Ipr::where('user_id', $userId)->first();
+        $iprData = $ipr?->data ?? [];
+        $iprButirs = $iprData['butirs'] ?? [];
+        $iprFilesUploaded = count(array_filter($iprButirs, fn($b) => ! empty($b['file'] ?? null)));
+        $hasIpr = $ipr !== null && $iprFilesUploaded >= 22;
+
+        $assessmentReady = $profilMinimum && $hasUnits && $ipmAllSesuai && $hasEdpm && $hasSdm && $hasIpr;
 
         return [
             'profilMinimum'   => $profilMinimum,
@@ -79,6 +87,8 @@ class PesantrenService
             'ipmAllSesuai'    => $ipmAllSesuai,
             'hasEdpm'         => $hasEdpm,
             'hasSdm'          => $hasSdm,
+            'hasIpr'          => $hasIpr,
+            'iprFilesUploaded' => $iprFilesUploaded,
         ];
     }
 
@@ -116,3 +126,4 @@ class PesantrenService
         return self::REQUIRED_PROFILE_FIELDS;
     }
 }
+

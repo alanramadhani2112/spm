@@ -7,6 +7,7 @@ use App\Models\AkreditasiEdpm;
 use App\Models\Document;
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\Ipr;
 use App\Models\MasterEdpmButir;
 use App\Models\Pesantren;
 use App\Models\PesantrenUnit;
@@ -160,6 +161,13 @@ class EndToEndWorkflowTest extends TestCase
         Ipm::create(['user_id' => $user->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
         SdmPesantren::create(['user_id' => $user->id, 'data' => ['butirs' => ['MI' => ['ustaz_tetap_L' => 12, 'ustaz_tetap_P' => 0]]]]);
         Edpm::create(['user_id' => $user->id, 'data' => ['status' => 'lengkap']]);
+
+        // IPR 22 butir
+        $iprButirs = [];
+        for ($i = 1; $i <= 22; $i++) {
+            $iprButirs[$i] = ['file' => 'ipr-documents/butir_' . $i . '.pdf'];
+        }
+        Ipr::create(['user_id' => $user->id, 'data' => ['butirs' => $iprButirs]]);
     }
 
     /**
@@ -175,6 +183,7 @@ class EndToEndWorkflowTest extends TestCase
             ->all();
     }
 }
+
 
 
 
