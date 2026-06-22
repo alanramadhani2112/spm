@@ -1120,8 +1120,12 @@ class AkreditasiWorkflowService
             $na2Scores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'na2')->pluck('value', 'butir_id');
 
             foreach ($nkValues as $butirId => $value) {
-                $na1 = $na1Scores[$butirId] ?? 0;
-                $na2 = $na2Scores[$butirId] ?? 0;
+                // Skip butir yang belum ada NA1/NA2
+                if (! isset($na1Scores[$butirId]) || ! isset($na2Scores[$butirId])) {
+                    continue;
+                }
+                $na1 = $na1Scores[$butirId];
+                $na2 = $na2Scores[$butirId];
                 // B.1 NK manual logic: jika delta = 0, NK = NA1
                 $finalValue = ($na1 == $na2) ? $na1 : $value;
 
@@ -1671,6 +1675,7 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
 
 
 

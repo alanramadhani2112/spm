@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             UserSeeder::class,
             MasterEdpmSeeder::class,
+            MasterEdpmSubKomponenSeeder::class,
             SuperAdminSettingSeeder::class,
         ]);
     }
 }
+

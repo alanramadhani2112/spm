@@ -92,12 +92,12 @@
                             @foreach($k->butirs as $butir)
                                 <div class="border border-gray-300 rounded p-4">
                                     @php
-                                        $na1 = $na1Scores[$butir->id] ?? 0;
-                                        $na2 = $na2Scores[$butir->id] ?? 0;
-                                        $delta = $na1 - $na2;
-                                        $hasDelta = $delta !== 0;
-                                        // Default NK jika tidak ada delta adalah NA1
-                                        $defaultNk = $hasDelta ? (old("butir.{$butir->id}") ?? $nkScores[$butir->id] ?? null) : $na1;
+                                        $na1 = $na1Scores[$butir->id] ?? null;
+                                        $na2 = $na2Scores[$butir->id] ?? null;
+                                        $hasBothScores = $na1 !== null && $na2 !== null;
+                                        $delta = $hasBothScores ? $na1 - $na2 : null;
+                                        $hasDelta = $delta !== null && $delta !== 0;
+                                        $defaultNk = $hasBothScores ? (($hasDelta ? (old("butir.{$butir->id}") ?? $nkScores[$butir->id] ?? null) : $na1)) : null;
                                     @endphp
                                     <div class="d-flex align-items-start gap-4">
                                         <div class="flex-grow-1 min-w-0">
@@ -114,11 +114,11 @@
                                             <div class="d-flex gap-4 mb-2">
                                                 <div class="border rounded p-2 text-center" style="min-width: 60px;">
                                                     <div class="fs-8 text-muted mb-1">NA1</div>
-                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na1 ?: '-' }}</div>
+                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na1 !== null ? $na1 : '-' }}</div>
                                                 </div>
                                                 <div class="border rounded p-2 text-center" style="min-width: 60px;">
                                                     <div class="fs-8 text-muted mb-1">NA2</div>
-                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na2 ?: '-' }}</div>
+                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na2 !== null ? $na2 : '-' }}</div>
                                                 </div>
                                                 <div class="border rounded p-2 text-center {{ $hasDelta ? 'bg-light-warning border-warning' : 'bg-light-success border-success' }}" style="min-width: 60px;">
                                                     <div class="fs-8 text-muted mb-1">Delta</div>
@@ -193,5 +193,6 @@
     </x-metronic.card>
 </div>
 @endsection
+
 
 
