@@ -1116,7 +1116,15 @@ class AkreditasiWorkflowService
         }
 
         DB::transaction(function () use ($akreditasiId, $ketuaUserId, $nkValues, $setFinal) {
+            $na1Scores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'na1')->pluck('value', 'butir_id');
+            $na2Scores = AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'na2')->pluck('value', 'butir_id');
+
             foreach ($nkValues as $butirId => $value) {
+                $na1 = $na1Scores[$butirId] ?? 0;
+                $na2 = $na2Scores[$butirId] ?? 0;
+                // B.1 NK manual logic: jika delta = 0, NK = NA1
+                $finalValue = ($na1 == $na2) ? $na1 : $value;
+
                 AkreditasiEdpm::updateOrCreate(
                     [
                         'akreditasi_id' => $akreditasiId,
@@ -1124,7 +1132,7 @@ class AkreditasiWorkflowService
                         'butir_id' => $butirId,
                     ],
                     [
-                        'value' => $value,
+                        'value' => $finalValue,
                         'type' => 'nk',
                     ]
                 );
@@ -1663,6 +1671,7 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
 
 
 

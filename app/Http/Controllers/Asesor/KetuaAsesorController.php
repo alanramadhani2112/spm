@@ -174,7 +174,11 @@ class KetuaAsesorController extends Controller
         $komponen = MasterEdpmKomponen::with('butirs')->get();
 
         if ($request->isMethod('get')) {
-            return view('asesor.ketua.input-nk', compact('akreditasi', 'komponen'));
+            $na1Scores = \App\Models\AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'na1')->pluck('value', 'butir_id');
+            $na2Scores = \App\Models\AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'na2')->pluck('value', 'butir_id');
+            $nkScores  = \App\Models\AkreditasiEdpm::where('akreditasi_id', $akreditasiId)->where('type', 'nk')->pluck('value', 'butir_id');
+
+            return view('asesor.ketua.input-nk', compact('akreditasi', 'komponen', 'na1Scores', 'na2Scores', 'nkScores'));
         }
 
         $validated = $request->validate([
@@ -294,6 +298,7 @@ class KetuaAsesorController extends Controller
         }
     }
 }
+
 
 
 

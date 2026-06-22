@@ -91,28 +91,61 @@
                         <div class="d-grid gap-3">
                             @foreach($k->butirs as $butir)
                                 <div class="border border-gray-300 rounded p-4">
-                                    <div class="d-flex align-items-start justify-content-between gap-4">
+                                    @php
+                                        $na1 = $na1Scores[$butir->id] ?? 0;
+                                        $na2 = $na2Scores[$butir->id] ?? 0;
+                                        $delta = $na1 - $na2;
+                                        $hasDelta = $delta !== 0;
+                                        // Default NK jika tidak ada delta adalah NA1
+                                        $defaultNk = $hasDelta ? (old("butir.{$butir->id}") ?? $nkScores[$butir->id] ?? null) : $na1;
+                                    @endphp
+                                    <div class="d-flex align-items-start gap-4">
                                         <div class="flex-grow-1 min-w-0">
                                             <p class="fs-7 fw-semibold text-gray-900 mb-1">
                                                 @if($butir->kode ?? false)
-                                                    <span class="fs-8 text-muted">{{ $butir->kode }}</span>
+                                                    <span class="badge badge-light-primary fs-8 me-1">{{ $butir->kode }}</span>
                                                 @endif
                                                 {{ $butir->nama ?? 'Butir ' . $butir->id }}
                                             </p>
                                             @if($butir->deskripsi ?? false)
-                                                <p class="fs-8 text-muted mb-0">{{ $butir->deskripsi }}</p>
+                                                <p class="fs-8 text-muted mb-3">{{ $butir->deskripsi }}</p>
                                             @endif
+
+                                            <div class="d-flex gap-4 mb-2">
+                                                <div class="border rounded p-2 text-center" style="min-width: 60px;">
+                                                    <div class="fs-8 text-muted mb-1">NA1</div>
+                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na1 ?: '-' }}</div>
+                                                </div>
+                                                <div class="border rounded p-2 text-center" style="min-width: 60px;">
+                                                    <div class="fs-8 text-muted mb-1">NA2</div>
+                                                    <div class="fs-6 fw-bold text-gray-800">{{ $na2 ?: '-' }}</div>
+                                                </div>
+                                                <div class="border rounded p-2 text-center {{ $hasDelta ? 'bg-light-warning border-warning' : 'bg-light-success border-success' }}" style="min-width: 60px;">
+                                                    <div class="fs-8 text-muted mb-1">Delta</div>
+                                                    <div class="fs-6 fw-bold {{ $hasDelta ? 'text-warning' : 'text-success' }}">{{ $delta }}</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                                            @foreach($skala as $nilai)
-                                                <label class="d-flex align-items-center gap-1 cursor-pointer">
-                                                    <input type="radio" name="butir[{{ $butir->id }}]" value="{{ $nilai }}"
-                                                           class="form-check-input"
-                                                           @checked(old("butir.{$butir->id}") == $nilai)
-                                                           @disabled($akreditasi->is_nk_final)>
-                                                    <span class="fs-8 fw-medium text-gray-600">{{ $nilai }}</span>
-                                                </label>
-                                            @endforeach
+                                        
+                                        <div class="d-flex flex-column align-items-end flex-shrink-0 bg-light p-4 rounded">
+                                            <div class="fs-8 fw-bold text-gray-700 mb-3">Input NK</div>
+                                            <div class="d-flex align-items-center gap-3">
+                                                @foreach($skala as $nilai)
+                                                    <label class="d-flex align-items-center gap-1 {{ !$hasDelta && $nilai != $defaultNk ? 'opacity-50' : 'cursor-pointer' }}">
+                                                        <input type="radio" name="butir[{{ $butir->id }}]" value="{{ $nilai }}"
+                                                               class="form-check-input"
+                                                               @checked($nilai == $defaultNk)
+                                                               @disabled($akreditasi->is_nk_final || !$hasDelta)>
+                                                        <span class="fs-6 fw-medium text-gray-800">{{ $nilai }}</span>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                            @if(!$hasDelta)
+                                                <input type="hidden" name="butir[{{ $butir->id }}]" value="{{ $na1 }}">
+                                                <div class="fs-9 text-muted mt-2"><i class="ki-outline ki-information fs-9 me-1"></i>Otomatis (Delta = 0)</div>
+                                            @else
+                                                <div class="fs-9 text-warning mt-2"><i class="ki-outline ki-warning-2 fs-9 me-1"></i>Perlu Input Manual</div>
+                                            @endif
                                         </div>
                                     </div>
                                     @error("butir.{$butir->id}")
@@ -160,4 +193,5 @@
     </x-metronic.card>
 </div>
 @endsection
+
 

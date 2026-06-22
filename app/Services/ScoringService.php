@@ -141,9 +141,9 @@ class ScoringService
     public static function getPeringkatLabel(string $peringkat): string
     {
         return match ($peringkat) {
-            'A' => 'Unggul',
-            'B' => 'Baik',
-            'C' => 'Cukup',
+            'A' => 'Unggul / Mumtaz',
+            'B' => 'Baik Sekali / Jayyid Jiddan',
+            'C' => 'Baik / Jayyid',
             default => 'Tidak Terakreditasi',
         };
     }
@@ -170,3 +170,4 @@ class ScoringService
         ];
     }
 }
+
