@@ -10,6 +10,7 @@
         'unit' => ['label' => 'Unit pendidikan', 'ok' => $pesantren?->units?->isNotEmpty() ?? false],
         'ipm' => ['label' => 'Data IPM', 'ok' => (bool) $ipm],
         'sdm' => ['label' => 'Data SDM', 'ok' => (bool) $sdm],
+        'ipr'  => ['label' => 'Dokumen IPR (22 butir)', 'ok' => (['hasIpr'] ?? false)],
         'edpm' => ['label' => 'Data EDPM/IPR', 'ok' => (bool) $edpm],
     ];
 @endphp
@@ -39,7 +40,7 @@
 @else
     <x-metronic.alert type="warning">
         <div class="fw-semibold mb-1">Data belum lengkap.</div>
-        <div>Lengkapi seluruh bagian sebelum mengajukan akreditasi. Field wajib yang belum lengkap: {{ implode(', ', $completeness['missingFields'] ?? []) ?: 'unit/IPM/SDM/EDPM' }}.</div>
+        <div>Lengkapi seluruh bagian sebelum mengajukan akreditasi. Field wajib yang belum lengkap: {{ implode(', ', $completeness['missingFields'] ?? []) ?: 'unit/IPM/SDM/EDPM/IPR' }}.</div>
     </x-metronic.alert>
 @endif
 
@@ -113,3 +114,4 @@
     </div>
 </div>
 @endsection
+

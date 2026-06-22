@@ -259,7 +259,7 @@ class AkreditasiWorkflowService
 
         if (! $completeness['assessmentReady']) {
             throw new WorkflowException(
-                'Data IPM, SDM, dan EDPM belum lengkap. Lengkapi semua data sebelum mengumpulkan asesmen.'
+                'Data belum lengkap. Pastikan IPM (4 butir), SDM, EDPM (40 butir), dan IPR (22 dokumen) telah diisi.'
             );
         }
 
@@ -1737,6 +1737,7 @@ class AkreditasiWorkflowService
         return in_array($user->role?->parameter, ['super_admin', 'superadmin'], true);
     }
 }
+
 
 
 

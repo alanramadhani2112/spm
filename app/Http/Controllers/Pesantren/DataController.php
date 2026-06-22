@@ -182,8 +182,8 @@ class DataController extends Controller
 
         // Handle file uploads per butir
         foreach ($butirs as $butirId => $butirEntry) {
-            if ($request->hasFile("ipr.butirs.{% raw %}{$butirId}{% endraw %}.file")) {
-                $iprData['butirs'][$butirId]['file'] = $request->file("ipr.butirs.{% raw %}{$butirId}{% endraw %}.file")->store('ipr-documents');
+            if ($request->hasFile("ipr.butirs.{$butirId}.file")) {
+                $iprData['butirs'][$butirId]['file'] = $request->file("ipr.butirs.{$butirId}.file")->store('ipr-documents');
             } else {
                 // Keep existing file if no new upload
                 $existing = Ipr::where('user_id', auth()->id())->first();
@@ -239,6 +239,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 
