@@ -49,15 +49,19 @@
     </div>
     <div class="col-md-4">
         <x-metronic.form-input name="email_pesantren" label="Email Pesantren" type="email" :value="$pesantren?->email_pesantren" />
+    </div>
+    <div class="col-md-4">
+        <x-metronic.form-input name="nspp" label="NSPP" :value="$pesantren?->nspp" />
+    </div>
     <div class="col-md-4">
         <x-metronic.form-input name="persyarikatan" label="Persyarikatan" :value="$pesantren?->persyarikatan" placeholder="Ranting/Cabang/Daerah/Wilayah/Pusat" />
-    </div>
     </div>
     <div class="col-md-6">
         <x-metronic.form-input name="luas_tanah" label="Luas Tanah" :value="$pesantren?->luas_tanah" placeholder="Contoh: 2.000 m2" />
     </div>
     <div class="col-md-6">
         <x-metronic.form-input name="luas_bangunan" label="Luas Bangunan" :value="$pesantren?->luas_bangunan" placeholder="Contoh: 1.200 m2" />
+    </div>
     <div class="col-md-4">
         <label class="form-label">Status Kepemilikan Tanah</label>
         <select name="status_kepemilikan_tanah" class="form-select form-select-solid">
@@ -69,6 +73,8 @@
             <option value="pinjam_pakai" @selected($skt === "pinjam_pakai")>Pinjam Pakai</option>
         </select>
     </div>
+    <div class="col-md-4">
+        <x-metronic.form-input name="sertifikat_nsp" label="Nomor Sertifikat NSP" :value="$pesantren?->sertifikat_nsp" />
     </div>
     <div class="col-md-12">
         <x-metronic.form-input name="visi" label="Visi" type="textarea" :value="$pesantren?->visi" :rows="2" />
