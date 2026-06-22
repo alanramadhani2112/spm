@@ -124,6 +124,7 @@
             'dok_kurikulum' => 'Kurikulum',
             'dok_silabus_rpp' => 'Silabus/RPP',
             'dok_kepengasuhan' => 'Kepengasuhan',
+            'file_lk_iapm' => 'File LK IAPM',
         ];
     @endphp
     @foreach($dokUtama as $field => $label)
@@ -155,4 +156,5 @@
         </div>
     @endforeach
 </div>
+
 

@@ -27,6 +27,7 @@ class DataController extends Controller
         'dok_sarpras',
         'dok_laporan_tahunan',
         'dok_sop',
+        'file_lk_iapm',
     ];
 
     public function __construct(
@@ -67,6 +68,7 @@ class DataController extends Controller
             'luas_tanah' => ['nullable', 'string', 'max:100'],
             'luas_bangunan' => ['nullable', 'string', 'max:100'],
             'status_kepemilikan_tanah' => ['nullable', 'string', 'max:50'],
+            'sertifikat_nsp' => ['nullable', 'string', 'max:100'],
             'layanan_satuan_pendidikan' => ['required', 'array', 'min:1'],
             'layanan_satuan_pendidikan.*' => ['string', 'max:100'],
             'units' => ['required', 'array', 'min:1'],
@@ -239,6 +241,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 
