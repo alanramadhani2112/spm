@@ -12,6 +12,7 @@ use App\Models\PesantrenUnit;
 use App\Models\SdmPesantren;
 use App\Services\PesantrenService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class DataController extends Controller
 {
@@ -88,6 +89,12 @@ class DataController extends Controller
             ->filter(fn (array $unit) => ! empty($unit['layanan_satuan_pendidikan']))
             ->values();
 
+        if ($units->isEmpty()) {
+            throw ValidationException::withMessages([
+                'units' => 'Minimal satu unit pendidikan harus diisi.',
+            ]);
+        }
+
         unset($validated['units']);
 
         $pesantren->fill($validated + ['user_id' => auth()->id()]);
@@ -119,9 +126,12 @@ class DataController extends Controller
             'ipm.butir_4'                  => ['nullable', 'in:sesuai,tidak_sesuai'],
         ]);
 
+        $existing = Ipm::where('user_id', auth()->id())->first();
+        $payload = array_replace_recursive($existing?->data ?? [], $validated['ipm']);
+
         Ipm::updateOrCreate(
             ['user_id' => auth()->id()],
-            ['data' => $validated['ipm']]
+            ['data' => $payload]
         );
 
         return redirect()->route('pesantren.data.index')->with('success', 'Data IPM berhasil disimpan.');
@@ -146,9 +156,12 @@ class DataController extends Controller
             'sdm.catatan_sdm'                   => ['nullable', 'string'],
         ]);
 
+        $existing = SdmPesantren::where('user_id', auth()->id())->first();
+        $payload = array_replace_recursive($existing?->data ?? [], $validated['sdm']);
+
         SdmPesantren::updateOrCreate(
             ['user_id' => auth()->id()],
-            ['data' => $validated['sdm']]
+            ['data' => $payload]
         );
 
         return redirect()->route('pesantren.data.index')->with('success', 'Data SDM berhasil disimpan.');
@@ -163,9 +176,12 @@ class DataController extends Controller
             'edpm.butirs.*.bukti_link'      => ['nullable', 'url', 'max:500'],
         ]);
 
+        $existing = Edpm::where('user_id', auth()->id())->first();
+        $payload = array_replace_recursive($existing?->data ?? [], $validated['edpm']);
+
         Edpm::updateOrCreate(
             ['user_id' => auth()->id()],
-            ['data' => $validated['edpm']]
+            ['data' => $payload]
         );
 
         return redirect()->route('pesantren.data.index')->with('success', 'Data EDPM 40 butir berhasil disimpan.');
@@ -179,8 +195,11 @@ class DataController extends Controller
             'ipr.butirs.*.file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        $iprData = $validated['ipr'] ?? [];
-        $butirs = $iprData['butirs'] ?? [];
+        $existing = Ipr::where('user_id', auth()->id())->first();
+        $existingData = $existing?->data ?? [];
+        $iprData = $existingData;
+        $iprData['butirs'] = $existingData['butirs'] ?? [];
+        $butirs = $validated['ipr']['butirs'] ?? [];
 
         // Handle file uploads per butir
         foreach ($butirs as $butirId => $butirEntry) {
@@ -188,7 +207,6 @@ class DataController extends Controller
                 $iprData['butirs'][$butirId]['file'] = $request->file("ipr.butirs.{$butirId}.file")->store('ipr-documents');
             } else {
                 // Keep existing file if no new upload
-                $existing = Ipr::where('user_id', auth()->id())->first();
                 if ($existing && isset($existing->data['butirs'][$butirId]['file'])) {
                     $iprData['butirs'][$butirId]['file'] = $existing->data['butirs'][$butirId]['file'];
                 }

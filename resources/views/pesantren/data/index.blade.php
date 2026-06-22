@@ -10,7 +10,7 @@
         'unit' => ['label' => 'Unit pendidikan', 'ok' => $pesantren?->units?->isNotEmpty() ?? false],
         'ipm' => ['label' => 'Data IPM', 'ok' => (bool) $ipm],
         'sdm' => ['label' => 'Data SDM', 'ok' => (bool) $sdm],
-        'ipr'  => ['label' => 'Dokumen IPR (22 butir)', 'ok' => (['hasIpr'] ?? false)],
+        'ipr'  => ['label' => 'Dokumen IPR (22 butir)', 'ok' => ($completeness['hasIpr'] ?? false)],
         'edpm' => ['label' => 'Data EDPM/IPR', 'ok' => (bool) $edpm],
     ];
 @endphp
@@ -91,25 +91,23 @@
             <form method="POST" action="{{ route('pesantren.data.edpm') }}">
                 @csrf
                 @include('pesantren.data._edpm-fields', ['edpm' => $edpm])
-
-                {{-- IPR Form --}}
-                <div class="card card-flush">
-                    <div class="card-header">
-                        <h3 class="card-title fw-bold">Dokumen IPR (22 Butir)</h3>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('pesantren.data.ipr') }}" enctype="multipart/form-data">
-                            @csrf
-                            @include('pesantren.data._ipr-fields', ['ipr' => $ipr])
-                            <div class="d-flex justify-content-end gap-3 mt-6">
-                                <button type="submit" class="btn btn-primary">Simpan IPR</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
                 <div class="d-flex justify-content-end gap-3 mt-6"><button type="submit" class="btn btn-primary">Simpan EDPM/IPR</button></div>
             </form>
+
+            <div class="card card-flush mt-8">
+                <div class="card-header">
+                    <h3 class="card-title fw-bold">Dokumen IPR (22 Butir)</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('pesantren.data.ipr') }}" enctype="multipart/form-data">
+                        @csrf
+                        @include('pesantren.data._ipr-fields', ['ipr' => $ipr])
+                        <div class="d-flex justify-content-end gap-3 mt-6">
+                            <button type="submit" class="btn btn-primary">Simpan IPR</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
