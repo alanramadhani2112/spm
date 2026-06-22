@@ -125,11 +125,20 @@ class DataController extends Controller
     public function updateSdm(Request $request)
     {
         $validated = $request->validate([
-            'sdm.ustaz_tetap' => ['required', 'integer', 'min:0'],
-            'sdm.ustaz_tidak_tetap' => ['nullable', 'integer', 'min:0'],
-            'sdm.tenaga_kependidikan' => ['nullable', 'integer', 'min:0'],
-            'sdm.rasio_pengasuh_santri' => ['nullable', 'string', 'max:100'],
-            'sdm.catatan_sdm' => ['nullable', 'string'],
+            'sdm.butirs' => ['nullable', 'array'],
+            'sdm.butirs.*.ustaz_tetap_L'       => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.ustaz_tetap_P'       => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.ustaz_tidak_tetap_L' => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.ustaz_tidak_tetap_P' => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.tenaga_kependidikan_L' => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.tenaga_kependidikan_P' => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.s1_d4_L'             => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.s1_d4_P'             => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.bersertifikat_L'      => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.bersertifikat_P'      => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.nbm_L'                => ['nullable', 'integer', 'min:0'],
+            'sdm.butirs.*.nbm_P'                => ['nullable', 'integer', 'min:0'],
+            'sdm.catatan_sdm'                   => ['nullable', 'string'],
         ]);
 
         SdmPesantren::updateOrCreate(
@@ -195,6 +204,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 

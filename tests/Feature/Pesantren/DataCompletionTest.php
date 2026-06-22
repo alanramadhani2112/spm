@@ -46,7 +46,7 @@ class DataCompletionTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('pesantren.data.sdm'), [
-                'sdm' => ['ustaz_tetap' => 14, 'tenaga_kependidikan' => 5],
+                'sdm' => ['butirs' => ['MI' => ['ustaz_tetap_L' => 7, 'ustaz_tetap_P' => 7, 'tenaga_kependidikan_L' => 3, 'tenaga_kependidikan_P' => 2]]],
             ])
             ->assertRedirect(route('pesantren.data.index'));
 
@@ -58,7 +58,7 @@ class DataCompletionTest extends TestCase
 
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Pesantren Lengkap']);
         $this->assertSame(120, Ipm::where('user_id', $user->id)->first()->data['santri_mukim']);
-        $this->assertSame(14, SdmPesantren::where('user_id', $user->id)->first()->data['ustaz_tetap']);
+        $this->assertNotNull(SdmPesantren::where('user_id', $user->id)->first()->data['butirs']);
         $this->assertNotNull(Edpm::where('user_id', $user->id)->first()->data);
         $this->assertTrue(app(PesantrenService::class)->checkDataCompleteness($user->id)['assessmentReady']);
     }
@@ -92,5 +92,6 @@ class DataCompletionTest extends TestCase
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Terkunci']);
     }
 }
+
 
 

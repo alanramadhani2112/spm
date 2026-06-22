@@ -274,7 +274,7 @@ class MasterDataTest extends TestCase
             'jumlah_rombel' => 6,
         ]);
         Ipm::create(['user_id' => $pesantrenUser->id, 'data' => ['santri_mukim' => 100, 'butir_1' => 'sesuai', 'butir_2' => 'sesuai', 'butir_3' => 'sesuai', 'butir_4' => 'sesuai']]);
-        SdmPesantren::create(['user_id' => $pesantrenUser->id, 'data' => ['ustaz_tetap' => 12]]);
+        SdmPesantren::create(['user_id' => $pesantrenUser->id, 'data' => ['butirs' => ['MI' => ['ustaz_tetap_L' => 12, 'ustaz_tetap_P' => 0]]]]);
         Edpm::create(['user_id' => $pesantrenUser->id, 'data' => ['status' => 'lengkap']]);
 
         $this->actingAs($this->superAdmin)
@@ -503,7 +503,7 @@ class MasterDataTest extends TestCase
 
         $this->actingAs($this->superAdmin)
             ->patch(route('superadmin.master-data.pesantren.sdm.update', $pesantren), [
-                'data_json' => json_encode(['ustaz_tetap' => 12]),
+                'data_json' => json_encode(['butirs' => ['MI' => ['ustaz_tetap_L' => 12, 'ustaz_tetap_P' => 0]]]),
                 'reason' => 'Koreksi data SDM.',
             ])
             ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
@@ -516,7 +516,7 @@ class MasterDataTest extends TestCase
             ->assertRedirect(route('superadmin.master-data.pesantren.show', $pesantren));
 
         $this->assertSame(125, Ipm::where('user_id', $pesantrenUser->id)->firstOrFail()->data['santri_mukim']);
-        $this->assertSame(12, SdmPesantren::where('user_id', $pesantrenUser->id)->firstOrFail()->data['ustaz_tetap']);
+        $this->assertSame(12, SdmPesantren::where('user_id', $pesantrenUser->id)->firstOrFail()->data['butirs']['MI']['ustaz_tetap_L']);
         $this->assertSame('lengkap', Edpm::where('user_id', $pesantrenUser->id)->firstOrFail()->data['status']);
         $this->assertDatabaseHas('akreditasi_audit_logs', [
             'action_type' => 'pesantren_ipm_overridden',
@@ -951,5 +951,6 @@ class MasterDataTest extends TestCase
         Role::where('parameter', 'super_admin')->firstOrFail()->permissions()->detach($permission->id);
     }
 }
+
 
 
