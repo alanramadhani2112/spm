@@ -4,17 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class MasterEdpmButir extends Model
+class MasterEdpmSubKomponen extends Model
 {
     protected $fillable = [
         'komponen_id',
         'kode',
-        'name',
         'nama',
         'deskripsi',
-        'sub_komponen',
-        'no_sk',
     ];
 
     public function komponen(): BelongsTo
@@ -22,8 +20,8 @@ class MasterEdpmButir extends Model
         return $this->belongsTo(MasterEdpmKomponen::class, 'komponen_id');
     }
 
-    public function subKomponen(): BelongsTo
+    public function butirs(): HasMany
     {
-        return $this->belongsTo(MasterEdpmSubKomponen::class, 'sub_komponen', 'kode');
+        return $this->hasMany(MasterEdpmButir::class, 'sub_komponen', 'kode');
     }
 }
