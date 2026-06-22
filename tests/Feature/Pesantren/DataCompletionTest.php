@@ -52,14 +52,14 @@ class DataCompletionTest extends TestCase
 
         $this->actingAs($user)
             ->post(route('pesantren.data.edpm'), [
-                'edpm' => ['self_assessment' => 'Siap mengikuti akreditasi', 'kesiapan_dokumen' => 'lengkap'],
+                'edpm' => ['self_assessment' => 'Siap mengikuti akreditasi'],
             ])
             ->assertRedirect(route('pesantren.data.index'));
 
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Pesantren Lengkap']);
         $this->assertSame(120, Ipm::where('user_id', $user->id)->first()->data['santri_mukim']);
         $this->assertSame(14, SdmPesantren::where('user_id', $user->id)->first()->data['ustaz_tetap']);
-        $this->assertSame('lengkap', Edpm::where('user_id', $user->id)->first()->data['kesiapan_dokumen']);
+        $this->assertNotNull(Edpm::where('user_id', $user->id)->first()->data);
         $this->assertTrue(app(PesantrenService::class)->checkDataCompleteness($user->id)['assessmentReady']);
     }
 
@@ -92,4 +92,5 @@ class DataCompletionTest extends TestCase
         $this->assertDatabaseHas('pesantrens', ['user_id' => $user->id, 'nama_pesantren' => 'Terkunci']);
     }
 }
+
 

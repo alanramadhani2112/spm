@@ -143,9 +143,10 @@ class DataController extends Controller
     public function updateEdpm(Request $request)
     {
         $validated = $request->validate([
-            'edpm.self_assessment' => ['required', 'string'],
-            'edpm.kesiapan_dokumen' => ['nullable', 'string', 'max:255'],
-            'edpm.catatan_ipr' => ['nullable', 'string'],
+            'edpm.self_assessment' => ['nullable', 'string'],
+            'edpm.butirs'          => ['nullable', 'array'],
+            'edpm.butirs.*.self_assessment' => ['nullable', 'string', 'max:2000'],
+            'edpm.butirs.*.bukti_link'      => ['nullable', 'url', 'max:500'],
         ]);
 
         Edpm::updateOrCreate(
@@ -153,7 +154,7 @@ class DataController extends Controller
             ['data' => $validated['edpm']]
         );
 
-        return redirect()->route('pesantren.data.index')->with('success', 'Data EDPM/IPR berhasil disimpan.');
+        return redirect()->route('pesantren.data.index')->with('success', 'Data EDPM 40 butir berhasil disimpan.');
     }
 
 
@@ -194,6 +195,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 
