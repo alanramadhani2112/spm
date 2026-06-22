@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:pesantren,super_admin'])->prefix('pesantren')->
     Route::post('/data/ipm', [PesantrenDataController::class, 'updateIpm'])->name('data.ipm');
     Route::post('/data/sdm', [PesantrenDataController::class, 'updateSdm'])->name('data.sdm');
     Route::post('/data/edpm', [PesantrenDataController::class, 'updateEdpm'])->name('data.edpm');
+    Route::post('/data/ipr', [PesantrenDataController::class, 'updateIpr'])->name('data.ipr');
 
     Route::get('/akreditasi', [AkreditasiController::class, 'index'])->name('akreditasi.index');
     Route::get('/akreditasi/pengajuan', [AkreditasiController::class, 'pengajuanForm'])->name('akreditasi.pengajuan');
@@ -361,5 +362,7 @@ Route::post('/logout', function () {
 
     return redirect('/');
 })->middleware('auth')->name('logout');
+
+
 
 

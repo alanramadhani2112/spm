@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Akreditasi;
 use App\Models\Edpm;
 use App\Models\Ipm;
+use App\Models\Ipr;
 use App\Models\Pesantren;
 use App\Models\PesantrenUnit;
 use App\Models\SdmPesantren;
@@ -167,6 +168,37 @@ class DataController extends Controller
     }
 
 
+    public function updateIpr(Request $request)
+    {
+        $validated = $request->validate([
+            'ipr.butirs' => ['nullable', 'array'],
+            'ipr.butirs.*.file' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
+        ]);
+
+        $iprData = $validated['ipr'] ?? [];
+        $butirs = $iprData['butirs'] ?? [];
+
+        // Handle file uploads per butir
+        foreach ($butirs as $butirId => $butirEntry) {
+            if ($request->hasFile("ipr.butirs.{% raw %}{$butirId}{% endraw %}.file")) {
+                $iprData['butirs'][$butirId]['file'] = $request->file("ipr.butirs.{% raw %}{$butirId}{% endraw %}.file")->store('ipr-documents');
+            } else {
+                // Keep existing file if no new upload
+                $existing = Ipr::where('user_id', auth()->id())->first();
+                if ($existing && isset($existing->data['butirs'][$butirId]['file'])) {
+                    $iprData['butirs'][$butirId]['file'] = $existing->data['butirs'][$butirId]['file'];
+                }
+            }
+        }
+
+        Ipr::updateOrCreate(
+            ['user_id' => auth()->id()],
+            ['data' => $iprData]
+        );
+
+        return redirect()->route('pesantren.data.index')->with('success', 'Dokumen IPR 22 butir berhasil disimpan.');
+    }
+
     private function canEditDuringLock(): bool
     {
         $akreditasi = Akreditasi::where('user_id', auth()->id())
@@ -189,6 +221,7 @@ class DataController extends Controller
             'ipm' => Ipm::where('user_id', $userId)->first(),
             'sdm' => SdmPesantren::where('user_id', $userId)->first(),
             'edpm' => Edpm::where('user_id', $userId)->first(),
+            'ipr'  => Ipr::where('user_id', $userId)->first(),
             'completeness' => $this->pesantrenService->checkDataCompleteness($userId),
         ];
     }
@@ -204,6 +237,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 

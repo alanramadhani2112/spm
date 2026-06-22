@@ -90,6 +90,23 @@
             <form method="POST" action="{{ route('pesantren.data.edpm') }}">
                 @csrf
                 @include('pesantren.data._edpm-fields', ['edpm' => $edpm])
+
+                {{-- IPR Form --}}
+                <div class="card card-flush">
+                    <div class="card-header">
+                        <h3 class="card-title fw-bold">Dokumen IPR (22 Butir)</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('pesantren.data.ipr') }}" enctype="multipart/form-data">
+                            @csrf
+                            @include('pesantren.data._ipr-fields', ['ipr' => $ipr])
+                            <div class="d-flex justify-content-end gap-3 mt-6">
+                                <button type="submit" class="btn btn-primary">Simpan IPR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end gap-3 mt-6"><button type="submit" class="btn btn-primary">Simpan EDPM/IPR</button></div>
             </form>
         </div>
