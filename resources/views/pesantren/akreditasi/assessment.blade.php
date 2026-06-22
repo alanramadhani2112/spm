@@ -56,6 +56,21 @@
                 <h3 class="fs-5 fw-semibold text-gray-900 mb-2">Dokumen Pendukung</h3>
                 <p class="fs-7 text-muted mb-6">Unggah dokumen pendukung yang diperlukan untuk proses akreditasi.</p>
                 @include('pesantren.data._document-fields', ['pesantren' => $pesantren])
+
+                {{-- IPR 22 Butir --}}
+                <div class="separator separator-dashed my-8"></div>
+
+                <div class="card card-flush">
+                    <div class="card-header">
+                        <h3 class="card-title fw-bold">Dokumen IPR (22 Butir)</h3>
+                        <div class="card-toolbar">
+                            <span class="badge badge-light-warning fs-8">Perlu diunggah</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @include('pesantren.data._ipr-fields', ['ipr' => $ipr])
+                    </div>
+                </div>
             </div>
 
             <x-slot:footer>

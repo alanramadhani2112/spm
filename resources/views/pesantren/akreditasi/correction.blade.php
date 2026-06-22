@@ -62,6 +62,15 @@
                 <x-metronic.card title="Koreksi Data EDPM/IPR">
                     <p class="fs-7 text-muted mb-6">Perbaiki data Evaluasi Diri Pesantren sesuai catatan.</p>
                     @include('pesantren.data._edpm-fields', ['edpm' => $edpm])
+
+                    <div class="card card-flush">
+                        <div class="card-header">
+                            <h3 class="card-title fw-bold">Dokumen IPR (22 Butir)</h3>
+                        </div>
+                        <div class="card-body">
+                            @include('pesantren.data._ipr-fields', ['ipr' => $ipr])
+                        </div>
+                    </div>
                 </x-metronic.card>
             @endif
 

@@ -194,6 +194,7 @@ class AkreditasiController extends Controller
             'ipm' => Ipm::where('user_id', $userId)->first(),
             'sdm' => SdmPesantren::where('user_id', $userId)->first(),
             'edpm' => Edpm::where('user_id', $userId)->first(),
+            'ipr'  => Ipr::where('user_id', $userId)->first(),
         ];
     }
 
