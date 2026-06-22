@@ -49,6 +49,9 @@
     </div>
     <div class="col-md-4">
         <x-metronic.form-input name="email_pesantren" label="Email Pesantren" type="email" :value="$pesantren?->email_pesantren" />
+    <div class="col-md-4">
+        <x-metronic.form-input name="persyarikatan" label="Persyarikatan" :value="$pesantren?->persyarikatan" placeholder="Ranting/Cabang/Daerah/Wilayah/Pusat" />
+    </div>
     </div>
     <div class="col-md-6">
         <x-metronic.form-input name="luas_tanah" label="Luas Tanah" :value="$pesantren?->luas_tanah" placeholder="Contoh: 2.000 m2" />

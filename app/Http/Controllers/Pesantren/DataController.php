@@ -60,6 +60,7 @@ class DataController extends Controller
             'telp_pesantren' => ['nullable', 'string', 'max:50'],
             'hp_wa' => ['nullable', 'string', 'max:50'],
             'email_pesantren' => ['nullable', 'email', 'max:255'],
+            'nspp' => ['nullable', 'string', 'max:100'],
             'persyarikatan' => ['nullable', 'string', 'max:255'],
             'visi' => ['nullable', 'string'],
             'misi' => ['nullable', 'string'],
@@ -237,6 +238,7 @@ class DataController extends Controller
         return $rules;
     }
 }
+
 
 
 
